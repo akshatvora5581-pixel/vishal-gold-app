@@ -1,0 +1,50 @@
+﻿Analyzing vishal_gold...                                        
+
+warning - Unused import: 'package:vishal_gold/config/app_config.dart' - lib\main.dart:4:8 - unused_import
+   info - 'background' is deprecated and shouldn't be used. Use surface instead. This feature was deprecated after v3.18.0-0.1.pre - lib\main.dart:41:13 - deprecated_member_use
+   info - 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss - lib\screens\cart\cart_screen.dart:84:43 - deprecated_member_use
+   info - 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss - lib\screens\cart\cart_screen.dart:232:45 - deprecated_member_use
+warning - Unused import: 'package:google_fonts/google_fonts.dart' - lib\screens\company_details\company_details_screen.dart:3:8 - unused_import
+   info - Type could be non-nullable - lib\screens\home\home_screen.dart:63:24 - unnecessary_nullable_for_final_variable_declarations
+warning - Unused import: 'package:intl/intl.dart' - lib\screens\notifications\notifications_screen.dart:4:8 - unused_import
+   info - 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss - lib\screens\notifications\notifications_screen.dart:86:43 - deprecated_member_use
+   info - 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss - lib\screens\notifications\notifications_screen.dart:136:29 - deprecated_member_use
+  error - The method 'getUserOrders' isn't defined for the type 'SupabaseService' - lib\screens\order\order_history_screen.dart:38:45 - undefined_method
+   info - 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss - lib\screens\order\order_history_screen.dart:65:43 - deprecated_member_use
+  error - The getter 'warningYellow' isn't defined for the type 'AppColors' - lib\screens\order\order_history_screen.dart:163:26 - undefined_getter
+   info - 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss - lib\screens\product\product_detail_screen.dart:271:41 - deprecated_member_use
+   info - 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss - lib\screens\profile\profile_screen.dart:106:51 - deprecated_member_use
+  error - The method 'getRecentlyViewedProducts' isn't defined for the type 'SupabaseService' - lib\screens\recent\recent_designs_screen.dart:37:47 - undefined_method
+   info - 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss - lib\screens\recent\recent_designs_screen.dart:67:43 - deprecated_member_use
+   info - 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss - lib\screens\role_selection\role_selection_screen.dart:124:41 - deprecated_member_use
+   info - 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss - lib\screens\role_selection\role_selection_screen.dart:129:37 - deprecated_member_use
+   info - 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss - lib\screens\splash_screen.dart:97:57 - deprecated_member_use
+  error - The method 'createWholesalerUpload' isn't defined for the type 'SupabaseService' - lib\screens\upload\upload_design_screen.dart:53:29 - undefined_method
+  error - The method 'eq' isn't defined for the type 'PostgrestTransformBuilder' - lib\services\supabase_service.dart:135:21 - undefined_method
+  error - The method 'eq' isn't defined for the type 'PostgrestTransformBuilder' - lib\services\supabase_service.dart:138:21 - undefined_method
+  error - The argument type 'List<int>' can't be assigned to the parameter type 'Uint8List'.  - lib\services\supabase_service.dart:391:66 - argument_type_not_assignable
+   info - 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss - lib\widgets\home\banner_carousel.dart:77:48 - deprecated_member_use
+   info - 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss - lib\widgets\home\banner_carousel.dart:82:49 - deprecated_member_use
+   info - 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss - lib\widgets\home\banner_carousel.dart:97:55 - deprecated_member_use
+   info - 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss - lib\widgets\home\banner_carousel.dart:122:58 - deprecated_member_use
+   info - 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss - lib\widgets\home\banner_carousel.dart:132:58 - deprecated_member_use
+   info - 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss - lib\widgets\home\category_section.dart:98:37 - deprecated_member_use
+   info - 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss - lib\widgets\product\product_card.dart:29:37 - deprecated_member_use
+   info - 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss - lib\widgets\product\product_card.dart:112:53 - deprecated_member_use
+
+flutter : 31 issues found. 
+(ran in 18.5s)
+At line:1 char:1
++ flutter analyze --no-pub 
+2>&1 | Out-File -FilePath 
+analyze_output.txt ...
++ 
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo           
+   : NotSpecified: (31 issu  
+  es found. (ran in 18.5s)   
+ :String) [], RemoteExcep    
+tion
+    + FullyQualifiedErrorId  
+   : NativeCommandError
+ 
