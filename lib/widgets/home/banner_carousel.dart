@@ -41,8 +41,8 @@ class _BannerCarouselState extends State<BannerCarousel> {
             height: 180.0,
             autoPlay: true,
             autoPlayInterval: const Duration(seconds: 4),
-            enlargeCenterPage: true,
-            viewportFraction: 0.9,
+            enlargeCenterPage: false,
+            viewportFraction: 1.0,
             onPageChanged: (index, reason) {
               setState(() {
                 _currentIndex = index;
@@ -57,16 +57,14 @@ class _BannerCarouselState extends State<BannerCarousel> {
                     Navigator.push(
                       context,
                       MaterialPageRoute(
-                        builder: (context) => ProductListingScreen(
-                          category: banner['category']!,
-                          categoryTitle: banner['title']!,
-                        ),
+                        builder: (context) =>
+                            ProductListingScreen(category: banner['category']!),
                       ),
                     );
                   },
                   child: Container(
                     width: MediaQuery.of(context).size.width,
-                    margin: const EdgeInsets.symmetric(horizontal: 5.0),
+                    margin: const EdgeInsets.symmetric(horizontal: 0.0),
                     decoration: BoxDecoration(
                       borderRadius: BorderRadius.circular(16),
                       gradient: LinearGradient(
@@ -103,34 +101,39 @@ class _BannerCarouselState extends State<BannerCarousel> {
 
                         // Content
                         Padding(
-                          padding: const EdgeInsets.all(20),
+                          padding: const EdgeInsets.all(16),
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             mainAxisAlignment: MainAxisAlignment.center,
+                            mainAxisSize: MainAxisSize.min,
                             children: [
                               Text(
                                 banner['title']!,
                                 style: const TextStyle(
-                                  fontSize: 24,
+                                  fontSize: 22,
                                   fontWeight: FontWeight.bold,
                                   color: AppColors.white,
                                   letterSpacing: 1.5,
                                 ),
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
                               ),
-                              const SizedBox(height: 8),
+                              const SizedBox(height: 6),
                               Text(
                                 banner['description']!,
                                 style: TextStyle(
-                                  fontSize: 14,
+                                  fontSize: 13,
                                   // ignore: deprecated_member_use
                                   color: AppColors.white.withOpacity(0.9),
                                 ),
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
                               ),
-                              const SizedBox(height: 16),
+                              const SizedBox(height: 12),
                               Container(
                                 padding: const EdgeInsets.symmetric(
-                                  horizontal: 16,
-                                  vertical: 8,
+                                  horizontal: 14,
+                                  vertical: 6,
                                 ),
                                 decoration: BoxDecoration(
                                   // ignore: deprecated_member_use
@@ -145,7 +148,7 @@ class _BannerCarouselState extends State<BannerCarousel> {
                                   'Browse Collection',
                                   style: TextStyle(
                                     color: AppColors.white,
-                                    fontSize: 12,
+                                    fontSize: 11,
                                     fontWeight: FontWeight.w600,
                                   ),
                                 ),

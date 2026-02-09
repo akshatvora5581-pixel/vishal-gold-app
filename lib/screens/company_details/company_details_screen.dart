@@ -32,20 +32,23 @@ class _CompanyDetailsScreenState extends State<CompanyDetailsScreen> {
 
     final authProvider = Provider.of<AuthProvider>(context, listen: false);
 
-    final success = await authProvider.updateCompanyDetails(
-      companyName: _companyNameController.text.trim(),
-      address: _addressController.text.trim(),
-      city: _cityController.text.trim(),
-    );
+    try {
+      await authProvider.updateProfile({
+        'company_name': _companyNameController.text.trim(),
+        'address': _addressController.text.trim(),
+        'city': _cityController.text.trim(),
+      });
 
-    if (!mounted) return;
+      if (!mounted) return;
 
-    if (success) {
+      // Success - navigate to home
       Navigator.pushReplacement(
         context,
         MaterialPageRoute(builder: (context) => const HomeScreen()),
       );
-    } else {
+    } catch (e) {
+      if (!mounted) return;
+
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
           content: Text('Failed to save company details'),

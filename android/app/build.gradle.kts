@@ -6,7 +6,7 @@ plugins {
 }
 
 android {
-    namespace = "com.example.vishal_gold"
+    namespace = "com.vishalgoldapp"
     compileSdk = flutter.compileSdkVersion
     ndkVersion = flutter.ndkVersion
 
@@ -21,10 +21,10 @@ android {
 
     defaultConfig {
         // TODO: Specify your own unique Application ID (https://developer.android.com/studio/build/application-id.html).
-        applicationId = "com.example.vishal_gold"
+        applicationId = "com.vishalgoldapp"
         // You can update the following values to match your application needs.
         // For more information, see: https://flutter.dev/to/review-gradle-config.
-        minSdk = flutter.minSdkVersion
+        minSdk = flutter.minSdkVersion  // Firebase requires minimum SDK 21
         targetSdk = flutter.targetSdkVersion
         versionCode = flutter.versionCode
         versionName = flutter.versionName
@@ -42,3 +42,6 @@ android {
 flutter {
     source = "../.."
 }
+
+// Apply Google Services plugin for Firebase
+apply(plugin = "com.google.gms.google-services")

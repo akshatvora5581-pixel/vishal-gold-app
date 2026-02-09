@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
-import 'package:vishal_gold/services/supabase_service.dart';
+import 'package:vishal_gold/services/firebase_service.dart';
 
 /// A service to handle image picking and uploading
 class ImagePickerService {
@@ -9,7 +9,7 @@ class ImagePickerService {
   ImagePickerService._internal();
 
   final ImagePicker _picker = ImagePicker();
-  final SupabaseService _supabaseService = SupabaseService();
+  final FirebaseService _firebaseService = FirebaseService();
 
   /// Pick a single image from gallery or camera
   Future<XFile?> pickImage({
@@ -71,7 +71,8 @@ class ImagePickerService {
 
     try {
       final bytes = await image.readAsBytes();
-      final url = await _supabaseService.uploadImage(image.path, bytes);
+      final fileName = image.path.split('/').last;
+      final url = await _firebaseService.uploadProductImage(fileName, bytes);
       return url;
     } catch (e) {
       debugPrint('Error uploading image: $e');
@@ -101,7 +102,8 @@ class ImagePickerService {
       try {
         onProgress?.call(i + 1, images.length);
         final bytes = await images[i].readAsBytes();
-        final url = await _supabaseService.uploadImage(images[i].path, bytes);
+        final fileName = images[i].path.split('/').last;
+        final url = await _firebaseService.uploadProductImage(fileName, bytes);
         urls.add(url);
       } catch (e) {
         debugPrint('Error uploading image ${i + 1}: $e');
@@ -126,8 +128,12 @@ class ImagePickerService {
 
     try {
       final bytes = await image.readAsBytes();
-      final fileName = image.path.split('/').last;
-      final url = await _supabaseService.uploadAvatar(userId, bytes, fileName);
+      final fileName = 'avatar_$userId.jpg';
+      final url = await _firebaseService.uploadUserAvatar(
+        userId,
+        bytes,
+        fileName,
+      );
       return url;
     } catch (e) {
       debugPrint('Error uploading avatar: $e');

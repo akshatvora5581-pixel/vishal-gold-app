@@ -1,18 +1,39 @@
+import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:firebase_core/firebase_core.dart';
+import 'package:vishal_gold/services/firebase_service.dart';
 import 'package:vishal_gold/constants/app_colors.dart';
 import 'package:vishal_gold/constants/app_strings.dart';
 import 'package:vishal_gold/providers/auth_provider.dart';
 import 'package:vishal_gold/providers/cart_provider.dart';
-import 'package:vishal_gold/services/supabase_service.dart';
+import 'package:vishal_gold/providers/product_provider.dart';
+import 'package:vishal_gold/providers/order_provider.dart';
+import 'package:vishal_gold/providers/wishlist_provider.dart';
 import 'package:vishal_gold/screens/splash_screen.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
-  // Initialize Supabase
-  await SupabaseService().initialize();
+  // Initialize Firebase
+  // Initialize Firebase
+  if (Platform.isAndroid) {
+    await Firebase.initializeApp(
+      options: const FirebaseOptions(
+        apiKey: 'AIzaSyDB5v9Aq7yPz6QRoLIBgPsvue5UcZgBQP0',
+        appId: '1:373212780191:android:a7bdbcba05e8bc3c5874aa',
+        messagingSenderId: '373212780191',
+        projectId: 'vishal-gold-app',
+        storageBucket: 'vishal-gold-app.firebasestorage.app',
+      ),
+    );
+  } else {
+    await Firebase.initializeApp();
+  }
+
+  // Seed initial data (temporary call)
+  await FirebaseService().seedInitialData();
 
   runApp(const MyApp());
 }
@@ -26,79 +47,100 @@ class MyApp extends StatelessWidget {
       providers: [
         ChangeNotifierProvider(create: (_) => AuthProvider()),
         ChangeNotifierProvider(create: (_) => CartProvider()),
+        ChangeNotifierProvider(create: (_) => ProductProvider()),
+        ChangeNotifierProvider(create: (_) => OrderProvider()),
+        ChangeNotifierProvider(create: (_) => WishlistProvider()),
       ],
       child: MaterialApp(
         title: AppStrings.appName,
         debugShowCheckedModeBanner: false,
         theme: ThemeData(
           useMaterial3: true,
-          colorScheme: ColorScheme.fromSeed(
-            seedColor: AppColors.oliveGreen,
-            primary: AppColors.oliveGreen,
+          colorScheme: const ColorScheme.dark(
+            primary: AppColors.gold,
             secondary: AppColors.softGold,
-            surface: AppColors.white,
+            surface: AppColors.surface,
+            background: AppColors.background,
+            error: AppColors.errorRed,
+            onPrimary: AppColors.black,
+            onSecondary: AppColors.black,
+            onSurface: AppColors.textPrimary,
+            onBackground: AppColors.textPrimary,
+            onError: AppColors.black,
           ),
-          textTheme: GoogleFonts.robotoTextTheme(),
-          appBarTheme: const AppBarTheme(
-            backgroundColor: AppColors.oliveGreen,
-            foregroundColor: AppColors.white,
+          scaffoldBackgroundColor: AppColors.background,
+          textTheme: GoogleFonts.outfitTextTheme().copyWith(
+            displayLarge: GoogleFonts.playfairDisplay(
+              color: AppColors.textPrimary,
+              fontWeight: FontWeight.bold,
+            ),
+            displayMedium: GoogleFonts.playfairDisplay(
+              color: AppColors.textPrimary,
+              fontWeight: FontWeight.bold,
+            ),
+            displaySmall: GoogleFonts.playfairDisplay(
+              color: AppColors.textPrimary,
+              fontWeight: FontWeight.bold,
+            ),
+            headlineLarge: GoogleFonts.playfairDisplay(
+              color: AppColors.textPrimary,
+              fontWeight: FontWeight.bold,
+            ),
+            headlineMedium: GoogleFonts.playfairDisplay(
+              color: AppColors.textPrimary,
+              fontWeight: FontWeight.bold,
+            ),
+            titleLarge: GoogleFonts.playfairDisplay(
+              color: AppColors.textPrimary,
+              fontWeight: FontWeight.w600,
+            ),
+            bodyLarge: GoogleFonts.outfit(color: AppColors.textPrimary),
+            bodyMedium: GoogleFonts.outfit(color: AppColors.textSecondary),
+          ),
+          appBarTheme: AppBarTheme(
+            backgroundColor: AppColors.background,
+            foregroundColor: AppColors.textPrimary,
             elevation: 0,
             centerTitle: true,
+            titleTextStyle: GoogleFonts.playfairDisplay(
+              fontSize: 20,
+              fontWeight: FontWeight.bold,
+              color: AppColors.textPrimary,
+              letterSpacing: 1.0,
+            ),
           ),
           elevatedButtonTheme: ElevatedButtonThemeData(
             style: ElevatedButton.styleFrom(
-              backgroundColor: AppColors.oliveGreen,
-              foregroundColor: AppColors.white,
+              backgroundColor: AppColors.gold,
+              foregroundColor: AppColors.black,
               minimumSize: const Size(double.infinity, 50),
               shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(8),
               ),
-              textStyle: GoogleFonts.roboto(
+              textStyle: GoogleFonts.outfit(
                 fontSize: 16,
-                fontWeight: FontWeight.w600,
+                fontWeight: FontWeight.bold,
+                letterSpacing: 1.0,
               ),
             ),
           ),
           inputDecorationTheme: InputDecorationTheme(
             filled: true,
-            fillColor: AppColors.white,
+            fillColor: AppColors.surface,
             border: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(8),
-              borderSide: const BorderSide(color: AppColors.lightGrey),
+              borderRadius: BorderRadius.circular(12),
+              borderSide: const BorderSide(color: AppColors.cardBorder),
             ),
             enabledBorder: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(8),
-              borderSide: const BorderSide(color: AppColors.lightGrey),
+              borderRadius: BorderRadius.circular(12),
+              borderSide: const BorderSide(color: AppColors.cardBorder),
             ),
             focusedBorder: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(8),
-              borderSide: const BorderSide(
-                color: AppColors.oliveGreen,
-                width: 2,
-              ),
-            ),
-            errorBorder: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(8),
-              borderSide: const BorderSide(color: AppColors.errorRed),
-            ),
-            contentPadding: const EdgeInsets.symmetric(
-              horizontal: 16,
-              vertical: 14,
-            ),
-          ),
-          cardTheme: CardThemeData(
-            color: AppColors.cardBackground,
-            elevation: 2,
-            shape: RoundedRectangleBorder(
               borderRadius: BorderRadius.circular(12),
+              borderSide: const BorderSide(color: AppColors.gold, width: 1.5),
             ),
-          ),
-          bottomNavigationBarTheme: const BottomNavigationBarThemeData(
-            backgroundColor: AppColors.white,
-            selectedItemColor: AppColors.oliveGreen,
-            unselectedItemColor: AppColors.grey,
-            type: BottomNavigationBarType.fixed,
-            elevation: 8,
+            labelStyle: const TextStyle(color: AppColors.textSecondary),
+            hintStyle: const TextStyle(color: AppColors.textTertiary),
           ),
         ),
         home: const SplashScreen(),

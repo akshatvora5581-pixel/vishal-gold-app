@@ -19,14 +19,21 @@ class CartItem {
 
   factory CartItem.fromJson(Map<String, dynamic> json) {
     return CartItem(
-      id: json['id'] as String,
-      userId: json['user_id'] as String,
-      productId: json['product_id'] as String,
-      quantity: json['quantity'] as int,
-      addedAt: DateTime.parse(json['added_at'] as String),
-      product: json['products'] != null
-          ? Product.fromJson(json['products'] as Map<String, dynamic>)
-          : null,
+      id: json['id'] as String? ?? json['productId'] as String? ?? '',
+      userId: json['user_id'] as String? ?? json['userId'] as String? ?? '',
+      productId:
+          json['product_id'] as String? ?? json['productId'] as String? ?? '',
+      quantity: json['quantity'] as int? ?? 1,
+      addedAt: json['added_at'] != null
+          ? DateTime.parse(json['added_at'] as String)
+          : (json['addedAt'] != null
+                ? DateTime.parse(json['addedAt'] as String)
+                : DateTime.now()),
+      product: json['product'] != null
+          ? Product.fromJson(json['product'] as Map<String, dynamic>)
+          : (json['products'] != null
+                ? Product.fromJson(json['products'] as Map<String, dynamic>)
+                : null),
     );
   }
 
@@ -34,9 +41,13 @@ class CartItem {
     return {
       'id': id,
       'user_id': userId,
+      'userId': userId,
       'product_id': productId,
+      'productId': productId,
       'quantity': quantity,
       'added_at': addedAt.toIso8601String(),
+      'addedAt': addedAt.toIso8601String(),
+      if (product != null) 'product': product!.toJson(),
     };
   }
 

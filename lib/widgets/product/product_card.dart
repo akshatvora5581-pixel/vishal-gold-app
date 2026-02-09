@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:cached_network_image/cached_network_image.dart';
+import 'package:provider/provider.dart';
 import 'package:vishal_gold/constants/app_colors.dart';
 import 'package:vishal_gold/models/product.dart';
+import 'package:vishal_gold/providers/wishlist_provider.dart';
 import 'package:vishal_gold/screens/product/product_detail_screen.dart';
 
 class ProductCard extends StatelessWidget {
@@ -22,157 +24,110 @@ class ProductCard extends StatelessWidget {
       },
       child: Container(
         decoration: BoxDecoration(
-          color: AppColors.white,
-          borderRadius: BorderRadius.circular(12),
-          boxShadow: [
-            BoxShadow(
-              // ignore: deprecated_member_use
-              color: AppColors.grey.withOpacity(0.2),
-              blurRadius: 8,
-              offset: const Offset(0, 4),
-            ),
-          ],
+          color: AppColors.surface,
+          borderRadius: BorderRadius.circular(20),
+          border: Border.all(color: AppColors.cardBorder, width: 1),
         ),
         child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
+          crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            // Product Image
-            ClipRRect(
-              borderRadius: const BorderRadius.vertical(
-                top: Radius.circular(12),
-              ),
-              child: AspectRatio(
-                aspectRatio: 1,
-                child: product.imageUrls.isNotEmpty
-                    ? CachedNetworkImage(
-                        imageUrl: product.imageUrls.first,
-                        fit: BoxFit.cover,
-                        placeholder: (context, url) => Container(
-                          color: AppColors.cream,
-                          child: const Center(
-                            child: CircularProgressIndicator(),
-                          ),
+            // Image Area
+            Expanded(
+              flex: 4,
+              child: Stack(
+                children: [
+                  ClipRRect(
+                    borderRadius: const BorderRadius.vertical(
+                      top: Radius.circular(20),
+                    ),
+                    child: _buildProductImage(),
+                  ),
+                  // Subtle Gradient Overlay
+                  Positioned.fill(
+                    child: Container(
+                      decoration: BoxDecoration(
+                        borderRadius: const BorderRadius.vertical(
+                          top: Radius.circular(20),
                         ),
-                        errorWidget: (context, url, error) => Container(
-                          color: AppColors.cream,
-                          child: const Icon(
-                            Icons.diamond,
-                            size: 48,
-                            color: AppColors.oliveGreen,
-                          ),
-                        ),
-                      )
-                    : Container(
-                        color: AppColors.cream,
-                        child: const Icon(
-                          Icons.diamond,
-                          size: 48,
-                          color: AppColors.oliveGreen,
+                        gradient: LinearGradient(
+                          begin: Alignment.topCenter,
+                          end: Alignment.bottomCenter,
+                          colors: [
+                            Colors.transparent,
+                            Colors.black.withOpacity(0.3),
+                          ],
+                          stops: const [0.7, 1.0],
                         ),
                       ),
+                    ),
+                  ),
+                  // Wishlist Button (Minimal)
+                  Positioned(
+                    top: 8,
+                    right: 8,
+                    child: Consumer<WishlistProvider>(
+                      builder: (context, wishlistProvider, child) {
+                        final isInWishlist = wishlistProvider.isInWishlist(
+                          product.id,
+                        );
+                        return GestureDetector(
+                          onTap: () => wishlistProvider.toggleWishlist(product),
+                          child: Container(
+                            padding: const EdgeInsets.all(6),
+                            decoration: BoxDecoration(
+                              color: AppColors.background.withOpacity(0.6),
+                              shape: BoxShape.circle,
+                            ),
+                            child: Icon(
+                              isInWishlist
+                                  ? Icons.favorite
+                                  : Icons.favorite_border,
+                              color: isInWishlist
+                                  ? AppColors.errorRed
+                                  : AppColors.white,
+                              size: 16,
+                            ),
+                          ),
+                        );
+                      },
+                    ),
+                  ),
+                ],
               ),
             ),
-
-            // Product Details
+            // Details Area
             Expanded(
+              flex: 2,
               child: Padding(
-                padding: const EdgeInsets.all(8),
+                padding: const EdgeInsets.all(12),
                 child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        // Tag Number
-                        Row(
-                          children: [
-                            const Text(
-                              'Tag: ',
-                              style: TextStyle(
-                                fontSize: 11,
-                                color: AppColors.grey,
+                        Text(
+                          product.tagNumber,
+                          style: Theme.of(context).textTheme.bodyMedium
+                              ?.copyWith(
+                                color: AppColors.gold,
+                                fontWeight: FontWeight.bold,
+                                letterSpacing: 0.5,
                               ),
-                            ),
-                            Expanded(
-                              child: Text(
-                                product.tagNumber,
-                                style: const TextStyle(
-                                  fontSize: 12,
-                                  fontWeight: FontWeight.bold,
-                                  color: AppColors.oliveGreen,
-                                ),
-                                maxLines: 1,
-                                overflow: TextOverflow.ellipsis,
-                              ),
-                            ),
-                          ],
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
                         ),
                         const SizedBox(height: 2),
-
-                        // Gross Weight
-                        Row(
-                          children: [
-                            const Text(
-                              'Gross: ',
-                              style: TextStyle(
-                                fontSize: 11,
-                                color: AppColors.grey,
+                        Text(
+                          '${product.grossWeight}g  •  ${product.purity}K',
+                          style: Theme.of(context).textTheme.bodySmall
+                              ?.copyWith(
+                                color: AppColors.textSecondary,
+                                fontSize: 10,
                               ),
-                            ),
-                            Text(
-                              '${product.grossWeight.toStringAsFixed(2)}g',
-                              style: const TextStyle(
-                                fontSize: 11,
-                                fontWeight: FontWeight.w600,
-                                color: AppColors.black,
-                              ),
-                            ),
-                          ],
-                        ),
-                        const SizedBox(height: 2),
-
-                        // Net Weight
-                        Row(
-                          children: [
-                            const Text(
-                              'Net: ',
-                              style: TextStyle(
-                                fontSize: 11,
-                                color: AppColors.grey,
-                              ),
-                            ),
-                            Text(
-                              '${product.netWeight.toStringAsFixed(2)}g',
-                              style: const TextStyle(
-                                fontSize: 11,
-                                fontWeight: FontWeight.w600,
-                                color: AppColors.black,
-                              ),
-                            ),
-                          ],
                         ),
                       ],
-                    ),
-
-                    // View Button
-                    Container(
-                      width: double.infinity,
-                      padding: const EdgeInsets.symmetric(vertical: 6),
-                      decoration: BoxDecoration(
-                        // ignore: deprecated_member_use
-                        color: AppColors.oliveGreen.withOpacity(0.1),
-                        borderRadius: BorderRadius.circular(6),
-                      ),
-                      child: const Text(
-                        'View Details',
-                        style: TextStyle(
-                          fontSize: 11,
-                          fontWeight: FontWeight.w600,
-                          color: AppColors.oliveGreen,
-                        ),
-                        textAlign: TextAlign.center,
-                      ),
                     ),
                   ],
                 ),
@@ -182,5 +137,58 @@ class ProductCard extends StatelessWidget {
         ),
       ),
     );
+  }
+
+  Widget _buildProductImage() {
+    if (product.imageUrls.isEmpty) {
+      return Container(
+        color: AppColors.background,
+        child: const Center(
+          child: Icon(Icons.diamond_outlined, color: AppColors.textTertiary),
+        ),
+      );
+    }
+
+    final imageUrl = product.imageUrls.first;
+    if (imageUrl.toLowerCase().contains('assets/')) {
+      return Image.asset(
+        imageUrl,
+        fit: BoxFit.cover,
+        width: double.infinity,
+        errorBuilder: (_, __, ___) => Container(
+          color: AppColors.background,
+          child: const Center(
+            child: Icon(
+              Icons.broken_image_outlined,
+              color: AppColors.textTertiary,
+            ),
+          ),
+        ),
+      );
+    } else {
+      return CachedNetworkImage(
+        imageUrl: imageUrl,
+        fit: BoxFit.cover,
+        width: double.infinity,
+        placeholder: (_, __) => Container(
+          color: AppColors.background,
+          child: Center(
+            child: CircularProgressIndicator(
+              strokeWidth: 2,
+              color: AppColors.gold.withOpacity(0.5),
+            ),
+          ),
+        ),
+        errorWidget: (_, __, ___) => Container(
+          color: AppColors.background,
+          child: const Center(
+            child: Icon(
+              Icons.broken_image_outlined,
+              color: AppColors.textTertiary,
+            ),
+          ),
+        ),
+      );
+    }
   }
 }

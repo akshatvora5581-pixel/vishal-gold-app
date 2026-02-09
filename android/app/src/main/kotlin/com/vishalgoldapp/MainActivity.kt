@@ -1,4 +1,4 @@
-package com.example.vishal_gold
+package com.vishalgoldapp
 
 import io.flutter.embedding.android.FlutterActivity
 
