@@ -1,0 +1,9 @@
+﻿Analyzing VishalGoldApp...                                      
+
+   info - Unnecessary 'const' keyword - lib\screens\profile\profile_screen.dart:188:35 - unnecessary_const
+   info - Unnecessary 'const' keyword - lib\screens\profile\profile_screen.dart:214:37 - unnecessary_const
+   info - Don't use 'BuildContext's across async gaps - lib\screens\splash_screen.dart:48:33 - use_build_context_synchronously
+warning - The value of the field '_firestore' isn't used - lib\services\firebase_auth_service.dart:6:27 - unused_field
+warning - The value of the field '_verificationId' isn't used - lib\services\firebase_auth_service.dart:18:11 - unused_field
+warning - The value of the field '_resendToken' isn't used - lib\services\firebase_auth_service.dart:19:8 - unused_field
+

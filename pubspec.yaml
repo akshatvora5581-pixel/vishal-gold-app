@@ -13,8 +13,11 @@ dependencies:
   # State Management
   provider: ^6.1.1
   
-  # Backend & Auth
-  supabase_flutter: ^2.0.0
+  # Backend & Auth - Firebase
+  firebase_core: ^3.6.0
+  firebase_auth: ^5.3.1
+  cloud_firestore: ^5.4.4
+  firebase_storage: ^12.3.4
   
   # UI Components
   cached_network_image: ^3.3.0
@@ -28,11 +31,14 @@ dependencies:
   intl: ^0.20.2
   uuid: ^4.2.1
   flutter_secure_storage: ^10.0.0
+  shared_preferences: ^2.3.3
   
   # Additional UI
   shimmer: ^3.0.0
   smooth_page_indicator: ^2.0.1
   google_fonts: ^8.0.0
+  url_launcher: ^6.3.2
+  flutter_staggered_animations: ^1.1.1
 
 dev_dependencies:
   flutter_test:
@@ -43,5 +49,6 @@ flutter:
   uses-material-design: true
   
   assets:
+    - assets/
     - assets/images/
     - assets/icons/

@@ -1,14 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:vishal_gold/constants/app_colors.dart';
-import 'package:vishal_gold/models/order.dart';
 import 'package:vishal_gold/screens/home/home_screen.dart';
 import 'package:vishal_gold/screens/order/order_detail_screen.dart';
 
 class OrderConfirmationScreen extends StatelessWidget {
-  final Order order;
+  final String orderId;
 
-  const OrderConfirmationScreen({super.key, required this.order});
+  const OrderConfirmationScreen({super.key, required this.orderId});
 
   @override
   Widget build(BuildContext context) {
@@ -51,7 +50,7 @@ class OrderConfirmationScreen extends StatelessWidget {
 
                 // Order Number
                 Text(
-                  'Order Number:',
+                  'Order ID:',
                   style: GoogleFonts.roboto(
                     fontSize: 14,
                     color: AppColors.grey,
@@ -59,7 +58,7 @@ class OrderConfirmationScreen extends StatelessWidget {
                 ),
                 const SizedBox(height: 4),
                 Text(
-                  order.orderNumber,
+                  orderId.substring(0, 8).toUpperCase(),
                   style: GoogleFonts.roboto(
                     fontSize: 16,
                     fontWeight: FontWeight.bold,
@@ -87,7 +86,7 @@ class OrderConfirmationScreen extends StatelessWidget {
                       context,
                       MaterialPageRoute(
                         builder: (context) =>
-                            OrderDetailScreen(orderId: order.id),
+                            OrderDetailScreen(orderId: orderId),
                       ),
                     );
                   },

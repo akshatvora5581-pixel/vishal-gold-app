@@ -1,20 +1,24 @@
 class Order {
   final String id;
   final String userId;
-  final String orderNumber;
+  final String? orderNumber;
   final String status; // pending, processing, shipped, delivered, cancelled
   final int totalItems;
+  final double totalGrossWeight;
+  final double totalNetWeight;
   final String? adminNotes;
   final DateTime createdAt;
   final DateTime updatedAt;
-  final List<OrderItem>? items; // Joined order items
+  final List<OrderItem>? items;
 
   Order({
     required this.id,
     required this.userId,
-    required this.orderNumber,
+    this.orderNumber,
     required this.status,
     required this.totalItems,
+    required this.totalGrossWeight,
+    required this.totalNetWeight,
     this.adminNotes,
     required this.createdAt,
     required this.updatedAt,
@@ -23,16 +27,22 @@ class Order {
 
   factory Order.fromJson(Map<String, dynamic> json) {
     return Order(
-      id: json['id'] as String,
-      userId: json['user_id'] as String,
-      orderNumber: json['order_number'] as String,
-      status: json['status'] as String,
-      totalItems: json['total_items'] as int,
-      adminNotes: json['admin_notes'] as String?,
-      createdAt: DateTime.parse(json['created_at'] as String),
-      updatedAt: DateTime.parse(json['updated_at'] as String),
-      items: json['order_items'] != null
-          ? (json['order_items'] as List)
+      id: json['id'] as String? ?? '',
+      userId: json['userId'] as String? ?? '',
+      orderNumber: json['orderNumber'] as String?,
+      status: json['status'] as String? ?? 'pending',
+      totalItems: json['totalItems'] as int? ?? 0,
+      totalGrossWeight: (json['totalGrossWeight'] as num? ?? 0.0).toDouble(),
+      totalNetWeight: (json['totalNetWeight'] as num? ?? 0.0).toDouble(),
+      adminNotes: json['adminNotes'] as String?,
+      createdAt: json['createdAt'] != null
+          ? DateTime.parse(json['createdAt'] as String)
+          : DateTime.now(),
+      updatedAt: json['updatedAt'] != null
+          ? DateTime.parse(json['updatedAt'] as String)
+          : DateTime.now(),
+      items: json['items'] != null
+          ? (json['items'] as List)
                 .map((item) => OrderItem.fromJson(item as Map<String, dynamic>))
                 .toList()
           : null,
@@ -42,13 +52,15 @@ class Order {
   Map<String, dynamic> toJson() {
     return {
       'id': id,
-      'user_id': userId,
-      'order_number': orderNumber,
+      'userId': userId,
+      'orderNumber': orderNumber,
       'status': status,
-      'total_items': totalItems,
-      'admin_notes': adminNotes,
-      'created_at': createdAt.toIso8601String(),
-      'updated_at': updatedAt.toIso8601String(),
+      'totalItems': totalItems,
+      'totalGrossWeight': totalGrossWeight,
+      'totalNetWeight': totalNetWeight,
+      'adminNotes': adminNotes,
+      'createdAt': createdAt.toIso8601String(),
+      'updatedAt': updatedAt.toIso8601String(),
     };
   }
 
@@ -85,52 +97,64 @@ class Order {
         return '';
     }
   }
+
+  /// Create empty order
+  factory Order.empty() {
+    return Order(
+      id: '',
+      userId: '',
+      status: '',
+      totalItems: 0,
+      totalGrossWeight: 0.0,
+      totalNetWeight: 0.0,
+      createdAt: DateTime.now(),
+      updatedAt: DateTime.now(),
+    );
+  }
 }
 
 class OrderItem {
-  final String id;
-  final String orderId;
   final String? productId;
   final int quantity;
   final String tagNumber;
   final double grossWeight;
   final double netWeight;
-  final DateTime createdAt;
+  final String category;
+  final List<String> imageUrls;
 
   OrderItem({
-    required this.id,
-    required this.orderId,
     this.productId,
     required this.quantity,
     required this.tagNumber,
     required this.grossWeight,
     required this.netWeight,
-    required this.createdAt,
+    required this.category,
+    required this.imageUrls,
   });
 
   factory OrderItem.fromJson(Map<String, dynamic> json) {
     return OrderItem(
-      id: json['id'] as String,
-      orderId: json['order_id'] as String,
-      productId: json['product_id'] as String?,
-      quantity: json['quantity'] as int,
-      tagNumber: json['tag_number'] as String,
-      grossWeight: (json['gross_weight'] as num).toDouble(),
-      netWeight: (json['net_weight'] as num).toDouble(),
-      createdAt: DateTime.parse(json['created_at'] as String),
+      productId: json['productId'] as String?,
+      quantity: json['quantity'] as int? ?? 1,
+      tagNumber: json['tagNumber'] as String? ?? 'N/A',
+      grossWeight: (json['grossWeight'] as num? ?? 0.0).toDouble(),
+      netWeight: (json['netWeight'] as num? ?? 0.0).toDouble(),
+      category: json['category'] as String? ?? '',
+      imageUrls: json['imageUrls'] != null
+          ? List<String>.from(json['imageUrls'] as List)
+          : [],
     );
   }
 
   Map<String, dynamic> toJson() {
     return {
-      'id': id,
-      'order_id': orderId,
-      'product_id': productId,
+      'productId': productId,
       'quantity': quantity,
-      'tag_number': tagNumber,
-      'gross_weight': grossWeight,
-      'net_weight': netWeight,
-      'created_at': createdAt.toIso8601String(),
+      'tagNumber': tagNumber,
+      'grossWeight': grossWeight,
+      'netWeight': netWeight,
+      'category': category,
+      'imageUrls': imageUrls,
     };
   }
 }

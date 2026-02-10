@@ -67,14 +67,14 @@ class Product {
 
   String get categoryDisplay {
     switch (category) {
-      case '84_ornaments':
-        return '84 Ornaments';
-      case '92_ornaments':
-        return '92 Ornaments';
-      case '92_chains':
-        return '92 Chains';
+      case '84_melting':
+        return '84 Melting';
+      case '92_melting':
+        return '92 Melting';
+      case '92_melting_chains':
+        return '92 Melting Chains';
       default:
-        return category;
+        return category.replaceAll('_', ' ').toUpperCase();
     }
   }
 
@@ -84,5 +84,21 @@ class Product {
 
   String get weightDisplay {
     return '${grossWeight.toStringAsFixed(2)}g';
+  }
+
+  /// Create empty product
+  factory Product.empty() {
+    return Product(
+      id: '',
+      tagNumber: '',
+      category: '',
+      subcategory: '',
+      imageUrls: [],
+      grossWeight: 0.0,
+      netWeight: 0.0,
+      purity: 84,
+      createdAt: DateTime.now(),
+      updatedAt: DateTime.now(),
+    );
   }
 }

@@ -1,237 +1,184 @@
-import 'package:flutter/material.dart';
-import 'package:supabase_flutter/supabase_flutter.dart' as supabase;
-import 'package:vishal_gold/models/user.dart' as app_models;
-import 'package:vishal_gold/services/supabase_service.dart';
+import 'package:flutter/foundation.dart';
+import 'package:firebase_auth/firebase_auth.dart';
+import 'package:vishal_gold/services/firebase_auth_service.dart';
+import 'package:vishal_gold/services/firebase_service.dart';
+import 'package:vishal_gold/services/local_storage_service.dart';
 
 class AuthProvider with ChangeNotifier {
-  final SupabaseService _supabaseService = SupabaseService();
+  final FirebaseAuthService _authService = FirebaseAuthService();
+  final FirebaseService _firebaseService = FirebaseService();
 
-  app_models.User? _user;
+  User? _currentUser;
+  String? _userRole;
+  Map<String, dynamic>? _userProfile;
   bool _isLoading = false;
-  String? _errorMessage;
 
-  app_models.User? get user => _user;
+  // Getters
+  User? get currentUser => _currentUser;
+  String? get userRole => _userRole;
+  Map<String, dynamic>? get userProfile => _userProfile;
   bool get isLoading => _isLoading;
-  String? get errorMessage => _errorMessage;
-  bool get isAuthenticated => _user != null;
+  bool get isAuthenticated => _currentUser != null;
+  bool get isRetailer => _userRole == 'retailer';
+  bool get isWholesaler => _userRole == 'wholesaler';
 
-  Future<void> initialize() async {
+  AuthProvider() {
+    _initializeAuth();
+  }
+
+  /// Initialize authentication state
+  Future<void> _initializeAuth() async {
     _isLoading = true;
     notifyListeners();
 
     try {
-      final currentUser = _supabaseService.currentUser;
-      if (currentUser != null) {
-        await loadUserProfile(currentUser.id);
+      // Get Firebase Auth user
+      _currentUser = _authService.currentUser;
+
+      // Get user role from local storage
+      _userRole = await LocalStorageService.getUserRole();
+
+      // Fetch profile from Firestore if logged in
+      if (_currentUser != null) {
+        await _loadUserProfile();
       }
     } catch (e) {
-      _errorMessage = e.toString();
+      debugPrint('Auth initialization error: $e');
     } finally {
       _isLoading = false;
       notifyListeners();
     }
   }
 
-  Future<bool> signUp({
-    required String email,
-    required String password,
-    required String fullName,
-  }) async {
-    _isLoading = true;
-    _errorMessage = null;
-    notifyListeners();
+  /// Load user profile from Firestore
+  Future<void> _loadUserProfile() async {
+    if (_currentUser == null) return;
 
     try {
-      final response = await _supabaseService.signUp(
-        email: email,
-        password: password,
-        fullName: fullName,
-      );
+      _userProfile = await _firebaseService.getUserProfile(_currentUser!.uid);
 
-      if (response.user != null) {
-        // Check if email confirmation is required
-        if (response.session == null) {
-          // Email confirmation is required - user created but not logged in
-          _errorMessage =
-              'Please check your email and click the confirmation link to complete signup';
-          return true; // Signup was successful, just needs email confirmation
-        }
-
-        // User is logged in, load profile
-        await loadUserProfile(response.user!.id);
-        return true;
+      // If no profile found in Firestore, create a basic one from Firebase Auth
+      if (_userProfile == null) {
+        _userProfile = {
+          'uid': _currentUser!.uid,
+          'name': _currentUser!.displayName ?? 'User',
+          'email': _currentUser!.email ?? '',
+          'phone': _currentUser!.phoneNumber ?? '',
+          'role': _userRole ?? 'retailer',
+        };
       }
-      _errorMessage = 'Signup failed. Please try again.';
-      return false;
-    } on supabase.AuthException catch (e) {
-      // Handle specific Supabase auth errors with user-friendly messages
-      if (e.message.contains('rate limit') || e.message.contains('429')) {
-        _errorMessage =
-            'Too many signup attempts. Please wait a few minutes and try again.';
-      } else if (e.message.contains('already registered') ||
-          e.message.contains('already exists')) {
-        _errorMessage =
-            'An account with this email already exists. Please login instead.';
-      } else if (e.message.contains('invalid email')) {
-        _errorMessage = 'Please enter a valid email address.';
-      } else if (e.message.contains('password')) {
-        _errorMessage = 'Password must be at least 6 characters long.';
-      } else {
-        _errorMessage = e.message;
-      }
-      return false;
+      notifyListeners();
     } catch (e) {
-      _errorMessage = 'An error occurred during signup: ${e.toString()}';
-      return false;
-    } finally {
-      _isLoading = false;
+      debugPrint('Failed to load user profile: $e');
+      // Set a fallback profile on error to prevent infinite spinner
+      _userProfile = {
+        'uid': _currentUser?.uid ?? '',
+        'name': 'User',
+        'email': _currentUser?.email ?? '',
+        'role': _userRole ?? 'retailer',
+      };
       notifyListeners();
     }
   }
 
-  Future<bool> signIn({required String email, required String password}) async {
-    _isLoading = true;
-    _errorMessage = null;
-    notifyListeners();
-
-    try {
-      final response = await _supabaseService.signIn(
-        email: email,
-        password: password,
-      );
-
-      if (response.user != null) {
-        await loadUserProfile(response.user!.id);
-        return true;
-      }
-      return false;
-    } on supabase.AuthException catch (e) {
-      _errorMessage = e.message;
-      return false;
-    } catch (e) {
-      _errorMessage = 'An error occurred during login';
-      return false;
-    } finally {
-      _isLoading = false;
-      notifyListeners();
-    }
-  }
-
+  /// Sign out
   Future<void> signOut() async {
-    _isLoading = true;
-    notifyListeners();
-
     try {
-      await _supabaseService.signOut();
-      _user = null;
+      _isLoading = true;
+      notifyListeners();
+
+      // Sign out from Firebase
+      await _authService.signOut();
+
+      // Clear local storage
+      await LocalStorageService.clearUserRole();
+
+      // Clear state
+      _currentUser = null;
+      _userRole = null;
+      _userProfile = null;
+
+      notifyListeners();
     } catch (e) {
-      _errorMessage = 'Failed to sign out';
+      debugPrint('Sign out error: $e');
+      rethrow;
     } finally {
       _isLoading = false;
       notifyListeners();
     }
   }
 
-  Future<bool> resetPassword(String email) async {
-    _isLoading = true;
-    _errorMessage = null;
-    notifyListeners();
+  /// Update user profile
+  Future<void> updateProfile(Map<String, dynamic> updates) async {
+    if (_currentUser == null) return;
 
     try {
-      await _supabaseService.resetPassword(email);
-      return true;
-    } catch (e) {
-      _errorMessage = 'Failed to send reset email';
-      return false;
-    } finally {
-      _isLoading = false;
+      _isLoading = true;
       notifyListeners();
-    }
-  }
 
-  Future<void> loadUserProfile(String userId) async {
-    try {
-      final profile = await _supabaseService.getUserProfile(userId);
-      _user = profile;
-      notifyListeners();
-    } catch (e) {
-      _errorMessage = 'Failed to load user profile';
-    }
-  }
-
-  Future<bool> updateUserRole(String role) async {
-    if (_user == null) return false;
-
-    _isLoading = true;
-    notifyListeners();
-
-    try {
-      await _supabaseService.saveUserRole(_user!.id, role);
-      _user = _user!.copyWith(userType: role);
-      return true;
-    } catch (e) {
-      _errorMessage = 'Failed to update role';
-      return false;
-    } finally {
-      _isLoading = false;
-      notifyListeners();
-    }
-  }
-
-  Future<bool> updateCompanyDetails({
-    required String companyName,
-    required String address,
-    required String city,
-  }) async {
-    if (_user == null) return false;
-
-    _isLoading = true;
-    notifyListeners();
-
-    try {
-      await _supabaseService.saveCompanyDetails(
-        userId: _user!.id,
-        companyName: companyName,
-        address: address,
-        city: city,
+      await _firebaseService.updateUserProfile(
+        userId: _currentUser!.uid,
+        updates: updates,
       );
 
-      _user = _user!.copyWith(
-        companyName: companyName,
-        companyAddress: address,
-        city: city,
-      );
-      return true;
+      // Reload profile
+      await _loadUserProfile();
     } catch (e) {
-      _errorMessage = 'Failed to update company details';
-      return false;
+      debugPrint('Update profile error: $e');
+      rethrow;
     } finally {
       _isLoading = false;
       notifyListeners();
     }
   }
 
-  Future<bool> updateProfile(Map<String, dynamic> data) async {
-    if (_user == null) return false;
+  /// Refresh user data
+  Future<void> refresh() async {
+    await _initializeAuth();
+  }
 
-    _isLoading = true;
-    notifyListeners();
+  bool hasRole(String role) {
+    return _userRole == role;
+  }
 
+  /// Sign in as guest (Retailer)
+  Future<void> signInAsGuest() async {
     try {
-      await _supabaseService.updateUserProfile(_user!.id, data);
-      await loadUserProfile(_user!.id);
-      return true;
+      _isLoading = true;
+      notifyListeners();
+
+      await _authService.signInAnonymously();
+
+      // Update role
+      _userRole = 'retailer';
+      await LocalStorageService.saveUserRole('retailer');
+
+      await _loadUserProfile();
     } catch (e) {
-      _errorMessage = 'Failed to update profile';
-      return false;
+      debugPrint('Guest sign in error: $e');
+      rethrow;
     } finally {
       _isLoading = false;
       notifyListeners();
     }
   }
 
-  void clearError() {
-    _errorMessage = null;
-    notifyListeners();
+  /// Get user display name
+  String get displayName {
+    if (_userProfile != null && _userProfile!['fullName'] != null) {
+      return _userProfile!['fullName'];
+    }
+    if (_currentUser != null && _currentUser!.displayName != null) {
+      return _currentUser!.displayName!;
+    }
+    return 'Guest';
+  }
+
+  /// Get user phone number
+  String? get phoneNumber {
+    if (_userProfile != null && _userProfile!['phone'] != null) {
+      return _userProfile!['phone'];
+    }
+    return _currentUser?.phoneNumber;
   }
 }

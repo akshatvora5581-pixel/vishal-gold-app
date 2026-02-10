@@ -1,28 +1,38 @@
 import 'package:flutter/material.dart';
 
 class AppColors {
-  // Primary Colors
-  static const Color oliveGreen = Color(0xFF808000);
-  static const Color cream = Color(0xFFFFFDD0);
-  static const Color softGold = Color(0xFFFFD700);
-
-  // Supporting Colors
+  // Premium Dark Theme Palette
+  static const Color background = Color(0xFF121212); // Deep rich dark grey
+  static const Color surface = Color(0xFF1E1E1E); // Slightly lighter for cards
+  static const Color gold = Color(0xFFD4AF37); // Metallic Classic Gold
+  static const Color softGold = Color(
+    0xFFFFD700,
+  ); // Lighter gold for highlights
   static const Color white = Color(0xFFFFFFFF);
   static const Color black = Color(0xFF000000);
-  static const Color grey = Color(0xFF9E9E9E);
-  static const Color lightGrey = Color(0xFFE0E0E0);
-  static const Color errorRed = Color(0xFFD32F2F);
-  static const Color successGreen = Color(0xFF388E3C);
-  static const Color warningYellow = Color(0xFFFFA726);
+
+  // Text Colors
+  static const Color textPrimary = white;
+  static const Color textSecondary = Color(0xFFB0B0B0); // Silver/Grey
+  static const Color textTertiary = Color(0xFF757575);
 
   // Status Colors
-  static const Color pending = Color(0xFFFFA726);
-  static const Color processing = Color(0xFF42A5F5);
-  static const Color shipped = Color(0xFFFF7043);
-  static const Color delivered = Color(0xFF66BB6A);
-  static const Color cancelled = Color(0xFFEF5350);
+  static const Color errorRed = Color(0xFFCF6679); // Muted red for dark mode
+  static const Color successGreen = Color(0xFF81C784); // Muted green
+  static const Color warningYellow = Color(0xFFFFB74D); // Muted orange
 
-  // Background Colors
-  static const Color background = Color(0xFFFAFAFA);
-  static const Color cardBackground = white;
+  // UI Accents
+  static const Color cardBorder = Color(0xFF2C2C2C);
+  static const Color divider = Color(0xFF2C2C2C);
+  static const Color overlay = Color(0xAA000000);
+
+  // Legacy/Compatibility
+  static const Color oliveGreen = surface; // Map old olive to surface
+  static const Color primaryGold = gold;
+  static const Color lightGrey = textSecondary;
+  static const Color grey = textTertiary;
+  static const Color cream = Color(0xFFFFFDD0); // Restored for compatibility
+
+  // Interactions
+  static const Color ripple = Color(0x1AD4AF37); // Gold ripple
 }

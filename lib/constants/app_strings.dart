@@ -2,7 +2,7 @@ class AppStrings {
   // App
   static const String appName = 'Vishal Jewellers';
   static const String appTagline = 'Dharukawala';
-  static const String logoPath = 'assets/images/logo.png';
+  static const String logoPath = 'assets/logo.png';
 
   // Authentication
   static const String login = 'Login';
