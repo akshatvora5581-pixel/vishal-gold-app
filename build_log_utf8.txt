@@ -1,0 +1,41 @@
+﻿Launching lib\main.dart on motorola edge 60 fusion in debug mode...
+Running Gradle task 'assembleDebug'...                             38.8s
+ΓêÜ Built build\app\outputs\flutter-apk\app-debug.apk
+Installing build\app\outputs\flutter-apk\app-debug.apk...           5.0s
+D/FlutterJNI( 4394): Beginning load of flutter...
+D/FlutterJNI( 4394): flutter (null) was loaded normally!
+I/flutter ( 4394): [IMPORTANT:flutter/shell/platform/android/android_context_vk_impeller.cc(62)] Using the Impeller rendering backend (Vulkan).
+Syncing files to device motorola edge 60 fusion...                 146ms
+
+Flutter run key commands.
+r Hot reload. 
+R Hot restart.
+h List all available interactive commands.
+d Detach (terminate "flutter run" but leave application running).
+c Clear the screen
+q Quit (terminate the application on the device).
+
+A Dart VM Service on motorola edge 60 fusion is available at: http://127.0.0.1:49225/H5aW10lGQ_Q=/
+The Flutter DevTools debugger and profiler on motorola edge 60 fusion is available at: http://127.0.0.1:49225/H5aW10lGQ_Q=/devtools/?uri=ws://127.0.0.1:49225/H5aW10lGQ_Q=/ws
+I/Choreographer( 4394): Skipped 54 frames!  The application may be doing too much work on its main thread.
+I/GrallocExtra( 4394): gralloc_extra_query:is_SW3D 0
+D/BLASTBufferQueue( 4394): [ffa6cc3 SurfaceView[com.example.vishal_gold/com.example.vishal_gold.MainActivity]#1](f:0,a:1) acquireNextBufferLocked size=1220x2712 mFrameNumber=1 applyTransaction=true mTimestamp=626343820967717(auto) mPendingTransactions.size=0 graphicBufferId=18872086298634 transform=0
+D/LibMBrainProxy( 4394): Init Paramters
+W/ServiceManagerCppClient( 4394): Failed to get isDeclared for vendor.mediatek.hardware.mbrain.IMBrain/default: Status(-1, EX_SECURITY): 'SELinux denied for service.'
+E/HWUI    ( 4394): fbcNotifySbeRescue error: undefined symbol: fbcNotifySbeRescue
+E/HWUI    ( 4394): fbcNotifyHintFrame error: undefined symbol: fbcNotifyHintFrame
+E/HWUI    ( 4394): updateSbeFeatureOption error: undefined symbol: updateSbeFeatureOption
+D/BLASTBufferQueue( 4394): [VRI[MainActivity]#0](f:0,a:1) acquireNextBufferLocked size=1220x2712 mFrameNumber=1 applyTransaction=true mTimestamp=626344003379178(auto) mPendingTransactions.size=0 graphicBufferId=18872086298642 transform=0
+D/InsetsController( 4394): hide(ime(), fromIme=false)
+I/ImeTracker( 4394): com.example.vishal_gold:272c431e: onCancelled at PHASE_CLIENT_ALREADY_HIDDEN
+W/WindowOnBackDispatcher( 4394): sendCancelIfRunning: isInProgress=false callback=io.flutter.embedding.android.FlutterActivity$1@f8d98e2
+D/ProfileInstaller( 4394): Installing profile for com.example.vishal_gold
+W/ple.vishal_gold( 4394): userfaultfd: MOVE ioctl seems unsupported: Connection timed out
+D/Surface ( 4394): Surface::disconnect
+D/Surface ( 4394): Surface::disconnect
+D/BLASTBufferQueue( 4394): [ffa6cc3 SurfaceView[com.example.vishal_gold/com.example.vishal_gold.MainActivity]#1](f:0,a:4) destructor()
+D/BufferQueueConsumer( 4394): [ffa6cc3 SurfaceView[com.example.vishal_gold/com.example.vishal_gold.MainActivity](BLAST)#148799(BLAST Consumer)pid:4394](id:112a00000001,api:0,p:-1,c:4394) disconnect
+D/Surface ( 4394): Surface::disconnect
+D/BLASTBufferQueue( 4394): [VRI[MainActivity]#0](f:0,a:1) destructor()
+D/BufferQueueConsumer( 4394): [com.example.vishal_gold/com.example.vishal_gold.MainActivity#148794(BLAST Consumer)pid:4394](id:112a00000000,api:0,p:-1,c:4394) disconnect
+Lost connection to device.

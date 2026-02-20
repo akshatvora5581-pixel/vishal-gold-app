@@ -206,6 +206,7 @@ class _PhoneAuthScreenState extends State<PhoneAuthScreen> {
                     border: Border.all(color: AppColors.gold, width: 2),
                     boxShadow: [
                       BoxShadow(
+                        // ignore: deprecated_member_use
                         color: AppColors.gold.withOpacity(0.2),
                         blurRadius: 20,
                         spreadRadius: 5,
@@ -254,9 +255,11 @@ class _PhoneAuthScreenState extends State<PhoneAuthScreen> {
                     padding: const EdgeInsets.all(12),
                     margin: const EdgeInsets.only(bottom: 24),
                     decoration: BoxDecoration(
+                      // ignore: deprecated_member_use
                       color: AppColors.errorRed.withOpacity(0.1),
                       borderRadius: BorderRadius.circular(12),
                       border: Border.all(
+                        // ignore: deprecated_member_use
                         color: AppColors.errorRed.withOpacity(0.3),
                       ),
                     ),
@@ -466,6 +469,7 @@ class _PhoneAuthScreenState extends State<PhoneAuthScreen> {
           backgroundColor: AppColors.gold,
           foregroundColor: AppColors.black,
           elevation: 5,
+          // ignore: deprecated_member_use
           shadowColor: AppColors.gold.withOpacity(0.4),
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(16),

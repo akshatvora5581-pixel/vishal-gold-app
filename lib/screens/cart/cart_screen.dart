@@ -118,6 +118,7 @@ class CartScreen extends StatelessWidget {
                   Icon(
                     Icons.shopping_bag_outlined,
                     size: 80,
+                    // ignore: deprecated_member_use
                     color: AppColors.grey.withOpacity(0.3),
                   ),
                   const SizedBox(height: 20),
@@ -160,7 +161,7 @@ class CartScreen extends StatelessWidget {
                 child: ListView.separated(
                   padding: const EdgeInsets.all(20),
                   itemCount: cartProvider.items.length,
-                  separatorBuilder: (_, __) => const SizedBox(height: 16),
+                  separatorBuilder: (_, _) => const SizedBox(height: 16),
                   itemBuilder: (context, index) {
                     final cartItem = cartProvider.items[index];
                     final product = cartItem.product;
@@ -173,6 +174,7 @@ class CartScreen extends StatelessWidget {
                         color: AppColors.surface,
                         borderRadius: BorderRadius.circular(16),
                         border: Border.all(
+                          // ignore: deprecated_member_use
                           color: AppColors.grey.withOpacity(0.1),
                         ),
                       ),
@@ -303,6 +305,7 @@ class CartScreen extends StatelessWidget {
                   ),
                   boxShadow: [
                     BoxShadow(
+                      // ignore: deprecated_member_use
                       color: Colors.black.withOpacity(0.5),
                       blurRadius: 20,
                       offset: const Offset(0, -5),

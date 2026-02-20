@@ -8,7 +8,7 @@ import 'package:vishal_gold/screens/auth/phone_auth_screen.dart';
 import 'package:vishal_gold/screens/order/order_history_screen.dart';
 import 'package:vishal_gold/screens/info/contact_us_screen.dart';
 import 'package:vishal_gold/screens/info/policy_screen.dart';
-import 'package:vishal_gold/services/image_picker_service.dart';
+import 'package:vishal_gold/services/local_storage_service.dart';
 
 class ProfileScreen extends StatefulWidget {
   const ProfileScreen({super.key});
@@ -18,46 +18,18 @@ class ProfileScreen extends StatefulWidget {
 }
 
 class _ProfileScreenState extends State<ProfileScreen> {
-  final _imagePickerService = ImagePickerService();
-  bool _isUploadingAvatar = false;
+  String _localUserName = '';
 
-  Future<void> _uploadProfileImage() async {
-    final authProvider = Provider.of<AuthProvider>(context, listen: false);
-    if (authProvider.currentUser == null) return;
+  @override
+  void initState() {
+    super.initState();
+    _loadLocalName();
+  }
 
-    final source = await _imagePickerService.showImageSourcePicker(context);
-    if (source == null) return;
-
-    setState(() => _isUploadingAvatar = true);
-
-    try {
-      final url = await _imagePickerService.pickAndUploadAvatar(
-        userId: authProvider.currentUser!.uid,
-        source: source,
-      );
-
-      if (url != null && mounted) {
-        await authProvider.updateProfile({'profile_image_url': url});
-        if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(
-              content: Text('Profile picture updated!'),
-              backgroundColor: AppColors.successGreen,
-            ),
-          );
-        }
-      }
-    } catch (e) {
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Failed to update: $e'),
-            backgroundColor: AppColors.errorRed,
-          ),
-        );
-      }
-    } finally {
-      if (mounted) setState(() => _isUploadingAvatar = false);
+  Future<void> _loadLocalName() async {
+    final name = await LocalStorageService.getUserName();
+    if (mounted) {
+      setState(() => _localUserName = name ?? '');
     }
   }
 
@@ -121,10 +93,11 @@ class _ProfileScreenState extends State<ProfileScreen> {
     final authProvider = Provider.of<AuthProvider>(context);
     final userProfile = authProvider.userProfile;
 
-    if (userProfile == null)
+    if (userProfile == null) {
       return const Center(
         child: CircularProgressIndicator(color: AppColors.gold),
       );
+    }
 
     return Scaffold(
       backgroundColor: AppColors.background,
@@ -175,7 +148,10 @@ class _ProfileScreenState extends State<ProfileScreen> {
                                       ?.isNotEmpty !=
                                   true
                               ? Text(
-                                  (userProfile['name'] as String? ?? 'U')[0]
+                                  (_localUserName.isNotEmpty
+                                          ? _localUserName
+                                          : (userProfile['name'] as String? ??
+                                                'U'))[0]
                                       .toUpperCase(),
                                   style: GoogleFonts.playfairDisplay(
                                     fontSize: 40,
@@ -186,35 +162,15 @@ class _ProfileScreenState extends State<ProfileScreen> {
                               : null,
                         ),
                       ),
-                      GestureDetector(
-                        onTap: _isUploadingAvatar ? null : _uploadProfileImage,
-                        child: Container(
-                          padding: const EdgeInsets.all(8),
-                          decoration: const BoxDecoration(
-                            color: AppColors.gold,
-                            shape: BoxShape.circle,
-                          ),
-                          child: _isUploadingAvatar
-                              ? const SizedBox(
-                                  width: 16,
-                                  height: 16,
-                                  child: CircularProgressIndicator(
-                                    strokeWidth: 2,
-                                    color: AppColors.black,
-                                  ),
-                                )
-                              : const Icon(
-                                  Icons.camera_alt,
-                                  color: AppColors.black,
-                                  size: 18,
-                                ),
-                        ),
-                      ),
                     ],
                   ),
                   const SizedBox(height: 16),
                   Text(
-                    userProfile['name'] as String? ?? 'User',
+                    _localUserName.isNotEmpty
+                        ? _localUserName
+                        : (userProfile['fullName'] as String? ??
+                              userProfile['name'] as String? ??
+                              'User'),
                     style: GoogleFonts.playfairDisplay(
                       fontSize: 28,
                       fontWeight: FontWeight.bold,

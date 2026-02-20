@@ -58,15 +58,13 @@ class AuthProvider with ChangeNotifier {
       _userProfile = await _firebaseService.getUserProfile(_currentUser!.uid);
 
       // If no profile found in Firestore, create a basic one from Firebase Auth
-      if (_userProfile == null) {
-        _userProfile = {
+      _userProfile ??= {
           'uid': _currentUser!.uid,
           'name': _currentUser!.displayName ?? 'User',
           'email': _currentUser!.email ?? '',
           'phone': _currentUser!.phoneNumber ?? '',
           'role': _userRole ?? 'retailer',
         };
-      }
       notifyListeners();
     } catch (e) {
       debugPrint('Failed to load user profile: $e');

@@ -751,8 +751,9 @@ class FirebaseService {
       String getAssetForSubcategory(String name) {
         final lower = name.toLowerCase();
         if (lower.contains('ring')) return 'assets/images/ring.webp';
-        if (lower.contains('bangle') || lower.contains('patla'))
+        if (lower.contains('bangle') || lower.contains('patla')) {
           return 'assets/images/bangles.png';
+        }
         if (lower.contains('chain')) return 'assets/images/chain.webp';
         if (lower.contains('bali') ||
             lower.contains('butty') ||

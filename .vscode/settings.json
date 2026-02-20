@@ -1,0 +1,5 @@
+{
+    "java.configuration.updateBuildConfiguration": "automatic",
+    "jdk.advanced.disable.nbjavac": true,
+    "dart.useFlutterDev": true
+}

@@ -2,7 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:carousel_slider/carousel_slider.dart';
 import 'package:smooth_page_indicator/smooth_page_indicator.dart';
 import 'package:vishal_gold/constants/app_colors.dart';
-import 'package:vishal_gold/screens/product/product_listing_screen.dart';
+import 'package:vishal_gold/config/category_data.dart';
+import 'package:vishal_gold/screens/home/all_subcategories_screen.dart';
 
 class BannerCarousel extends StatefulWidget {
   const BannerCarousel({super.key});
@@ -18,19 +19,41 @@ class _BannerCarouselState extends State<BannerCarousel> {
     {
       'title': '84 ORNAMENTS',
       'category': '84_ornaments',
+      'targetTitle': '84 MELTING',
+      'targetCategory': '84_melting',
       'description': '20K Gold Jewelry',
     },
     {
       'title': '92 ORNAMENTS',
       'category': '92_ornaments',
+      'targetTitle': '92 MELTING',
+      'targetCategory': '92_melting',
       'description': '22K Gold Jewelry',
     },
     {
       'title': '92 CHAINS',
       'category': '92_chains',
+      'targetTitle': '92 MELTING CHAIN',
+      'targetCategory': '92_melting_chains',
       'description': 'Premium Gold Chains',
     },
   ];
+
+  void _onBannerTap(Map<String, String> banner) {
+    final targetCategory = banner['targetCategory']!;
+    final targetTitle = banner['targetTitle']!;
+    final subs = CategoryData.getSubcategories(targetCategory);
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (_) => AllSubcategoriesScreen(
+          title: targetTitle,
+          category: targetCategory,
+          subcategories: subs,
+        ),
+      ),
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -53,15 +76,7 @@ class _BannerCarouselState extends State<BannerCarousel> {
             return Builder(
               builder: (BuildContext context) {
                 return GestureDetector(
-                  onTap: () {
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                        builder: (context) =>
-                            ProductListingScreen(category: banner['category']!),
-                      ),
-                    );
-                  },
+                  onTap: () => _onBannerTap(banner),
                   child: Container(
                     width: MediaQuery.of(context).size.width,
                     margin: const EdgeInsets.symmetric(horizontal: 0.0),

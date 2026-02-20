@@ -35,7 +35,7 @@ class CategoryCard extends StatelessWidget {
                 child: Image.asset(
                   imagePath,
                   fit: BoxFit.cover,
-                  errorBuilder: (_, __, ___) => Container(
+                  errorBuilder: (_, _, _) => Container(
                     color: AppColors.background,
                     child: const Icon(
                       Icons.broken_image,

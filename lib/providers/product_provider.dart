@@ -2,6 +2,9 @@ import 'package:flutter/foundation.dart';
 import 'package:vishal_gold/models/product.dart';
 import 'package:vishal_gold/services/firebase_service.dart';
 
+/// Sort options exposed to the UI.
+enum ProductSortOrder { newestFirst, tagAsc, tagDesc, weightAsc, weightDesc }
+
 class ProductProvider with ChangeNotifier {
   final FirebaseService _firebaseService = FirebaseService();
 
@@ -12,6 +15,7 @@ class ProductProvider with ChangeNotifier {
   String _currentCategory = 'all';
   String? _currentSubcategory;
   String _searchQuery = '';
+  ProductSortOrder _currentSort = ProductSortOrder.newestFirst;
 
   // Getters
   List<Product> get products =>
@@ -21,6 +25,7 @@ class ProductProvider with ChangeNotifier {
   String get currentCategory => _currentCategory;
   String? get currentSubcategory => _currentSubcategory;
   bool get hasProducts => products.isNotEmpty;
+  ProductSortOrder get currentSort => _currentSort;
 
   /// Load all products
   Future<void> loadProducts() async {
@@ -74,7 +79,7 @@ class ProductProvider with ChangeNotifier {
     notifyListeners();
   }
 
-  /// Apply filters (category + search)
+  /// Apply filters (category + search) then sort
   void _applyFilters() {
     _filteredProducts = _products.where((product) {
       // Check search query
@@ -98,6 +103,43 @@ class ProductProvider with ChangeNotifier {
 
       return true;
     }).toList();
+
+    _applySortToList(_filteredProducts);
+  }
+
+  /// Sort a product list in-place according to [_currentSort]
+  void _applySortToList(List<Product> list) {
+    switch (_currentSort) {
+      case ProductSortOrder.newestFirst:
+        list.sort((a, b) => b.createdAt.compareTo(a.createdAt));
+        break;
+      case ProductSortOrder.tagAsc:
+        list.sort(
+          (a, b) =>
+              a.tagNumber.toLowerCase().compareTo(b.tagNumber.toLowerCase()),
+        );
+        break;
+      case ProductSortOrder.tagDesc:
+        list.sort(
+          (a, b) =>
+              b.tagNumber.toLowerCase().compareTo(a.tagNumber.toLowerCase()),
+        );
+        break;
+      case ProductSortOrder.weightAsc:
+        list.sort((a, b) => a.grossWeight.compareTo(b.grossWeight));
+        break;
+      case ProductSortOrder.weightDesc:
+        list.sort((a, b) => b.grossWeight.compareTo(a.grossWeight));
+        break;
+    }
+  }
+
+  /// Change sort order and re-sort the current list immediately
+  void sortProducts(ProductSortOrder order) {
+    if (_currentSort == order) return;
+    _currentSort = order;
+    _applyFilters();
+    notifyListeners();
   }
 
   /// Get single product by ID

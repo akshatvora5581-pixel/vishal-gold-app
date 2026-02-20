@@ -6,13 +6,15 @@ import 'package:vishal_gold/widgets/home/category_card.dart';
 class CategorySection extends StatelessWidget {
   final String title;
   final String category;
-  final List<Map<String, String>> subcategories;
+  final List<Map<String, dynamic>> subcategories;
+  final VoidCallback? onViewAll;
 
   const CategorySection({
     super.key,
     required this.title,
     required this.category,
     required this.subcategories,
+    this.onViewAll,
   });
 
   @override
@@ -33,10 +35,15 @@ class CategorySection extends StatelessWidget {
                 ),
               ),
               TextButton(
-                onPressed: () {
-                  // Navigate to full list or just expand
-                },
-                child: const Text('View All'),
+                onPressed: onViewAll,
+                style: TextButton.styleFrom(
+                  foregroundColor: AppColors.gold,
+                  padding: const EdgeInsets.symmetric(horizontal: 12),
+                ),
+                child: const Text(
+                  'View All',
+                  style: TextStyle(fontWeight: FontWeight.bold),
+                ),
               ),
             ],
           ),
@@ -46,7 +53,7 @@ class CategorySection extends StatelessWidget {
           child: ListView.separated(
             padding: const EdgeInsets.symmetric(horizontal: 20),
             scrollDirection: Axis.horizontal,
-            separatorBuilder: (_, __) => const SizedBox(width: 16),
+            separatorBuilder: (_, _) => const SizedBox(width: 16),
             itemCount: subcategories.length,
             itemBuilder: (context, index) {
               final sub = subcategories[index];

@@ -5,6 +5,10 @@ class LocalStorageService {
   static const String _keyUserRole = 'user_role';
   static const String _keyIsFirstLaunch = 'is_first_launch';
   static const String _keyUserName = 'user_name';
+  static const String _keyUserCity = 'user_city';
+  static const String _keyUserState = 'user_state';
+  static const String _keyUserPhone = 'user_phone';
+  static const String _keyIsUserInfoProvided = 'is_user_info_provided';
 
   static SharedPreferences? _prefs;
 
@@ -47,6 +51,54 @@ class LocalStorageService {
   static Future<String?> getUserName() async {
     await init();
     return _prefs!.getString(_keyUserName);
+  }
+
+  /// Save user city
+  static Future<bool> saveUserCity(String city) async {
+    await init();
+    return await _prefs!.setString(_keyUserCity, city);
+  }
+
+  /// Get user city
+  static Future<String?> getUserCity() async {
+    await init();
+    return _prefs!.getString(_keyUserCity);
+  }
+
+  /// Save user state
+  static Future<bool> saveUserState(String state) async {
+    await init();
+    return await _prefs!.setString(_keyUserState, state);
+  }
+
+  /// Get user state
+  static Future<String?> getUserState() async {
+    await init();
+    return _prefs!.getString(_keyUserState);
+  }
+
+  /// Save user phone
+  static Future<bool> saveUserPhone(String phone) async {
+    await init();
+    return await _prefs!.setString(_keyUserPhone, phone);
+  }
+
+  /// Get user phone
+  static Future<String?> getUserPhone() async {
+    await init();
+    return _prefs!.getString(_keyUserPhone);
+  }
+
+  /// Mark user info as provided
+  static Future<bool> setUserInfoProvided() async {
+    await init();
+    return await _prefs!.setBool(_keyIsUserInfoProvided, true);
+  }
+
+  /// Check if user info is provided
+  static Future<bool> isUserInfoProvided() async {
+    await init();
+    return _prefs!.getBool(_keyIsUserInfoProvided) ?? false;
   }
 
   /// Check if this is first launch

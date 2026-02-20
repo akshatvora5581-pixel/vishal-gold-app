@@ -1,8 +1,8 @@
-import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:firebase_core/firebase_core.dart';
+import 'firebase_options.dart'; // <--- Professional setup import
 import 'package:vishal_gold/services/firebase_service.dart';
 import 'package:vishal_gold/constants/app_colors.dart';
 import 'package:vishal_gold/constants/app_strings.dart';
@@ -14,26 +14,22 @@ import 'package:vishal_gold/providers/wishlist_provider.dart';
 import 'package:vishal_gold/screens/splash_screen.dart';
 
 void main() async {
-  WidgetsFlutterBinding.ensureInitialized();
+  try {
+    WidgetsFlutterBinding.ensureInitialized();
 
-  // Initialize Firebase
-  // Initialize Firebase
-  if (Platform.isAndroid) {
+    // --- Firebase Setup Cleaned ---
+    // Ab ye khud hi Android, Web aur iOS ko detect kar lega.
     await Firebase.initializeApp(
-      options: const FirebaseOptions(
-        apiKey: 'AIzaSyDB5v9Aq7yPz6QRoLIBgPsvue5UcZgBQP0',
-        appId: '1:373212780191:android:a7bdbcba05e8bc3c5874aa',
-        messagingSenderId: '373212780191',
-        projectId: 'vishal-gold-app',
-        storageBucket: 'vishal-gold-app.firebasestorage.app',
-      ),
+      options: DefaultFirebaseOptions.currentPlatform,
     );
-  } else {
-    await Firebase.initializeApp();
-  }
 
-  // Seed initial data (temporary call)
-  await FirebaseService().seedInitialData();
+    // Seed initial data in background (don't block the UI)
+    FirebaseService().seedInitialData().catchError((e) {
+      debugPrint('Error seeding data: $e');
+    });
+  } catch (e) {
+    debugPrint('Initialization error: $e');
+  }
 
   runApp(const MyApp());
 }
@@ -60,12 +56,10 @@ class MyApp extends StatelessWidget {
             primary: AppColors.gold,
             secondary: AppColors.softGold,
             surface: AppColors.surface,
-            background: AppColors.background,
             error: AppColors.errorRed,
             onPrimary: AppColors.black,
             onSecondary: AppColors.black,
             onSurface: AppColors.textPrimary,
-            onBackground: AppColors.textPrimary,
             onError: AppColors.black,
           ),
           scaffoldBackgroundColor: AppColors.background,

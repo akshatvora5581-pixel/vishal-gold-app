@@ -1,26 +1,51 @@
 {
   "project_info": {
-    "project_number": "373212780191",
-    "project_id": "vishal-gold-app",
-    "storage_bucket": "vishal-gold-app.firebasestorage.app"
+    "project_number": "564443743822",
+    "project_id": "vishal-gold",
+    "storage_bucket": "vishal-gold.firebasestorage.app"
   },
   "client": [
     {
       "client_info": {
-        "mobilesdk_app_id": "1:373212780191:android:a7bdbcba05e8bc3c5874aa",
+        "mobilesdk_app_id": "1:564443743822:android:c3d548d01e94de3970e51f",
         "android_client_info": {
           "package_name": "com.vishalgoldapp"
         }
       },
-      "oauth_client": [],
+      "oauth_client": [
+        {
+          "client_id": "564443743822-kbv9rv5dkdpu8jq8jm30r65v1i0h5cv2.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.vishalgoldapp",
+            "certificate_hash": "e27139217932b9ccec204f0e8c093992cacbabc3"
+          }
+        },
+        {
+          "client_id": "564443743822-tnfmjlgkhm2p3mbicv48p3k5iakvgpen.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
       "api_key": [
         {
-          "current_key": "AIzaSyDB5v9Aq7yPz6QRoLIBgPsvue5UcZgBQP0"
+          "current_key": "AIzaSyDhA6JGUy0h9SW4OGb7v20r7JZNqJmZvCI"
         }
       ],
       "services": {
         "appinvite_service": {
-          "other_platform_oauth_client": []
+          "other_platform_oauth_client": [
+            {
+              "client_id": "564443743822-tnfmjlgkhm2p3mbicv48p3k5iakvgpen.apps.googleusercontent.com",
+              "client_type": 3
+            },
+            {
+              "client_id": "564443743822-j74f37i6q0v2djlvjj05aq2tgpau8ct0.apps.googleusercontent.com",
+              "client_type": 2,
+              "ios_info": {
+                "bundle_id": "com.example.vishalGold"
+              }
+            }
+          ]
         }
       }
     }

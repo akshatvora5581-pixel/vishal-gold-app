@@ -155,7 +155,7 @@ class ProductCard extends StatelessWidget {
         imageUrl,
         fit: BoxFit.cover,
         width: double.infinity,
-        errorBuilder: (_, __, ___) => Container(
+        errorBuilder: (_, _, _) => Container(
           color: AppColors.background,
           child: const Center(
             child: Icon(
@@ -170,7 +170,7 @@ class ProductCard extends StatelessWidget {
         imageUrl: imageUrl,
         fit: BoxFit.cover,
         width: double.infinity,
-        placeholder: (_, __) => Container(
+        placeholder: (_, _) => Container(
           color: AppColors.background,
           child: Center(
             child: CircularProgressIndicator(
@@ -179,7 +179,7 @@ class ProductCard extends StatelessWidget {
             ),
           ),
         ),
-        errorWidget: (_, __, ___) => Container(
+        errorWidget: (_, _, _) => Container(
           color: AppColors.background,
           child: const Center(
             child: Icon(
