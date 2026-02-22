@@ -1,9 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:carousel_slider/carousel_slider.dart';
 import 'package:smooth_page_indicator/smooth_page_indicator.dart';
+import 'package:url_launcher/url_launcher.dart';
 import 'package:vishal_gold/constants/app_colors.dart';
-import 'package:vishal_gold/config/category_data.dart';
+import 'package:vishal_gold/models/app_banner.dart';
+import 'package:vishal_gold/services/firebase_service.dart';
 import 'package:vishal_gold/screens/home/all_subcategories_screen.dart';
+import 'package:vishal_gold/screens/product/product_detail_screen.dart';
+import 'package:vishal_gold/config/category_data.dart';
 
 class BannerCarousel extends StatefulWidget {
   const BannerCarousel({super.key});
@@ -14,185 +18,179 @@ class BannerCarousel extends StatefulWidget {
 
 class _BannerCarouselState extends State<BannerCarousel> {
   int _currentIndex = 0;
+  final FirebaseService _firebaseService = FirebaseService();
 
-  final List<Map<String, String>> _banners = [
-    {
-      'title': '84 ORNAMENTS',
-      'category': '84_ornaments',
-      'targetTitle': '84 MELTING',
-      'targetCategory': '84_melting',
-      'description': '20K Gold Jewelry',
-    },
-    {
-      'title': '92 ORNAMENTS',
-      'category': '92_ornaments',
-      'targetTitle': '92 MELTING',
-      'targetCategory': '92_melting',
-      'description': '22K Gold Jewelry',
-    },
-    {
-      'title': '92 CHAINS',
-      'category': '92_chains',
-      'targetTitle': '92 MELTING CHAIN',
-      'targetCategory': '92_melting_chains',
-      'description': 'Premium Gold Chains',
-    },
-  ];
+  Future<void> _onBannerTap(AppBanner banner) async {
+    if (banner.actionValue == null || banner.actionValue!.isEmpty) return;
 
-  void _onBannerTap(Map<String, String> banner) {
-    final targetCategory = banner['targetCategory']!;
-    final targetTitle = banner['targetTitle']!;
-    final subs = CategoryData.getSubcategories(targetCategory);
-    Navigator.push(
-      context,
-      MaterialPageRoute(
-        builder: (_) => AllSubcategoriesScreen(
-          title: targetTitle,
-          category: targetCategory,
-          subcategories: subs,
-        ),
-      ),
-    );
+    try {
+      switch (banner.actionType) {
+        case 'category':
+          final category = banner.actionValue!;
+          final subs = CategoryData.getSubcategories(category);
+          Navigator.push(
+            context,
+            MaterialPageRoute(
+              builder: (_) => AllSubcategoriesScreen(
+                title: category.replaceAll('_', ' ').toUpperCase(),
+                category: category,
+                subcategories: subs,
+              ),
+            ),
+          );
+          break;
+        case 'subcategory':
+          // We don't have a direct subcategory screen yet, usually navigating to product listing with filters
+          break;
+        case 'product':
+          final product = await _firebaseService.getProductById(
+            banner.actionValue!,
+          );
+          if (product != null && mounted) {
+            Navigator.push(
+              context,
+              MaterialPageRoute(
+                builder: (_) => ProductDetailScreen(product: product),
+              ),
+            );
+          }
+          break;
+        case 'external':
+          final url = Uri.parse(banner.actionValue!);
+          if (await canLaunchUrl(url)) {
+            await launchUrl(url, mode: LaunchMode.externalApplication);
+          }
+          break;
+      }
+    } catch (e) {
+      debugPrint('Error navigating from banner: $e');
+    }
   }
 
   @override
   Widget build(BuildContext context) {
-    return Column(
-      children: [
-        CarouselSlider(
-          options: CarouselOptions(
-            height: 180.0,
-            autoPlay: true,
-            autoPlayInterval: const Duration(seconds: 4),
-            enlargeCenterPage: false,
-            viewportFraction: 1.0,
-            onPageChanged: (index, reason) {
-              setState(() {
-                _currentIndex = index;
-              });
-            },
-          ),
-          items: _banners.map((banner) {
-            return Builder(
-              builder: (BuildContext context) {
-                return GestureDetector(
-                  onTap: () => _onBannerTap(banner),
-                  child: Container(
-                    width: MediaQuery.of(context).size.width,
-                    margin: const EdgeInsets.symmetric(horizontal: 0.0),
-                    decoration: BoxDecoration(
-                      borderRadius: BorderRadius.circular(16),
-                      gradient: LinearGradient(
-                        begin: Alignment.topLeft,
-                        end: Alignment.bottomRight,
-                        colors: [
-                          AppColors.oliveGreen,
-                          // ignore: deprecated_member_use
-                          AppColors.oliveGreen.withOpacity(0.7),
-                        ],
-                      ),
-                      boxShadow: [
-                        BoxShadow(
-                          // ignore: deprecated_member_use
-                          color: AppColors.grey.withOpacity(0.3),
-                          blurRadius: 10,
-                          offset: const Offset(0, 5),
-                        ),
-                      ],
-                    ),
-                    child: Stack(
-                      children: [
-                        // Decorative elements
-                        Positioned(
-                          top: -20,
-                          right: -20,
-                          child: Icon(
-                            Icons.diamond,
-                            size: 120,
-                            // ignore: deprecated_member_use
-                            color: AppColors.softGold.withOpacity(0.2),
-                          ),
-                        ),
+    return StreamBuilder<List<AppBanner>>(
+      stream: _firebaseService.getActiveBanners(),
+      builder: (context, snapshot) {
+        if (snapshot.connectionState == ConnectionState.waiting) {
+          return const SizedBox(
+            height: 180,
+            child: Center(
+              child: CircularProgressIndicator(color: AppColors.gold),
+            ),
+          );
+        }
 
-                        // Content
-                        Padding(
-                          padding: const EdgeInsets.all(16),
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            mainAxisAlignment: MainAxisAlignment.center,
-                            mainAxisSize: MainAxisSize.min,
-                            children: [
-                              Text(
-                                banner['title']!,
-                                style: const TextStyle(
-                                  fontSize: 22,
-                                  fontWeight: FontWeight.bold,
-                                  color: AppColors.white,
-                                  letterSpacing: 1.5,
-                                ),
-                                maxLines: 1,
-                                overflow: TextOverflow.ellipsis,
-                              ),
-                              const SizedBox(height: 6),
-                              Text(
-                                banner['description']!,
-                                style: TextStyle(
-                                  fontSize: 13,
-                                  // ignore: deprecated_member_use
-                                  color: AppColors.white.withOpacity(0.9),
-                                ),
-                                maxLines: 1,
-                                overflow: TextOverflow.ellipsis,
-                              ),
-                              const SizedBox(height: 12),
+        final banners = snapshot.data ?? [];
+        if (banners.isEmpty) return const SizedBox.shrink();
+
+        return Column(
+          children: [
+            CarouselSlider(
+              options: CarouselOptions(
+                height: 180.0,
+                autoPlay: true,
+                autoPlayInterval: const Duration(seconds: 4),
+                enlargeCenterPage: false,
+                viewportFraction: 1.0,
+                onPageChanged: (index, reason) {
+                  setState(() {
+                    _currentIndex = index;
+                  });
+                },
+              ),
+              items: banners.map((banner) {
+                return Builder(
+                  builder: (BuildContext context) {
+                    return GestureDetector(
+                      onTap: () => _onBannerTap(banner),
+                      child: Container(
+                        width: MediaQuery.of(context).size.width,
+                        margin: const EdgeInsets.symmetric(horizontal: 16.0),
+                        decoration: BoxDecoration(
+                          borderRadius: BorderRadius.circular(16),
+                          image: DecorationImage(
+                            image: NetworkImage(banner.imageUrl),
+                            fit: BoxFit.cover,
+                          ),
+                          boxShadow: [
+                            BoxShadow(
+                              color: Colors.black.withValues(alpha: 0.2),
+                              blurRadius: 10,
+                              offset: const Offset(0, 5),
+                            ),
+                          ],
+                        ),
+                        child: Stack(
+                          children: [
+                            // Overlay for readability if title exists
+                            if (banner.title != null)
                               Container(
-                                padding: const EdgeInsets.symmetric(
-                                  horizontal: 14,
-                                  vertical: 6,
-                                ),
                                 decoration: BoxDecoration(
-                                  // ignore: deprecated_member_use
-                                  color: AppColors.white.withOpacity(0.2),
-                                  borderRadius: BorderRadius.circular(20),
-                                  border: Border.all(
-                                    color: AppColors.white,
-                                    width: 1,
-                                  ),
-                                ),
-                                child: const Text(
-                                  'Browse Collection',
-                                  style: TextStyle(
-                                    color: AppColors.white,
-                                    fontSize: 11,
-                                    fontWeight: FontWeight.w600,
+                                  borderRadius: BorderRadius.circular(16),
+                                  gradient: LinearGradient(
+                                    begin: Alignment.bottomCenter,
+                                    end: Alignment.topCenter,
+                                    colors: [
+                                      Colors.black.withValues(alpha: 0.6),
+                                      Colors.transparent,
+                                    ],
                                   ),
                                 ),
                               ),
-                            ],
-                          ),
+                            Padding(
+                              padding: const EdgeInsets.all(20),
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                mainAxisAlignment: MainAxisAlignment.end,
+                                children: [
+                                  if (banner.title != null)
+                                    Text(
+                                      banner.title!,
+                                      style: const TextStyle(
+                                        fontSize: 24,
+                                        fontWeight: FontWeight.bold,
+                                        color: AppColors.white,
+                                        letterSpacing: 1.2,
+                                      ),
+                                    ),
+                                  if (banner.subtitle != null) ...[
+                                    const SizedBox(height: 4),
+                                    Text(
+                                      banner.subtitle!,
+                                      style: TextStyle(
+                                        fontSize: 14,
+                                        color: AppColors.white.withValues(
+                                          alpha: 0.9,
+                                        ),
+                                      ),
+                                    ),
+                                  ],
+                                ],
+                              ),
+                            ),
+                          ],
                         ),
-                      ],
-                    ),
-                  ),
+                      ),
+                    );
+                  },
                 );
-              },
-            );
-          }).toList(),
-        ),
-        const SizedBox(height: 16),
-
-        // Page Indicator
-        AnimatedSmoothIndicator(
-          activeIndex: _currentIndex,
-          count: _banners.length,
-          effect: const WormEffect(
-            dotColor: AppColors.lightGrey,
-            activeDotColor: AppColors.oliveGreen,
-            dotHeight: 8,
-            dotWidth: 8,
-          ),
-        ),
-      ],
+              }).toList(),
+            ),
+            const SizedBox(height: 16),
+            AnimatedSmoothIndicator(
+              activeIndex: _currentIndex,
+              count: banners.length,
+              effect: const WormEffect(
+                dotColor: AppColors.lightGrey,
+                activeDotColor: AppColors.gold,
+                dotHeight: 8,
+                dotWidth: 8,
+              ),
+            ),
+          ],
+        );
+      },
     );
   }
 }

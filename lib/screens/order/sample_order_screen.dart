@@ -150,7 +150,7 @@ class _SampleOrderScreenState extends State<SampleOrderScreen> {
                   border: Border.all(
                     color: Theme.of(
                       context,
-                    ).colorScheme.primary.withOpacity(0.3),
+                    ).colorScheme.primary.withValues(alpha: 0.3),
                   ),
                 ),
                 child: Column(
@@ -200,7 +200,7 @@ class _SampleOrderScreenState extends State<SampleOrderScreen> {
                   hintStyle: TextStyle(
                     color: Theme.of(
                       context,
-                    ).colorScheme.onSurface.withOpacity(0.5),
+                    ).colorScheme.onSurface.withValues(alpha: 0.5),
                   ),
                   filled: true,
                   fillColor: Theme.of(context).colorScheme.surface,
@@ -213,7 +213,7 @@ class _SampleOrderScreenState extends State<SampleOrderScreen> {
                     borderSide: BorderSide(
                       color: Theme.of(
                         context,
-                      ).colorScheme.primary.withOpacity(0.3),
+                      ).colorScheme.primary.withValues(alpha: 0.3),
                     ),
                   ),
                   enabledBorder: OutlineInputBorder(
@@ -221,7 +221,7 @@ class _SampleOrderScreenState extends State<SampleOrderScreen> {
                     borderSide: BorderSide(
                       color: Theme.of(
                         context,
-                      ).colorScheme.primary.withOpacity(0.3),
+                      ).colorScheme.primary.withValues(alpha: 0.3),
                     ),
                   ),
                   focusedBorder: OutlineInputBorder(
@@ -335,7 +335,7 @@ class _SampleOrderScreenState extends State<SampleOrderScreen> {
                       border: Border.all(
                         color: Theme.of(
                           context,
-                        ).colorScheme.primary.withOpacity(0.5),
+                        ).colorScheme.primary.withValues(alpha: 0.5),
                         width: 1.5,
                       ),
                       borderRadius: BorderRadius.circular(12),
@@ -353,7 +353,7 @@ class _SampleOrderScreenState extends State<SampleOrderScreen> {
                               Icons.add_a_photo_outlined,
                               color: Theme.of(
                                 context,
-                              ).colorScheme.primary.withOpacity(0.6),
+                              ).colorScheme.primary.withValues(alpha: 0.6),
                               size: 32,
                             ),
                           )
@@ -380,7 +380,7 @@ class _SampleOrderScreenState extends State<SampleOrderScreen> {
                   elevation: 5,
                   shadowColor: Theme.of(
                     context,
-                  ).colorScheme.primary.withOpacity(0.4),
+                  ).colorScheme.primary.withValues(alpha: 0.4),
                 ),
                 child: _isLoading
                     ? SizedBox(
@@ -425,20 +425,20 @@ class _SampleOrderScreenState extends State<SampleOrderScreen> {
       decoration: InputDecoration(
         hintText: hint,
         hintStyle: TextStyle(
-          color: Theme.of(context).colorScheme.onSurface.withOpacity(0.5),
+          color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.5),
         ),
         filled: true,
         fillColor: Theme.of(context).colorScheme.surface,
         border: OutlineInputBorder(
           borderRadius: BorderRadius.circular(12),
           borderSide: BorderSide(
-            color: Theme.of(context).colorScheme.primary.withOpacity(0.3),
+            color: Theme.of(context).colorScheme.primary.withValues(alpha: 0.3),
           ),
         ),
         enabledBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(12),
           borderSide: BorderSide(
-            color: Theme.of(context).colorScheme.primary.withOpacity(0.3),
+            color: Theme.of(context).colorScheme.primary.withValues(alpha: 0.3),
           ),
         ),
         focusedBorder: OutlineInputBorder(
@@ -484,7 +484,7 @@ class _SampleOrderScreenState extends State<SampleOrderScreen> {
         Icon(
           icon,
           size: 16,
-          color: Theme.of(context).colorScheme.primary.withOpacity(0.7),
+          color: Theme.of(context).colorScheme.primary.withValues(alpha: 0.7),
         ),
         const SizedBox(width: 8),
         Expanded(

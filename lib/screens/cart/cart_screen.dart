@@ -119,7 +119,7 @@ class CartScreen extends StatelessWidget {
                     Icons.shopping_bag_outlined,
                     size: 80,
                     // ignore: deprecated_member_use
-                    color: AppColors.grey.withOpacity(0.3),
+                    color: AppColors.grey.withValues(alpha: 0.3),
                   ),
                   const SizedBox(height: 20),
                   Text(
@@ -175,7 +175,7 @@ class CartScreen extends StatelessWidget {
                         borderRadius: BorderRadius.circular(16),
                         border: Border.all(
                           // ignore: deprecated_member_use
-                          color: AppColors.grey.withOpacity(0.1),
+                          color: AppColors.grey.withValues(alpha: 0.1),
                         ),
                       ),
                       child: Row(
@@ -306,7 +306,7 @@ class CartScreen extends StatelessWidget {
                   boxShadow: [
                     BoxShadow(
                       // ignore: deprecated_member_use
-                      color: Colors.black.withOpacity(0.5),
+                      color: Colors.black.withValues(alpha: 0.5),
                       blurRadius: 20,
                       offset: const Offset(0, -5),
                     ),

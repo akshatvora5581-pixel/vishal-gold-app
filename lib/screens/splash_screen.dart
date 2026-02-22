@@ -25,8 +25,10 @@ class _SplashScreenState extends State<SplashScreen> {
     await Future.delayed(const Duration(seconds: 3));
     if (mounted) {
       await LocalStorageService.init();
+      if (!mounted) return;
 
       final bool infoProvided = await LocalStorageService.isUserInfoProvided();
+      if (!mounted) return;
 
       if (!infoProvided) {
         Navigator.pushReplacement(

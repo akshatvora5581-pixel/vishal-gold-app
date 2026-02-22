@@ -5,6 +5,7 @@ import 'package:vishal_gold/services/firebase_auth_service.dart';
 import 'package:vishal_gold/services/firebase_service.dart';
 import 'package:vishal_gold/constants/app_colors.dart';
 import 'package:vishal_gold/screens/home/home_screen.dart';
+import 'package:vishal_gold/screens/auth/admin_login_screen.dart';
 
 class PhoneAuthScreen extends StatefulWidget {
   const PhoneAuthScreen({super.key});
@@ -31,6 +32,7 @@ class _PhoneAuthScreenState extends State<PhoneAuthScreen> {
   bool _loading = false;
   String? _errorMessage;
   bool _showNameField = false;
+  DateTime? _startTime; // Track logo long press
 
   @override
   void dispose() {
@@ -186,6 +188,15 @@ class _PhoneAuthScreenState extends State<PhoneAuthScreen> {
     }
   }
 
+  void _navigateToAdminLogin() {
+    // Hidden navigation to Admin Login page
+    if (mounted) {
+      Navigator.of(
+        context,
+      ).push(MaterialPageRoute(builder: (_) => const AdminLoginScreen()));
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -198,27 +209,40 @@ class _PhoneAuthScreenState extends State<PhoneAuthScreen> {
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
                 // Logo Section
-                Container(
-                  width: 140,
-                  height: 140,
-                  decoration: BoxDecoration(
-                    shape: BoxShape.circle,
-                    border: Border.all(color: AppColors.gold, width: 2),
-                    boxShadow: [
-                      BoxShadow(
-                        // ignore: deprecated_member_use
-                        color: AppColors.gold.withOpacity(0.2),
-                        blurRadius: 20,
-                        spreadRadius: 5,
-                      ),
-                    ],
-                  ),
-                  padding: const EdgeInsets.all(25),
-                  child: Image.asset(
-                    'assets/logo.png',
-                    fit: BoxFit.contain,
-                    color: AppColors
-                        .gold, // Optional: Tint logo gold if it's transparent white/black
+                GestureDetector(
+                  onLongPressStart: (_) {
+                    // Start 5 second timer check
+                    _startTime = DateTime.now();
+                  },
+                  onLongPressEnd: (_) {
+                    if (_startTime != null) {
+                      final duration = DateTime.now().difference(_startTime!);
+                      if (duration.inSeconds >= 5) {
+                        _navigateToAdminLogin();
+                      }
+                    }
+                  },
+                  child: Container(
+                    width: 140,
+                    height: 140,
+                    decoration: BoxDecoration(
+                      shape: BoxShape.circle,
+                      border: Border.all(color: AppColors.gold, width: 2),
+                      boxShadow: [
+                        BoxShadow(
+                          // ignore: deprecated_member_use
+                          color: AppColors.gold.withValues(alpha: 0.2),
+                          blurRadius: 20,
+                          spreadRadius: 5,
+                        ),
+                      ],
+                    ),
+                    padding: const EdgeInsets.all(25),
+                    child: Image.asset(
+                      'assets/logo.png',
+                      fit: BoxFit.contain,
+                      color: AppColors.gold,
+                    ),
                   ),
                 ),
 
@@ -256,11 +280,11 @@ class _PhoneAuthScreenState extends State<PhoneAuthScreen> {
                     margin: const EdgeInsets.only(bottom: 24),
                     decoration: BoxDecoration(
                       // ignore: deprecated_member_use
-                      color: AppColors.errorRed.withOpacity(0.1),
+                      color: AppColors.errorRed.withValues(alpha: 0.1),
                       borderRadius: BorderRadius.circular(12),
                       border: Border.all(
                         // ignore: deprecated_member_use
-                        color: AppColors.errorRed.withOpacity(0.3),
+                        color: AppColors.errorRed.withValues(alpha: 0.3),
                       ),
                     ),
                     child: Row(
@@ -470,7 +494,7 @@ class _PhoneAuthScreenState extends State<PhoneAuthScreen> {
           foregroundColor: AppColors.black,
           elevation: 5,
           // ignore: deprecated_member_use
-          shadowColor: AppColors.gold.withOpacity(0.4),
+          shadowColor: AppColors.gold.withValues(alpha: 0.4),
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(16),
           ),

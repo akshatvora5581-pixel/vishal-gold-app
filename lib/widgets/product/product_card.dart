@@ -54,7 +54,7 @@ class ProductCard extends StatelessWidget {
                           end: Alignment.bottomCenter,
                           colors: [
                             Colors.transparent,
-                            Colors.black.withOpacity(0.3),
+                            Colors.black.withValues(alpha: 0.3),
                           ],
                           stops: const [0.7, 1.0],
                         ),
@@ -75,7 +75,7 @@ class ProductCard extends StatelessWidget {
                           child: Container(
                             padding: const EdgeInsets.all(6),
                             decoration: BoxDecoration(
-                              color: AppColors.background.withOpacity(0.6),
+                              color: AppColors.background.withValues(alpha: 0.6),
                               shape: BoxShape.circle,
                             ),
                             child: Icon(
@@ -175,7 +175,7 @@ class ProductCard extends StatelessWidget {
           child: Center(
             child: CircularProgressIndicator(
               strokeWidth: 2,
-              color: AppColors.gold.withOpacity(0.5),
+              color: AppColors.gold.withValues(alpha: 0.5),
             ),
           ),
         ),
