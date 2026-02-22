@@ -11,7 +11,9 @@ import 'package:vishal_gold/providers/cart_provider.dart';
 import 'package:vishal_gold/providers/product_provider.dart';
 import 'package:vishal_gold/providers/order_provider.dart';
 import 'package:vishal_gold/providers/wishlist_provider.dart';
+import 'package:vishal_gold/providers/preview_provider.dart';
 import 'package:vishal_gold/screens/splash_screen.dart';
+import 'package:vishal_gold/services/fcm_service.dart';
 
 void main() async {
   try {
@@ -22,6 +24,9 @@ void main() async {
     await Firebase.initializeApp(
       options: DefaultFirebaseOptions.currentPlatform,
     );
+
+    // Initialize FCM
+    await FCMService().initialize();
 
     // Seed initial data in background (don't block the UI)
     FirebaseService().seedInitialData().catchError((e) {
@@ -46,6 +51,7 @@ class MyApp extends StatelessWidget {
         ChangeNotifierProvider(create: (_) => ProductProvider()),
         ChangeNotifierProvider(create: (_) => OrderProvider()),
         ChangeNotifierProvider(create: (_) => WishlistProvider()),
+        ChangeNotifierProvider(create: (_) => PreviewProvider()),
       ],
       child: MaterialApp(
         title: AppStrings.appName,
