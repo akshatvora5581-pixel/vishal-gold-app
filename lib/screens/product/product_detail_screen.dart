@@ -1,13 +1,18 @@
 import 'package:flutter/material.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:provider/provider.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:vishal_gold/constants/app_colors.dart';
 import 'package:vishal_gold/models/product.dart';
+import 'package:vishal_gold/models/category.dart' as app_category;
+import 'package:vishal_gold/models/market_settings.dart';
 import 'package:vishal_gold/providers/cart_provider.dart';
 import 'package:vishal_gold/providers/wishlist_provider.dart';
 import 'package:vishal_gold/screens/cart/cart_screen.dart';
 import 'package:vishal_gold/screens/product/full_screen_photo_viewer.dart';
+import 'package:vishal_gold/services/firebase_service.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 class ProductDetailScreen extends StatefulWidget {
   final Product product;
@@ -257,7 +262,7 @@ class _ProductDetailScreenState extends State<ProductDetailScreen>
                           colors: [
                             Colors.transparent,
                             // ignore: deprecated_member_use
-                            AppColors.background.withOpacity(0.6),
+                            AppColors.background.withValues(alpha: 0.6),
                           ],
                         ),
                       ),
@@ -287,7 +292,7 @@ class _ProductDetailScreenState extends State<ProductDetailScreen>
                             boxShadow: [
                               BoxShadow(
                                 // ignore: deprecated_member_use
-                                color: Colors.black.withOpacity(0.5),
+                                color: Colors.black.withValues(alpha: 0.5),
                                 blurRadius: 30,
                                 offset: const Offset(0, -10),
                               ),
@@ -303,7 +308,9 @@ class _ProductDetailScreenState extends State<ProductDetailScreen>
                                   height: 4,
                                   decoration: BoxDecoration(
                                     // ignore: deprecated_member_use
-                                    color: AppColors.grey.withOpacity(0.3),
+                                    color: AppColors.grey.withValues(
+                                      alpha: 0.3,
+                                    ),
                                     borderRadius: BorderRadius.circular(2),
                                   ),
                                 ),
@@ -333,7 +340,9 @@ class _ProductDetailScreenState extends State<ProductDetailScreen>
                                     ),
                                     decoration: BoxDecoration(
                                       // ignore: deprecated_member_use
-                                      color: AppColors.gold.withOpacity(0.15),
+                                      color: AppColors.gold.withValues(
+                                        alpha: 0.15,
+                                      ),
                                       borderRadius: BorderRadius.circular(20),
                                       border: Border.all(
                                         color: AppColors.gold,
@@ -362,6 +371,8 @@ class _ProductDetailScreenState extends State<ProductDetailScreen>
                                 ),
                               ),
 
+                              const SizedBox(height: 30),
+                              _buildEstimatedPriceSection(),
                               const SizedBox(height: 30),
 
                               // Specs row
@@ -406,7 +417,7 @@ class _ProductDetailScreenState extends State<ProductDetailScreen>
                           height: 60,
                           decoration: BoxDecoration(
                             // ignore: deprecated_member_use
-                            color: AppColors.surface.withOpacity(0.92),
+                            color: AppColors.surface.withValues(alpha: 0.92),
                             borderRadius: const BorderRadius.only(
                               topLeft: Radius.circular(28),
                               topRight: Radius.circular(28),
@@ -414,7 +425,7 @@ class _ProductDetailScreenState extends State<ProductDetailScreen>
                             boxShadow: [
                               BoxShadow(
                                 // ignore: deprecated_member_use
-                                color: AppColors.gold.withOpacity(0.1),
+                                color: AppColors.gold.withValues(alpha: 0.1),
                                 blurRadius: 20,
                                 offset: const Offset(0, -4),
                               ),
@@ -428,7 +439,7 @@ class _ProductDetailScreenState extends State<ProductDetailScreen>
                                 height: 4,
                                 decoration: BoxDecoration(
                                   // ignore: deprecated_member_use
-                                  color: AppColors.gold.withOpacity(0.7),
+                                  color: AppColors.gold.withValues(alpha: 0.7),
                                   borderRadius: BorderRadius.circular(2),
                                 ),
                               ),
@@ -438,7 +449,7 @@ class _ProductDetailScreenState extends State<ProductDetailScreen>
                                 style: GoogleFonts.outfit(
                                   fontSize: 10,
                                   // ignore: deprecated_member_use
-                                  color: AppColors.gold.withOpacity(0.85),
+                                  color: AppColors.gold.withValues(alpha: 0.85),
                                   letterSpacing: 1.4,
                                   fontWeight: FontWeight.w500,
                                 ),
@@ -507,7 +518,7 @@ class _ProductDetailScreenState extends State<ProductDetailScreen>
           height: 44,
           decoration: BoxDecoration(
             // ignore: deprecated_member_use
-            color: AppColors.white.withOpacity(0.90),
+            color: AppColors.white.withValues(alpha: 0.90),
             shape: BoxShape.circle,
             boxShadow: const [BoxShadow(color: Colors.black26, blurRadius: 8)],
           ),
@@ -558,7 +569,7 @@ class _ProductDetailScreenState extends State<ProductDetailScreen>
             borderRadius: BorderRadius.circular(16),
             border: Border.all(
               // ignore: deprecated_member_use
-              color: AppColors.grey.withOpacity(0.15),
+              color: AppColors.grey.withValues(alpha: 0.15),
             ),
           ),
           child: Row(
@@ -584,6 +595,24 @@ class _ProductDetailScreenState extends State<ProductDetailScreen>
           ),
         ),
         const SizedBox(width: 16),
+        // WhatsApp Query
+        Container(
+          height: 56,
+          width: 56,
+          decoration: BoxDecoration(
+            color: AppColors.surface,
+            borderRadius: BorderRadius.circular(16),
+            border: Border.all(
+              color: const Color(0xFF25D366).withValues(alpha: 0.3),
+            ),
+          ),
+          child: IconButton(
+            onPressed: () => _launchWhatsApp(context),
+            icon: const Icon(Icons.chat_outlined, color: Color(0xFF25D366)),
+            tooltip: 'Query on WhatsApp',
+          ),
+        ),
+        const SizedBox(width: 12),
         // Add to Cart
         Expanded(
           child: SizedBox(
@@ -629,6 +658,154 @@ class _ProductDetailScreenState extends State<ProductDetailScreen>
           ),
         ),
       ],
+    );
+  }
+
+  Future<void> _launchWhatsApp(BuildContext context) async {
+    final firebaseService = FirebaseService();
+    final support = await firebaseService.getSupportContact();
+    final number = support['whatsapp'];
+
+    if (number == null || number.isEmpty) {
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Support contact not available')),
+        );
+      }
+      return;
+    }
+
+    // Prepare message
+    final message =
+        'Hi, I am interested in this product:\n'
+        'Tag: ${widget.product.tagNumber}\n'
+        'Category: ${widget.product.categoryDisplay}\n'
+        'Gross Weight: ${widget.product.grossWeight}g\n'
+        'Purity: ${widget.product.purity}%';
+
+    final whatsappUrl = Uri.parse(
+      'whatsapp://send?phone=$number&text=${Uri.encodeComponent(message)}',
+    );
+
+    try {
+      if (await canLaunchUrl(whatsappUrl)) {
+        await launchUrl(whatsappUrl);
+      } else {
+        // Fallback to web link if app not installed
+        final webUrl = Uri.parse(
+          'https://wa.me/$number?text=${Uri.encodeComponent(message)}',
+        );
+        await launchUrl(webUrl, mode: LaunchMode.externalApplication);
+      }
+    } catch (e) {
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Could not launch WhatsApp: $e')),
+        );
+      }
+    }
+  }
+
+  Widget _buildEstimatedPriceSection() {
+    final firebaseService = FirebaseService();
+
+    return StreamBuilder<MarketSettings?>(
+      stream: firebaseService.getMarketSettings(),
+      builder: (context, marketSnapshot) {
+        if (!marketSnapshot.hasData || marketSnapshot.data == null) {
+          return const SizedBox.shrink();
+        }
+
+        final settings = marketSnapshot.data!;
+
+        return FutureBuilder<DocumentSnapshot>(
+          future: FirebaseFirestore.instance
+              .collection(FirebaseService.categoriesCollection)
+              .doc(widget.product.category)
+              .get(),
+          builder: (context, catSnapshot) {
+            if (!catSnapshot.hasData || !catSnapshot.data!.exists) {
+              return const SizedBox.shrink();
+            }
+
+            final categoryData =
+                catSnapshot.data!.data() as Map<String, dynamic>;
+            final category = app_category.Category.fromJson(
+              categoryData,
+              catSnapshot.data!.id,
+            );
+
+            // Determine base rate based on purity
+            double baseRate = settings.goldRate24K;
+            if (widget.product.purityDisplay.contains('22K') ||
+                widget.product.purity == 92) {
+              baseRate = settings.goldRate22K;
+            } else if (widget.product.purityDisplay.contains('18K')) {
+              baseRate = settings.goldRate18K;
+            }
+
+            final estimatedPrice = widget.product.calculateEstimatedPrice(
+              baseRatePerGram: baseRate,
+              makingChargePerGram: category.makingChargePerGram,
+              makingChargeFlat: category.makingChargeFlat,
+            );
+
+            return Container(
+              padding: const EdgeInsets.all(16),
+              decoration: BoxDecoration(
+                // ignore: deprecated_member_use
+                color: AppColors.gold.withValues(alpha: 0.1),
+                borderRadius: BorderRadius.circular(16),
+                border: Border.all(
+                  // ignore: deprecated_member_use
+                  color: AppColors.gold.withValues(alpha: 0.3),
+                ),
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Text(
+                        "Today's Estimated Price",
+                        style: GoogleFonts.outfit(
+                          color: AppColors.gold,
+                          fontSize: 14,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                      const Icon(
+                        Icons.info_outline,
+                        color: AppColors.gold,
+                        size: 16,
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 8),
+                  Text(
+                    '₹ ${estimatedPrice.toStringAsFixed(0)}*',
+                    style: GoogleFonts.outfit(
+                      color: AppColors.white,
+                      fontSize: 28,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                  const SizedBox(height: 4),
+                  Text(
+                    '*Includes making charges. Final price may vary at the time of purchase.',
+                    style: GoogleFonts.outfit(
+                      color: AppColors.textSecondary,
+                      fontSize: 10,
+                      fontStyle: FontStyle.italic,
+                    ),
+                  ),
+                ],
+              ),
+            );
+          },
+        );
+      },
     );
   }
 }

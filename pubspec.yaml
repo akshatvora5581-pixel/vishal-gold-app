@@ -14,10 +14,11 @@ dependencies:
   provider: ^6.1.1
   
   # Backend & Auth - Firebase
-  firebase_core: ^3.15.2
-  firebase_auth: ^5.3.1
-  cloud_firestore: ^5.4.4
-  firebase_storage: ^12.3.4
+  firebase_core: ^4.4.0
+  firebase_auth: ^6.1.4
+  cloud_firestore: ^6.1.1
+  firebase_storage: ^13.0.6
+  firebase_messaging: ^16.1.1
   
   # UI Components
   cached_network_image: ^3.3.0
@@ -39,6 +40,7 @@ dependencies:
   google_fonts: ^8.0.0
   url_launcher: ^6.3.2
   flutter_staggered_animations: ^1.1.1
+  fl_chart: ^0.70.2
 
 dev_dependencies:
   flutter_test:

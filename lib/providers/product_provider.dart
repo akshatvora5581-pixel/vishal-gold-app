@@ -1,4 +1,5 @@
-import 'package:flutter/foundation.dart';
+import 'package:flutter/material.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:vishal_gold/models/product.dart';
 import 'package:vishal_gold/services/firebase_service.dart';
 
@@ -16,6 +17,7 @@ class ProductProvider with ChangeNotifier {
   String? _currentSubcategory;
   String _searchQuery = '';
   ProductSortOrder _currentSort = ProductSortOrder.newestFirst;
+  bool _viewDrafts = false;
 
   // Getters
   List<Product> get products =>
@@ -26,15 +28,25 @@ class ProductProvider with ChangeNotifier {
   String? get currentSubcategory => _currentSubcategory;
   bool get hasProducts => products.isNotEmpty;
   ProductSortOrder get currentSort => _currentSort;
+  bool get viewDrafts => _viewDrafts;
 
   /// Load all products
-  Future<void> loadProducts() async {
+  Future<void> loadProducts({List<QueryDocumentSnapshot>? stagedDocs}) async {
     _isLoading = true;
     _error = null;
     notifyListeners();
 
     try {
-      _products = await _firebaseService.getAllProducts();
+      final liveProducts = await _firebaseService.getAllProducts(
+        status: _viewDrafts ? 'draft' : 'published',
+      );
+
+      if (stagedDocs != null && stagedDocs.isNotEmpty) {
+        _products = _mergeProducts(liveProducts, stagedDocs);
+      } else {
+        _products = liveProducts;
+      }
+
       _applyFilters();
     } catch (e) {
       _error = e.toString();
@@ -45,10 +57,40 @@ class ProductProvider with ChangeNotifier {
     }
   }
 
+  List<Product> _mergeProducts(
+    List<Product> liveItems,
+    List<QueryDocumentSnapshot> stagedDocs,
+  ) {
+    final Map<String, Product> mergedMap = {
+      for (var item in liveItems) item.id: item,
+    };
+
+    for (var doc in stagedDocs) {
+      final change = doc.data() as Map<String, dynamic>;
+      final String collectionName = change['collection_name'];
+      if (collectionName != 'products') continue;
+
+      final String changeType = change['change_type'];
+      final String docId = change['doc_id'];
+      final Map<String, dynamic>? data = change['data'];
+
+      if (changeType == 'delete') {
+        mergedMap.remove(docId);
+      } else if (data != null) {
+        // Ensure id is present in data for fromJson
+        final Map<String, dynamic> completeData = Map.from(data);
+        completeData['id'] = docId;
+        mergedMap[docId] = Product.fromJson(completeData);
+      }
+    }
+    return mergedMap.values.toList();
+  }
+
   /// Load products by category
   Future<void> loadProductsByCategory(
     String category, {
     String? subcategory,
+    List<QueryDocumentSnapshot>? stagedDocs,
   }) async {
     _currentCategory = category;
     _currentSubcategory = subcategory;
@@ -57,11 +99,23 @@ class ProductProvider with ChangeNotifier {
     notifyListeners();
 
     try {
+      final status = _viewDrafts ? 'draft' : 'published';
+      final List<Product> liveProducts;
       if (category == 'all') {
-        _products = await _firebaseService.getAllProducts();
+        liveProducts = await _firebaseService.getAllProducts(status: status);
       } else {
-        _products = await _firebaseService.getProductsByCategory(category);
+        liveProducts = await _firebaseService.getProductsByCategory(
+          category,
+          status: status,
+        );
       }
+
+      if (stagedDocs != null && stagedDocs.isNotEmpty) {
+        _products = _mergeProducts(liveProducts, stagedDocs);
+      } else {
+        _products = liveProducts;
+      }
+
       _applyFilters();
     } catch (e) {
       _error = e.toString();
@@ -142,6 +196,13 @@ class ProductProvider with ChangeNotifier {
     notifyListeners();
   }
 
+  /// Toggle Draft View
+  void setViewDrafts(bool value) {
+    if (_viewDrafts == value) return;
+    _viewDrafts = value;
+    loadProductsByCategory(_currentCategory, subcategory: _currentSubcategory);
+  }
+
   /// Get single product by ID
   Future<Product?> getProductById(String productId) async {
     try {
@@ -157,6 +218,8 @@ class ProductProvider with ChangeNotifier {
           grossWeight: 0,
           netWeight: 0,
           purity: 84,
+          status: 'published',
+          version: 1,
           createdAt: DateTime.now(),
           updatedAt: DateTime.now(),
         ),
@@ -167,11 +230,8 @@ class ProductProvider with ChangeNotifier {
       }
 
       // If not in cache, fetch from Firestore
-      final productData = await _firebaseService.getProduct(productId);
-      if (productData != null) {
-        return Product.fromJson(productData);
-      }
-      return null;
+      final product = await _firebaseService.getProduct(productId);
+      return product;
     } catch (e) {
       debugPrint('Failed to get product: $e');
       return null;
@@ -216,9 +276,9 @@ class ProductProvider with ChangeNotifier {
   }
 
   /// Delete product (wholesalers only)
-  Future<void> deleteProduct(String productId) async {
+  Future<void> deleteProduct(String productId, String performedBy) async {
     try {
-      await _firebaseService.deleteProduct(productId);
+      await _firebaseService.deleteProduct(productId, performedBy);
 
       // Remove from local cache
       _products.removeWhere((p) => p.id == productId);
@@ -231,12 +291,17 @@ class ProductProvider with ChangeNotifier {
   }
 
   /// Update product (wholesalers only)
-  Future<void> updateProduct(
-    String productId,
-    Map<String, dynamic> updates,
-  ) async {
+  Future<void> updateProduct({
+    required String productId,
+    required Map<String, dynamic> updates,
+    required String performedBy,
+  }) async {
     try {
-      await _firebaseService.updateProduct(productId, updates);
+      await _firebaseService.updateProductWithLog(
+        productId: productId,
+        updates: updates,
+        performedBy: performedBy,
+      );
 
       // Reload products
       await loadProducts();

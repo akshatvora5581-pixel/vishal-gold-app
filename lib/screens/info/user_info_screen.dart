@@ -109,7 +109,7 @@ class _UserInfoScreenState extends State<UserInfoScreen> {
                       border: Border.all(color: AppColors.gold, width: 2),
                       boxShadow: [
                         BoxShadow(
-                          color: AppColors.gold.withOpacity(0.2),
+                          color: AppColors.gold.withValues(alpha: 0.2),
                           blurRadius: 20,
                           spreadRadius: 5,
                         ),
@@ -144,10 +144,10 @@ class _UserInfoScreenState extends State<UserInfoScreen> {
                     padding: const EdgeInsets.all(12),
                     margin: const EdgeInsets.only(bottom: 24),
                     decoration: BoxDecoration(
-                      color: AppColors.errorRed.withOpacity(0.1),
+                      color: AppColors.errorRed.withValues(alpha: 0.1),
                       borderRadius: BorderRadius.circular(12),
                       border: Border.all(
-                        color: AppColors.errorRed.withOpacity(0.3),
+                        color: AppColors.errorRed.withValues(alpha: 0.3),
                       ),
                     ),
                     child: Row(
@@ -291,7 +291,7 @@ class _UserInfoScreenState extends State<UserInfoScreen> {
           backgroundColor: AppColors.gold,
           foregroundColor: AppColors.black,
           elevation: 5,
-          shadowColor: AppColors.gold.withOpacity(0.4),
+          shadowColor: AppColors.gold.withValues(alpha: 0.4),
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(16),
           ),

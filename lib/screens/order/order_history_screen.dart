@@ -65,7 +65,7 @@ class _OrderHistoryScreenState extends State<OrderHistoryScreen> {
                     Icons.shopping_bag_outlined,
                     size: 80,
                     // ignore: deprecated_member_use
-                    color: AppColors.grey.withOpacity(0.3),
+                    color: AppColors.grey.withValues(alpha: 0.3),
                   ),
                   const SizedBox(height: 20),
                   Text(
@@ -131,11 +131,11 @@ class _OrderCard extends StatelessWidget {
         color: AppColors.surface,
         borderRadius: BorderRadius.circular(16),
         // ignore: deprecated_member_use
-        border: Border.all(color: AppColors.grey.withOpacity(0.1)),
+        border: Border.all(color: AppColors.grey.withValues(alpha: 0.1)),
         boxShadow: [
           BoxShadow(
             // ignore: deprecated_member_use
-            color: Colors.black.withOpacity(0.3),
+            color: Colors.black.withValues(alpha: 0.3),
             blurRadius: 10,
             offset: const Offset(0, 4),
           ),
@@ -249,10 +249,10 @@ class _StatusBadge extends StatelessWidget {
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
       decoration: BoxDecoration(
         // ignore: deprecated_member_use
-        color: color.withOpacity(0.1),
+        color: color.withValues(alpha: 0.1),
         borderRadius: BorderRadius.circular(20),
         // ignore: deprecated_member_use
-        border: Border.all(color: color.withOpacity(0.3)),
+        border: Border.all(color: color.withValues(alpha: 0.3)),
       ),
       child: Row(
         mainAxisSize: MainAxisSize.min,

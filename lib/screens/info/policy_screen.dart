@@ -24,7 +24,7 @@ class PolicyScreen extends StatelessWidget {
             boxShadow: [
               BoxShadow(
                 // ignore: deprecated_member_use
-                color: Colors.black.withOpacity(0.05),
+                color: Colors.black.withValues(alpha: 0.05),
                 blurRadius: 10,
                 offset: const Offset(0, 4),
               ),
@@ -36,7 +36,7 @@ class PolicyScreen extends StatelessWidget {
               fontSize: 15,
               height: 1.6,
               // ignore: deprecated_member_use
-              color: AppColors.black.withOpacity(0.8),
+              color: AppColors.black.withValues(alpha: 0.8),
             ),
           ),
         ),

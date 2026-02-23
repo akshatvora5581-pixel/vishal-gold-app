@@ -115,7 +115,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 ),
                 boxShadow: [
                   BoxShadow(
-                    color: Colors.black.withOpacity(0.3),
+                    color: Colors.black.withValues(alpha: 0.3),
                     blurRadius: 20,
                     offset: const Offset(0, 10),
                   ),
@@ -184,10 +184,10 @@ class _ProfileScreenState extends State<ProfileScreen> {
                       vertical: 6,
                     ),
                     decoration: BoxDecoration(
-                      color: AppColors.gold.withOpacity(0.1),
+                      color: AppColors.gold.withValues(alpha: 0.1),
                       borderRadius: BorderRadius.circular(20),
                       border: Border.all(
-                        color: AppColors.gold.withOpacity(0.3),
+                        color: AppColors.gold.withValues(alpha: 0.3),
                       ),
                     ),
                     child: Text(
@@ -338,7 +338,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
       decoration: BoxDecoration(
         color: AppColors.surface,
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: AppColors.grey.withOpacity(0.1)),
+        border: Border.all(color: AppColors.grey.withValues(alpha: 0.1)),
       ),
       child: Column(children: children),
     );
@@ -349,7 +349,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
       decoration: BoxDecoration(
         color: AppColors.surface,
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: AppColors.grey.withOpacity(0.1)),
+        border: Border.all(color: AppColors.grey.withValues(alpha: 0.1)),
       ),
       child: Column(children: children),
     );

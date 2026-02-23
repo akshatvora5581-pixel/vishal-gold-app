@@ -97,7 +97,7 @@ class _FullScreenPhotoViewerState extends State<FullScreenPhotoViewer> {
                     end: Alignment.bottomCenter,
                     colors: [
                       // ignore: deprecated_member_use
-                      Colors.black.withOpacity(0.65),
+                      Colors.black.withValues(alpha: 0.65),
                       Colors.transparent,
                     ],
                     stops: const [0.0, 1.0],
@@ -131,11 +131,11 @@ class _FullScreenPhotoViewerState extends State<FullScreenPhotoViewer> {
                         ),
                         decoration: BoxDecoration(
                           // ignore: deprecated_member_use
-                          color: Colors.black.withOpacity(0.5),
+                          color: Colors.black.withValues(alpha: 0.5),
                           borderRadius: BorderRadius.circular(20),
                           border: Border.all(
                             // ignore: deprecated_member_use
-                            color: AppColors.gold.withOpacity(0.4),
+                            color: AppColors.gold.withValues(alpha: 0.4),
                           ),
                         ),
                         child: Text(
@@ -177,7 +177,7 @@ class _FullScreenPhotoViewerState extends State<FullScreenPhotoViewer> {
                         color: i == _currentIndex
                             ? AppColors.gold
                             // ignore: deprecated_member_use
-                            : Colors.white.withOpacity(0.4),
+                            : Colors.white.withValues(alpha: 0.4),
                         borderRadius: BorderRadius.circular(4),
                       ),
                     );
@@ -206,16 +206,16 @@ class _GlassButton extends StatelessWidget {
         height: 44,
         decoration: BoxDecoration(
           // ignore: deprecated_member_use
-          color: Colors.black.withOpacity(0.45),
+          color: Colors.black.withValues(alpha: 0.45),
           shape: BoxShape.circle,
           border: Border.all(
             // ignore: deprecated_member_use
-            color: Colors.white.withOpacity(0.2),
+            color: Colors.white.withValues(alpha: 0.2),
           ),
           boxShadow: [
             BoxShadow(
               // ignore: deprecated_member_use
-              color: Colors.black.withOpacity(0.3),
+              color: Colors.black.withValues(alpha: 0.3),
               blurRadius: 10,
             ),
           ],

@@ -3,6 +3,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:vishal_gold/services/firebase_auth_service.dart';
 import 'package:vishal_gold/services/firebase_service.dart';
 import 'package:vishal_gold/services/local_storage_service.dart';
+import 'package:vishal_gold/services/fcm_service.dart';
 
 class AuthProvider with ChangeNotifier {
   final FirebaseAuthService _authService = FirebaseAuthService();
@@ -59,12 +60,19 @@ class AuthProvider with ChangeNotifier {
 
       // If no profile found in Firestore, create a basic one from Firebase Auth
       _userProfile ??= {
-          'uid': _currentUser!.uid,
-          'name': _currentUser!.displayName ?? 'User',
-          'email': _currentUser!.email ?? '',
-          'phone': _currentUser!.phoneNumber ?? '',
-          'role': _userRole ?? 'retailer',
-        };
+        'uid': _currentUser!.uid,
+        'name': _currentUser!.displayName ?? 'User',
+        'email': _currentUser!.email ?? '',
+        'phone': _currentUser!.phoneNumber ?? '',
+        'role': _userRole ?? 'retailer',
+      };
+
+      // Update FCM token
+      await FCMService().updateUserToken(
+        _currentUser!.uid,
+        isAdmin: _userProfile!['isAdmin'] == true || _userRole == 'admin',
+      );
+
       notifyListeners();
     } catch (e) {
       debugPrint('Failed to load user profile: $e');

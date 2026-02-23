@@ -4,6 +4,7 @@ import 'package:flutter_staggered_animations/flutter_staggered_animations.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:vishal_gold/constants/app_colors.dart';
 import 'package:vishal_gold/providers/product_provider.dart';
+import 'package:vishal_gold/providers/auth_provider.dart';
 import 'package:vishal_gold/widgets/product/product_card.dart';
 
 // Brand accent for the Sort sheet
@@ -153,7 +154,7 @@ class _ProductListingScreenState extends State<ProductListingScreen> {
                       decoration: InputDecoration(
                         hintText: 'Search by tag, name…',
                         hintStyle: GoogleFonts.outfit(
-                          color: AppColors.white.withOpacity(0.5),
+                          color: AppColors.white.withValues(alpha: 0.5),
                           fontSize: 16,
                         ),
                         border: InputBorder.none,
@@ -209,7 +210,7 @@ class _ProductListingScreenState extends State<ProductListingScreen> {
                               Icons.search_off_rounded,
                               size: 64,
                               // ignore: deprecated_member_use
-                              color: AppColors.grey.withOpacity(0.3),
+                              color: AppColors.grey.withValues(alpha: 0.3),
                             ),
                             const SizedBox(height: 16),
                             Text(
@@ -226,8 +227,8 @@ class _ProductListingScreenState extends State<ProductListingScreen> {
                               Text(
                                 'Try a different keyword',
                                 style: GoogleFonts.outfit(
-                                  color: AppColors.textSecondary.withOpacity(
-                                    0.6,
+                                  color: AppColors.textSecondary.withValues(
+                                    alpha: 0.6,
                                   ),
                                   fontSize: 13,
                                 ),
@@ -349,7 +350,49 @@ class _SortBottomSheetState extends State<_SortBottomSheet> {
             const SizedBox(height: 14),
 
             const Divider(height: 1, thickness: 1, indent: 24, endIndent: 24),
-            const SizedBox(height: 4),
+            const SizedBox(height: 8),
+
+            // Admin: Show Drafts Toggle
+            Consumer2<AuthProvider, ProductProvider>(
+              builder: (context, auth, product, child) {
+                // Roles that can see drafts
+                final role = auth.userProfile?['role'];
+                final canPreview = role == 'super' || role == 'manager';
+                if (!canPreview) return const SizedBox.shrink();
+
+                return Column(
+                  children: [
+                    SwitchListTile(
+                      value: product.viewDrafts,
+                      onChanged: (val) {
+                        product.setViewDrafts(val);
+                      },
+                      title: Text(
+                        'Show Draft Designs',
+                        style: GoogleFonts.outfit(
+                          fontSize: 15,
+                          fontWeight: FontWeight.w600,
+                          color: AppColors.gold,
+                        ),
+                      ),
+                      secondary: const Icon(
+                        Icons.preview_rounded,
+                        color: AppColors.gold,
+                      ),
+                      activeThumbColor: AppColors.gold,
+                      dense: true,
+                    ),
+                    const Divider(
+                      height: 1,
+                      thickness: 1,
+                      indent: 24,
+                      endIndent: 24,
+                    ),
+                    const SizedBox(height: 4),
+                  ],
+                );
+              },
+            ),
 
             // Radio options
             for (final opt in _options)

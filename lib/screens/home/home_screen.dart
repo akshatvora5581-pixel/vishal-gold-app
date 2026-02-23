@@ -12,6 +12,7 @@ import 'package:vishal_gold/widgets/home/banner_carousel.dart';
 import 'package:vishal_gold/widgets/home/category_section.dart';
 import 'package:vishal_gold/screens/home/all_subcategories_screen.dart';
 import 'package:vishal_gold/config/category_data.dart';
+import 'package:vishal_gold/providers/preview_provider.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -59,12 +60,90 @@ class _HomeScreenState extends State<HomeScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: AppColors.background,
-      body: _screens[_selectedIndex],
+      body: Column(
+        children: [
+          _buildPreviewBanner(context),
+          Expanded(child: _screens[_selectedIndex]),
+        ],
+      ),
       bottomNavigationBar: CustomBottomNavBar(
         currentIndex: _selectedIndex,
         onTap: _onItemTapped,
       ),
       floatingActionButton: _selectedIndex == 0 ? const CustomOrderFAB() : null,
+    );
+  }
+
+  Widget _buildPreviewBanner(BuildContext context) {
+    return Consumer<PreviewProvider>(
+      builder: (context, preview, _) {
+        if (!preview.isPreviewMode) return const SizedBox.shrink();
+        return Container(
+          width: double.infinity,
+          padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 20),
+          decoration: BoxDecoration(
+            color: AppColors.gold,
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withValues(alpha: 0.3),
+                blurRadius: 10,
+                offset: const Offset(0, 4),
+              ),
+            ],
+          ),
+          child: SafeArea(
+            bottom: false,
+            child: Row(
+              children: [
+                const Icon(Icons.visibility, color: Colors.black, size: 20),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      const Text(
+                        'PREVIEW MODE ACTIVE',
+                        style: TextStyle(
+                          color: Colors.black,
+                          fontWeight: FontWeight.bold,
+                          fontSize: 13,
+                          letterSpacing: 1.1,
+                        ),
+                      ),
+                      Text(
+                        'Showing staged changes merged with live data.',
+                        style: TextStyle(
+                          color: Colors.black.withValues(alpha: 0.7),
+                          fontSize: 11,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                TextButton(
+                  onPressed: () {
+                    preview.togglePreviewMode();
+                    Navigator.pop(context); // Go back to Admin Dashboard
+                  },
+                  style: TextButton.styleFrom(
+                    padding: const EdgeInsets.symmetric(horizontal: 16),
+                    backgroundColor: Colors.black.withValues(alpha: 0.1),
+                  ),
+                  child: const Text(
+                    'EXIT',
+                    style: TextStyle(
+                      color: Colors.black,
+                      fontWeight: FontWeight.bold,
+                      fontSize: 12,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        );
+      },
     );
   }
 }
@@ -131,13 +210,13 @@ class _HomeTabState extends State<HomeTab> {
                           end: Alignment.bottomRight,
                           colors: [
                             AppColors.gold,
-                            AppColors.gold.withOpacity(0.8),
+                            AppColors.gold.withValues(alpha: 0.8),
                           ],
                         ),
                         shape: BoxShape.circle,
                         boxShadow: [
                           BoxShadow(
-                            color: AppColors.gold.withOpacity(0.3),
+                            color: AppColors.gold.withValues(alpha: 0.3),
                             blurRadius: 8,
                             offset: const Offset(0, 4),
                           ),
