@@ -17,6 +17,12 @@ scripts = [
     "09_maintenance_sla.py",
     "10_known_issues_log.py",
     "11_play_store_checklist.py",
+    "12_vapt_report.py",
+    "13_qa_report.py",
+    "14_developer_guide.py",
+    "15_qa_fixes.py",
+    "16_qa_test_cases.py",
+    "17_troubleshooting_guide.py",
 ]
 
 print("=" * 60)
@@ -37,7 +43,7 @@ print("\n" + "=" * 60)
 if errors:
     print(f"  ✗ {len(errors)} script(s) failed: {errors}")
 else:
-    print(f"  ✓ All 11 documents generated successfully.")
+    print(f"  ✓ All 15 documents generated successfully.")
     out = os.path.join(SCRIPTS_DIR, "..", "client_delivery")
     print(f"  📁 Output folder: {os.path.abspath(out)}")
 print("=" * 60)
