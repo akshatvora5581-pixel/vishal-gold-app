@@ -44,7 +44,7 @@ class AuthProvider with ChangeNotifier {
         await _loadUserProfile();
       }
     } catch (e) {
-      debugPrint('Auth initialization error: $e');
+      if (kDebugMode) debugPrint('Auth initialization error: $e');
     } finally {
       _isLoading = false;
       notifyListeners();
@@ -75,7 +75,7 @@ class AuthProvider with ChangeNotifier {
 
       notifyListeners();
     } catch (e) {
-      debugPrint('Failed to load user profile: $e');
+      if (kDebugMode) debugPrint('Failed to load user profile: $e');
       // Set a fallback profile on error to prevent infinite spinner
       _userProfile = {
         'uid': _currentUser?.uid ?? '',
@@ -106,7 +106,7 @@ class AuthProvider with ChangeNotifier {
 
       notifyListeners();
     } catch (e) {
-      debugPrint('Sign out error: $e');
+      if (kDebugMode) debugPrint('Sign out error: $e');
       rethrow;
     } finally {
       _isLoading = false;
@@ -130,7 +130,7 @@ class AuthProvider with ChangeNotifier {
       // Reload profile
       await _loadUserProfile();
     } catch (e) {
-      debugPrint('Update profile error: $e');
+      if (kDebugMode) debugPrint('Update profile error: $e');
       rethrow;
     } finally {
       _isLoading = false;
@@ -161,7 +161,7 @@ class AuthProvider with ChangeNotifier {
 
       await _loadUserProfile();
     } catch (e) {
-      debugPrint('Guest sign in error: $e');
+      if (kDebugMode) debugPrint('Guest sign in error: $e');
       rethrow;
     } finally {
       _isLoading = false;

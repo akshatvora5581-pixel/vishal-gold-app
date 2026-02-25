@@ -26,6 +26,7 @@ class ProductDetailScreen extends StatefulWidget {
 class _ProductDetailScreenState extends State<ProductDetailScreen>
     with SingleTickerProviderStateMixin {
   int _quantity = 1;
+  static const int _maxQuantity = 99; // BUG-004: bounded quantity
 
   /// 0.0 → details visible (image = 55% height)
   /// 1.0 → image fully expanded (full-screen), details hidden
@@ -37,7 +38,10 @@ class _ProductDetailScreenState extends State<ProductDetailScreen>
   double _screenHeight = 0;
   double _dragAnchorY = 0;
 
-  void _incrementQuantity() => setState(() => _quantity++);
+  void _incrementQuantity() {
+    if (_quantity < _maxQuantity) setState(() => _quantity++);
+  }
+
   void _decrementQuantity() {
     if (_quantity > 1) setState(() => _quantity--);
   }

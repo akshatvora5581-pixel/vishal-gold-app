@@ -5,7 +5,6 @@ import 'package:vishal_gold/services/firebase_auth_service.dart';
 import 'package:vishal_gold/services/firebase_service.dart';
 import 'package:vishal_gold/constants/app_colors.dart';
 import 'package:vishal_gold/screens/home/home_screen.dart';
-import 'package:vishal_gold/screens/auth/admin_login_screen.dart';
 
 class PhoneAuthScreen extends StatefulWidget {
   const PhoneAuthScreen({super.key});
@@ -32,7 +31,8 @@ class _PhoneAuthScreenState extends State<PhoneAuthScreen> {
   bool _loading = false;
   String? _errorMessage;
   bool _showNameField = false;
-  DateTime? _startTime; // Track logo long press
+  // OTP rate limiting (VAPT-004): 60s cooldown after each OTP request
+  int _otpCooldownSecondsRemaining = 0;
 
   @override
   void dispose() {
@@ -43,6 +43,18 @@ class _PhoneAuthScreenState extends State<PhoneAuthScreen> {
     _otpFocus.dispose();
     _nameFocus.dispose();
     super.dispose();
+  }
+
+  bool get _isOtpCoolingDown => _otpCooldownSecondsRemaining > 0;
+
+  void _startOtpCooldown() {
+    setState(() => _otpCooldownSecondsRemaining = 60);
+    Future.doWhile(() async {
+      await Future.delayed(const Duration(seconds: 1));
+      if (!mounted) return false;
+      setState(() => _otpCooldownSecondsRemaining--);
+      return _otpCooldownSecondsRemaining > 0;
+    });
   }
 
   Future<void> _sendOTP() async {
@@ -56,6 +68,15 @@ class _PhoneAuthScreenState extends State<PhoneAuthScreen> {
       phoneNumber = '+91$phoneNumber'; // Default to India
     }
 
+    // Client-side OTP rate limiting (VAPT-004)
+    if (_isOtpCoolingDown) {
+      setState(
+        () => _errorMessage =
+            'Please wait $_otpCooldownSecondsRemaining seconds before requesting again.',
+      );
+      return;
+    }
+
     setState(() {
       _loading = true;
       _errorMessage = null;
@@ -64,6 +85,7 @@ class _PhoneAuthScreenState extends State<PhoneAuthScreen> {
     await _authService.sendOTP(
       phoneNumber: phoneNumber,
       onCodeSent: (verificationId) {
+        _startOtpCooldown(); // Start 60s cooldown on success
         setState(() {
           _verificationId = verificationId;
           _otpSent = true;
@@ -173,7 +195,7 @@ class _PhoneAuthScreenState extends State<PhoneAuthScreen> {
     } catch (e) {
       if (mounted) {
         setState(() {
-          _errorMessage = 'Failed to create profile: ${e.toString()}';
+          _errorMessage = 'Failed to create profile. Please try again.';
           _loading = false;
         });
       }
@@ -188,14 +210,8 @@ class _PhoneAuthScreenState extends State<PhoneAuthScreen> {
     }
   }
 
-  void _navigateToAdminLogin() {
-    // Hidden navigation to Admin Login page
-    if (mounted) {
-      Navigator.of(
-        context,
-      ).push(MaterialPageRoute(builder: (_) => const AdminLoginScreen()));
-    }
-  }
+  // VAPT-003: Removed _navigateToAdminLogin() hidden gesture entry point.
+  // Admin access via deep link or explicitly secured route only.
 
   @override
   Widget build(BuildContext context) {
@@ -208,41 +224,27 @@ class _PhoneAuthScreenState extends State<PhoneAuthScreen> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
-                // Logo Section
-                GestureDetector(
-                  onLongPressStart: (_) {
-                    // Start 5 second timer check
-                    _startTime = DateTime.now();
-                  },
-                  onLongPressEnd: (_) {
-                    if (_startTime != null) {
-                      final duration = DateTime.now().difference(_startTime!);
-                      if (duration.inSeconds >= 5) {
-                        _navigateToAdminLogin();
-                      }
-                    }
-                  },
-                  child: Container(
-                    width: 140,
-                    height: 140,
-                    decoration: BoxDecoration(
-                      shape: BoxShape.circle,
-                      border: Border.all(color: AppColors.gold, width: 2),
-                      boxShadow: [
-                        BoxShadow(
-                          // ignore: deprecated_member_use
-                          color: AppColors.gold.withValues(alpha: 0.2),
-                          blurRadius: 20,
-                          spreadRadius: 5,
-                        ),
-                      ],
-                    ),
-                    padding: const EdgeInsets.all(25),
-                    child: Image.asset(
-                      'assets/logo.png',
-                      fit: BoxFit.contain,
-                      color: AppColors.gold,
-                    ),
+                // Logo Section — no hidden gesture (VAPT-003 fix)
+                Container(
+                  width: 140,
+                  height: 140,
+                  decoration: BoxDecoration(
+                    shape: BoxShape.circle,
+                    border: Border.all(color: AppColors.gold, width: 2),
+                    boxShadow: [
+                      BoxShadow(
+                        // ignore: deprecated_member_use
+                        color: AppColors.gold.withValues(alpha: 0.2),
+                        blurRadius: 20,
+                        spreadRadius: 5,
+                      ),
+                    ],
+                  ),
+                  padding: const EdgeInsets.all(25),
+                  child: Image.asset(
+                    'assets/logo.png',
+                    fit: BoxFit.contain,
+                    color: AppColors.gold,
                   ),
                 ),
 
@@ -377,12 +379,17 @@ class _PhoneAuthScreenState extends State<PhoneAuthScreen> {
           isLoading: _loading,
         ),
         const SizedBox(height: 20),
+        // Resend OTP with cooldown (VAPT-004 fix)
         TextButton(
-          onPressed: _loading ? null : _sendOTP,
+          onPressed: (_loading || _isOtpCoolingDown) ? null : _sendOTP,
           child: Text(
-            'RESEND OTP',
+            _isOtpCoolingDown
+                ? 'RESEND IN ${_otpCooldownSecondsRemaining}s'
+                : 'RESEND OTP',
             style: GoogleFonts.outfit(
-              color: AppColors.gold,
+              color: _isOtpCoolingDown
+                  ? AppColors.textSecondary
+                  : AppColors.gold,
               fontWeight: FontWeight.w600,
               letterSpacing: 1.0,
             ),
