@@ -20,150 +20,132 @@ add_cover(doc,
 )
 
 add_toc_placeholder(doc, [
-    ("Architecture Overview", 3),
-    ("Project Structure", 5),
-    ("Environment Setup", 7),
-    ("Dependency Management", 9),
-    ("Coding Standards", 11),
-    ("State Management", 13),
-    ("Firebase & Data Layer", 15),
-    ("Security Practices", 17),
-    ("Build & Deployment", 19),
-    ("Testing Workflow", 21),
+    ("Architecture & philosophy", 3),
+    ("Project Structure Deep-Dive", 5),
+    ("Infrastucture: Firebase & Secure Storage", 8),
+    ("State Management (Provider Stack)", 11),
+    ("Administrative Staging Workflow", 14),
+    ("Security Architecture & VAPT Mitigation", 17),
+    ("Build & Environment Configuration", 20),
+    ("Developer Workflow & Standards", 23),
 ])
 
-# ── 1. Architecture Overview ────────────────────────────────────────────────
-add_h1(doc, "1. Architecture Overview")
+# ── 1. Architecture & Philosophy ──────────────────────────────────────────
+add_h1(doc, "1. Architecture & Philosophy")
 add_body(doc, (
-    "Vishal Gold is an enterprise-grade B2B/B2C jewelry mobile application built on the "
-    "Flutter framework with a multi-layered Firebase backend. The system is designed for "
-    "high availability, secure PII handling, and scalability across large jewelry inventories."
+    "The Vishal Gold application is built on a high-availability, security-first foundation. "
+    "The system follows a reactive architecture where the UI is a function of the state, "
+    "and the state is strictly managed through localized providers."
 ))
 
+add_h2(doc, "1.1 Reactive Data Flow")
 add_body(doc, (
-    "The application follows a clean-architecture inspired approach with strict separation "
-    "between UI, state management, and the service layer. The diagram below illustrates "
-    "the primary data flow and relationship between components."
+    "We utilize the 'Provider' package for state management. This ensures a clean separation "
+    "between business logic and user interface. Every major domain (Auth, Cart, Products) "
+    "lives in its own ChangeNotifier singleton."
 ))
 
-# Note: Mermaid diagram converted to descriptive text for docx
-add_bullet(doc, "UI Layer: Flutter Widgets observing state via Provider.")
-add_bullet(doc, "State Layer: Providers (ChangeNotifier) managing business logic and reactive updates.")
-add_bullet(doc, "Service Layer: Core logic for Firebase (Auth, Firestore, Storage) and Local Storage (SharedPreferences, SecureStorage).")
-add_bullet(doc, "Backend: Firebase infrastructure (managed services).")
+add_bullet(doc, "Unidirectional Data Flow: UI -> Provider Action -> Service -> Firestore.")
+add_bullet(doc, "State Persistence: Critical PII is persisted in Secure Storage; catalog data in Firestore.")
+add_bullet(doc, "Lazy Initialization: Providers are instantiated only when needed by the widget tree.")
 
-add_h2(doc, "1.1 User Roles & Access Control")
-add_table(doc,
-    headers=["Role", "Auth Type", "Storage", "Description"],
-    rows=[
-        ["Wholesaler", "Phone OTP", "Firestore", "Full catalog access, persistent sync."],
-        ["Retailer",   "Phone / Anon", "LocalStorage", "Browsing focused, local cart persistence."],
-        ["Admin",      "Credentials", "Firestore", "CMS, order mgmt, and staging preview."]
-    ]
-)
-
-# ── 2. Project Structure ────────────────────────────────────────────────────
-add_h1(doc, "2. Project Structure")
-add_body(doc, "The repository follows a standard Flutter structure with clear domain-based separation in the lib/ folder.")
+# ── 2. Project Structure Deep-Dive ──────────────────────────────────────────
+add_h1(doc, "2. Project Structure Deep-Dive")
+add_body(doc, "The codebase is organized into atomic domains located in the lib/ folder.")
 
 structure = [
-    ("lib/main.dart", "Entry point; contains MultiProvider setup and app-wide initialization."),
-    ("lib/constants/", "UI tokens — AppColors, TextStyles, and API constants."),
-    ("lib/models/", "Typed Dart classes for Products, Orders, CartItems, and Users."),
-    ("lib/providers/", "State containers (ChangeNotifier) for various app modules."),
-    ("lib/screens/", "UI screens organized by domain (auth, home, product, cart, admin)."),
-    ("lib/services/", "Backend interaction (FirebaseService) and hardware access."),
-    ("lib/widgets/", "Project-wide reusable UI components."),
-    ("docs/engineering/", "Comprehensive technical documentation and VAPT reports.")
+    ("config/", "Firebase options and platform-specific configurations."),
+    ("constants/", "Design tokens (colors, text styles, spacing) and API strings."),
+    ("models/", "Strongly typed schemas with JSON serialization (Product, User, Order)."),
+    ("providers/", "Business logic containers managing reactive state updates."),
+    ("services/", "Hardware/Backend interaction layer (Firebase, LocalStorage, Analytics)."),
+    ("screens/", "Feature-specific UI modules (Admin, Wholesaler, Retailer flows)."),
+    ("widgets/", "Re-usable design components (AppButtons, CustomCards, Shimmers).")
 ]
 
-for item, desc in structure:
-    add_bullet(doc, f"{item}: {desc}")
-
-# ── 3. Environment Setup ────────────────────────────────────────────────────
-add_h1(doc, "3. Environment Setup")
-add_h2(doc, "3.1 Prerequisites")
 add_table(doc,
-    headers=["Component", "Requirement", "Source"],
-    rows=[
-        ["Flutter SDK", ">= 3.32.0", "flutter.dev"],
-        ["Android Studio", "Hedgehog+", "developer.android.com"],
-        ["Java JDK", "17 (LTS)", "JDK Vendor distribution"],
-        ["Firebase CLI", "Latest (npm)", "Firebase Console"]
-    ]
+    headers=["Directory", "Responsibility"],
+    rows=structure
 )
 
-add_h2(doc, "3.2 Quick Start")
-add_body(doc, "Run the following commands in sequence to initialize the development environment.")
-add_body(doc, "1. git clone <repository-url>")
-add_body(doc, "2. flutter pub get")
-add_body(doc, "3. Place 'google-services.json' in android/app/")
-add_body(doc, "4. flutter run")
+# ── 3. Infrastructure: Firebase & Secure Storage ──────────────────────────
+add_h1(doc, "3. Infrastructure: Firebase & Secure Storage")
+add_body(doc, "The backend is powered by Firebase, with a security layer implemented through hardware-backed storage.")
 
-# ── 4. Dependency Management ────────────────────────────────────────────────
-add_h1(doc, "4. Dependency Management")
-add_body(doc, "Core dependencies are strictly version-pinned in pubspec.yaml to ensure build repeatability.")
-
-add_table(doc,
-    headers=["Package", "Purpose", "Critically"],
-    rows=[
-        ["provider", "State Management", "High"],
-        ["firebase_core", "Infrastructure", "High"],
-        ["flutter_secure_storage", "PII Security", "Critical"],
-        ["cached_network_image", "Performance", "Medium"],
-        ["uuid", "Data Integrity", "Medium"]
-    ]
-)
-
-# ── 5. Coding Standards ─────────────────────────────────────────────────────
-add_h1(doc, "5. Coding Standards")
-add_bullet(doc, "Dart Style: Adherence to 'Effective Dart' is mandatory.")
-add_bullet(doc, "UI Tokens: Never hardcode hex colors; reference AppColors.gold.")
-add_bullet(doc, "Typing: Avoid 'dynamic'; always use explicit types for data models.")
-add_bullet(doc, "Performance: Use 'const' constructors for all stateless surfaces.")
-
-# ── 6. State Management ─────────────────────────────────────────────────────
-add_h1(doc, "6. State Management")
-add_body(doc, "The application utilizes the Provider pattern for dependency injection and state updates.")
-add_body(doc, "1. Read: context.read<T>() for one-time state access (e.g., inside methods).")
-add_body(doc, "2. Watch: context.watch<T>() for UI-driven rebuilds.")
-add_body(doc, "3. Select: context.select<T, R>() for granular subset observation.")
-
-# ── 7. Firebase & Data Layer ────────────────────────────────────────────────
-add_h1(doc, "7. Firebase & Data Layer")
+add_h2(doc, "3.1 FirebaseService")
 add_body(doc, (
-    "The data layer is abstracted behind a service-provider pattern. The UI never interacts "
-    "directly with Cloud Firestore; all requests pass through FirebaseService."
+    "The FirebaseService (lib/services/firebase_service.dart) is the central API hub. "
+    "It implements complex cloud logic including Staging, Batch Writes, and Audit Logs."
 ))
 
 add_table(doc,
-    headers=["Collection", "Purpose", "Access Level"],
+    headers=["Module", "Capability"],
     rows=[
-        ["/products/", "Live Catalog", "Auth-Read / Admin-Write"],
-        ["/users/", "User Profiles", "Owner-Read/Write"],
-        ["/staging/", "Draft changes", "Admin-Only"],
+        ["Staging", "Drafting changes in a separate collection for admin review."],
+        ["Audit Logs", "Tracking every admin write (Admin ID, Doc ID, Action)."],
+        ["Product API", "Fetching filtered streams based on status (Draft/Published)."],
+        ["Order Engine", "Atomic transaction handling for high-integrity orders."]
     ]
 )
 
-# ── 8. Security Practices ───────────────────────────────────────────────────
-add_h1(doc, "8. Security Practices")
-add_note(doc, "MANDATORY", "PII fields (Name, Phone, Role) must NEVER be stored in plaintext SharedPreferences. Always use SecureLocalStorageService.")
-
-add_body(doc, "1. Secure Storage: All identifying fields encrypted at rest.")
-add_body(doc, "2. Rate Limiting: 60s client-side cooldown on sensitive OTP actions.")
-add_body(doc, "3. Validation: Server-side Firestore rules enforce role-based access control.")
-
-# ── 9. Build & Deployment ───────────────────────────────────────────────────
-add_h1(doc, "9. Build & Deployment")
-add_body(doc, "Deployment requires a clean build and full environment check.")
-add_body(doc, "Build APK: flutter build apk --release")
-add_body(doc, "Build AppBundle: flutter build appbundle --release")
-
-# ── 10. Testing Workflow ────────────────────────────────────────────────────
-add_h1(doc, "10. Testing Workflow")
+add_h2(doc, "3.2 SecureLocalStorageService")
 add_body(doc, (
-    "A manual and automated testing suite must be executed prior to any release. Manual tests "
-    "are documented in the QA Test Cases report. Automated tests live in the test/ directory."
+    "Unlike standard SharedPreferences, this service uses AES encryption via flutter_secure_storage. "
+    "It is mandatory for storing any string that could identify a user (UID, Token, Role)."
 ))
+
+# ── 4. State Management (Provider Stack) ──────────────────────────────────
+add_h1(doc, "4. State Management (Provider Stack)")
+add_body(doc, "The MultiProvider setup in main.dart defines the dependency hierarchy of the application.")
+
+add_table(doc,
+    headers=["Provider", "Primary Logic", "Dependency"],
+    rows=[
+        ["AuthProvider", "OTP logic, Role verification, Profile sync.", "None (Root)"],
+        ["ProductProvider", "Catalog streaming, Category filtering.", "Auth (Role-based price)"],
+        ["CartProvider", "Local/Cloud basket sync, Item arithmetic.", "Auth (UID matching)"],
+        ["PreviewProvider", "Merging staged vs live data for admin view.", "Firebase (Staging coll)"]
+    ]
+)
+
+# ── 5. Administrative Staging Workflow ────────────────────────────────────
+add_h1(doc, "5. Administrative Staging Workflow")
+add_body(doc, "The app enforces a 'Standard Change' process to avoid catalog corruption.")
+
+add_body(doc, "Step 1: Admin edits product or banner details.")
+add_body(doc, "Step 2: Changes are written to the 'staging' collection (status=pending).")
+add_body(doc, "Step 3: Admin reviews the 'Staging Preview' screen (PreviewProvider).")
+add_body(doc, "Step 4: Admin clicks 'Publish All' — changes move to live collections.")
+
+# ── 6. Security Architecture & VAPT Mitigation ───────────────────────────
+add_h1(doc, "6. Security Architecture & VAPT Mitigation")
+add_note(doc, "CRITICAL", "The following security controls must never be removed or bypassed.")
+
+add_h3(doc, "VAPT-001 (PII Security)")
+add_body(doc, "PII is strictly isolated in the SecureStorage provider. Raw SharedPreferences only stores UI flags.")
+
+add_h3(doc, "VAPT-006 (Firestore Rules)")
+add_body(doc, "Minimum privilege rules: Wholesalers can only read /products/; Admins can write; Others are blocked.")
+
+add_h3(doc, "VAPT-012 (Screenshot Protection)")
+add_body(doc, "The FLAG_SECURE window flag is toggled during initState on sensitive profile and cart screens.")
+
+# ── 7. Build & Environment Configuration ────────────────────────────────
+add_h1(doc, "7. Build & Environment Configuration")
+add_body(doc, (
+    "We use a Flavor-based setup (dev/prod) to separate Firebase projects. "
+    "Release builds are optimized with R8 shrinking and obfuscation."
+))
+
+add_h2(doc, "7.1 Build Commands")
+add_body(doc, "Standard Release APK: flutter build apk --release")
+add_body(doc, "Optimization: Build App Bundle (AAB) for Play Store deployment.")
+
+# ── 8. Developer Workflow & Standards ────────────────────────────────────
+add_h1(doc, "8. Developer Workflow & Standards")
+add_bullet(doc, "PR Pre-check: Run 'flutter analyze' before any commit.")
+add_bullet(doc, "Models: Always include 'toJson' and 'fromJson' for API compatibility.")
+add_bullet(doc, "UI Consistency: Reference AppColors.gold instead of specific hex codes.")
+add_bullet(doc, "Logging: Use debugPrint() for dev logs; wrapped in kDebugMode check.")
 
 save(doc, OUT)
