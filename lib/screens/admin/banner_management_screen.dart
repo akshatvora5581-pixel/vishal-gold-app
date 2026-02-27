@@ -130,7 +130,7 @@ class _BannerManagementScreenState extends State<BannerManagementScreen> {
             ),
             trailing: Switch(
               value: banner.isActive,
-              activeColor: AppColors.gold,
+              activeThumbColor: AppColors.gold,
               onChanged: (val) {
                 _firebaseService.updateBanner(
                   banner.copyWith(isActive: val),
@@ -344,7 +344,7 @@ class _AddEditBannerSheetState extends State<_AddEditBannerSheet> {
             ),
             const SizedBox(height: 16),
             DropdownButtonFormField<String>(
-              value: _actionType,
+              initialValue: _actionType,
               dropdownColor: AppColors.surface,
               decoration: const InputDecoration(labelText: 'Action Type'),
               items: ['category', 'subcategory', 'product', 'external']
@@ -379,7 +379,7 @@ class _AddEditBannerSheetState extends State<_AddEditBannerSheet> {
                 Switch(
                   value: _isActive,
                   onChanged: (v) => setState(() => _isActive = v),
-                  activeColor: AppColors.gold,
+                  activeThumbColor: AppColors.gold,
                 ),
               ],
             ),

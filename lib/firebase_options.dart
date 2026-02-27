@@ -68,19 +68,19 @@ class DefaultFirebaseOptions {
 
   static const FirebaseOptions macos = FirebaseOptions(
     apiKey: 'AIzaSyBkWoV-D7atHBOiJP_EQ73lAkQh2EMxFnc',
-    appId: '1:564443743822:ios:9fde0ed17951df6470e51f',
-    messagingSenderId: '564443743822',
-    projectId: 'vishal-gold',
-    storageBucket: 'vishal-gold.firebasestorage.app',
+    appId: '1:373212780191:ios:9fde0ed17951df6470e51f',
+    messagingSenderId: '373212780191',
+    projectId: 'vishal-gold-app',
+    storageBucket: 'vishal-gold-app.firebasestorage.app',
     iosBundleId: 'com.example.vishalGold',
   );
 
   static const FirebaseOptions windows = FirebaseOptions(
     apiKey: 'AIzaSyBSVoAxst038IvxwmZ8zrh-W4o-D_9JeOE',
-    appId: '1:564443743822:web:7e09e385c993147e70e51f',
-    messagingSenderId: '564443743822',
-    projectId: 'vishal-gold',
-    authDomain: 'vishal-gold.firebaseapp.com',
-    storageBucket: 'vishal-gold.firebasestorage.app',
+    appId: '1:373212780191:web:7e09e385c993147e70e51f',
+    messagingSenderId: '373212780191',
+    projectId: 'vishal-gold-app',
+    authDomain: 'vishal-gold-app.firebaseapp.com',
+    storageBucket: 'vishal-gold-app.firebasestorage.app',
   );
 }

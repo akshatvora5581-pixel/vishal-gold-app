@@ -382,7 +382,7 @@ class _AddEditSubcategorySheetState extends State<_AddEditSubcategorySheet> {
               const LinearProgressIndicator(color: AppColors.gold)
             else
               DropdownButtonFormField<String>(
-                value: (_categories.any((c) => c.id == _selectedCategoryId))
+                initialValue: (_categories.any((c) => c.id == _selectedCategoryId))
                     ? _selectedCategoryId
                     : null,
                 dropdownColor: AppColors.surface,

@@ -15,18 +15,23 @@ import 'package:vishal_gold/providers/preview_provider.dart';
 import 'package:vishal_gold/screens/splash_screen.dart';
 import 'package:vishal_gold/services/fcm_service.dart';
 
+/// Global navigator key — used by FCMService for deep-link navigation
+/// when a push notification is tapped from background/terminated state.
+final GlobalKey<NavigatorState> navigatorKey = GlobalKey<NavigatorState>();
+
 void main() async {
   try {
     WidgetsFlutterBinding.ensureInitialized();
 
-    // --- Firebase Setup Cleaned ---
-    // Ab ye khud hi Android, Web aur iOS ko detect kar lega.
+    // --- Firebase Setup ---
     await Firebase.initializeApp(
       options: DefaultFirebaseOptions.currentPlatform,
     );
 
-    // Initialize FCM
-    await FCMService().initialize();
+    // Initialize FCM and inject the navigator key for deep-link navigation
+    final fcmService = FCMService();
+    fcmService.navigatorKey = navigatorKey;
+    await fcmService.initialize();
 
     // Seed initial data in background (don't block the UI)
     FirebaseService().seedInitialData().catchError((e) {
@@ -56,6 +61,7 @@ class MyApp extends StatelessWidget {
       child: MaterialApp(
         title: AppStrings.appName,
         debugShowCheckedModeBanner: false,
+        navigatorKey: navigatorKey,
         theme: ThemeData(
           useMaterial3: true,
           colorScheme: const ColorScheme.dark(

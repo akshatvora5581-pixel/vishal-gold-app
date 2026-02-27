@@ -13,6 +13,7 @@ import 'package:vishal_gold/widgets/home/category_section.dart';
 import 'package:vishal_gold/screens/home/all_subcategories_screen.dart';
 import 'package:vishal_gold/config/category_data.dart';
 import 'package:vishal_gold/providers/preview_provider.dart';
+import 'package:vishal_gold/screens/search/global_search_screen.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -171,21 +172,40 @@ class _HomeTabState extends State<HomeTab> {
               child: Row(
                 children: [
                   Expanded(
-                    child: TextField(
-                      decoration: InputDecoration(
-                        hintText: 'Search for jewelry...',
-                        prefixIcon: const Icon(
-                          Icons.search,
-                          color: AppColors.textSecondary,
-                        ),
-                        fillColor: AppColors.surface,
-                        filled: true,
-                        border: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(30),
-                          borderSide: BorderSide.none,
-                        ),
-                        contentPadding: const EdgeInsets.symmetric(
-                          horizontal: 20,
+                    child: GestureDetector(
+                      onTap: () {
+                        Navigator.push(
+                          context,
+                          PageRouteBuilder(
+                            pageBuilder: (ctx, a, b) =>
+                                const GlobalSearchScreen(),
+                            transitionsBuilder: (ctx, anim, _, child) =>
+                                FadeTransition(opacity: anim, child: child),
+                            transitionDuration: const Duration(
+                              milliseconds: 220,
+                            ),
+                          ),
+                        );
+                      },
+                      child: AbsorbPointer(
+                        child: TextField(
+                          readOnly: true,
+                          decoration: InputDecoration(
+                            hintText: 'Search for jewelry...',
+                            prefixIcon: const Icon(
+                              Icons.search,
+                              color: AppColors.textSecondary,
+                            ),
+                            fillColor: AppColors.surface,
+                            filled: true,
+                            border: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(30),
+                              borderSide: BorderSide.none,
+                            ),
+                            contentPadding: const EdgeInsets.symmetric(
+                              horizontal: 20,
+                            ),
+                          ),
                         ),
                       ),
                     ),

@@ -1054,27 +1054,49 @@ class FirebaseService {
   /// ========== SAMPLE ORDER OPERATIONS ==========
 
   /// Place a custom sample order
-  Future<String> placeSampleOrder(
+  Future<Map<String, String>> placeSampleOrder(
     Map<String, dynamic> sampleOrderData,
-    File? imageFile,
-  ) async {
+    List<File> imageFiles, {
+    String category = 'general',
+  }) async {
     try {
-      String? imageUrl;
-      if (imageFile != null) {
-        imageUrl = await uploadImage(
-          imageFile: imageFile,
-          folder: 'sample_orders',
-        );
+      // Sanitise category for use as a Storage folder name
+      final safeCategory = category.toLowerCase().replaceAll(
+        RegExp(r'[^a-z0-9_]'),
+        '_',
+      );
+      final storageFolder = 'sample_orders/$safeCategory';
+
+      List<String> imageUrls = [];
+      if (imageFiles.isNotEmpty) {
+        final baseTimestamp = DateTime.now().millisecondsSinceEpoch;
+        for (int i = 0; i < imageFiles.length; i++) {
+          // Append index to guarantee a unique path even when multiple
+          // uploads happen within the same millisecond.
+          final fileName = 'design_${baseTimestamp}_$i';
+          final url = await uploadImage(
+            imageFile: imageFiles[i],
+            folder: storageFolder,
+            fileName: fileName,
+          );
+          imageUrls.add(url);
+        }
       }
 
       final docRef = await _firestore.collection(sampleOrdersCollection).add({
         ...sampleOrderData,
-        if (imageUrl != null) 'imageUrls': [imageUrl],
+        // Explicit fields always override whatever toJson() sends
+        'category': category,
+        'imageUrls': imageUrls,
+        'status': 'Pending',
         'createdAt': FieldValue.serverTimestamp(),
         'updatedAt': FieldValue.serverTimestamp(),
       });
 
-      return docRef.id;
+      return {
+        'docId': docRef.id,
+        'imageUrls': imageUrls.join(','), // Join with comma for easy extraction
+      };
     } catch (e) {
       throw 'Failed to place sample order: ${e.toString()}';
     }
@@ -1165,16 +1187,25 @@ class FirebaseService {
     required List<File> imageFiles,
     required String folder,
   }) async {
-    try {
-      List<String> urls = [];
-      for (File file in imageFiles) {
-        String url = await uploadImage(imageFile: file, folder: folder);
-        urls.add(url);
+    List<String> imageUrls = [];
+    String timestamp = DateTime.now().millisecondsSinceEpoch.toString();
+
+    for (int i = 0; i < imageFiles.length; i++) {
+      try {
+        // Unique name per image: timestamp_index
+        String fileName = '${timestamp}_$i';
+        String url = await uploadImage(
+          imageFile: imageFiles[i],
+          folder: folder,
+          fileName: fileName,
+        );
+        imageUrls.add(url);
+      } catch (e) {
+        debugPrint('Error uploading image $i: $e');
+        // Continue with other images or throw if critical
       }
-      return urls;
-    } catch (e) {
-      throw 'Failed to upload images: ${e.toString()}';
     }
+    return imageUrls;
   }
 
   /// ========== RECENT VIEWS ==========
@@ -1825,10 +1856,11 @@ class FirebaseService {
       for (var doc in snapshot.docs) {
         final data = doc.data();
         final productId = data['productId'] as String?;
-        if (productId != null) {
+        final productMap = data['product'] as Map<String, dynamic>?;
+        if (productId != null && productMap != null) {
           productCounts[productId] = (productCounts[productId] ?? 0) + 1;
           if (!productData.containsKey(productId)) {
-            productData[productId] = data['product'] as Map<String, dynamic>;
+            productData[productId] = productMap;
           }
         }
       }

@@ -6,6 +6,7 @@ import 'package:vishal_gold/constants/app_colors.dart';
 import 'package:vishal_gold/providers/auth_provider.dart';
 import 'package:vishal_gold/providers/product_provider.dart';
 import 'package:vishal_gold/services/firebase_service.dart';
+import 'package:vishal_gold/services/whatsapp_service.dart';
 
 class UploadDesignScreen extends StatefulWidget {
   const UploadDesignScreen({super.key});
@@ -44,10 +45,21 @@ class _UploadDesignScreenState extends State<UploadDesignScreen> {
   };
 
   Future<void> _pickImages() async {
+    if (_selectedImages.length >= 4) {
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text('Maximum 4 images allowed')));
+      return;
+    }
+
     final List<XFile> images = await _picker.pickMultiImage();
     if (images.isNotEmpty) {
       setState(() {
-        _selectedImages.addAll(images.map((x) => File(x.path)));
+        // Take only up to 4 images total
+        final int remainingSlot = 4 - _selectedImages.length;
+        _selectedImages.addAll(
+          images.take(remainingSlot).map((x) => File(x.path)),
+        );
       });
     }
   }
@@ -106,7 +118,32 @@ class _UploadDesignScreenState extends State<UploadDesignScreen> {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(content: Text('Product uploaded successfully!')),
         );
-        Navigator.pop(context);
+
+        // 3. Send WhatsApp Notification
+        final String customerName = authProvider.displayName;
+        final String customerPhone = authProvider.phoneNumber ?? 'No Phone';
+
+        await WhatsAppService.notifyAdmin(
+          context: context,
+          customerName: customerName,
+          customerPhone: customerPhone,
+          category: _selectedCategory,
+          itemName: _nameController.text.trim().isEmpty
+              ? _selectedSubcategory
+              : _nameController.text.trim(),
+          qty: '1', // Default for single product upload
+          size: 'N/A',
+          weight: _grossWeightController.text,
+          totalWeight: _grossWeightController.text,
+          rodium: false, // Default for standard upload
+          huid: false, // Default for standard upload
+          remarks: _descriptionController.text.trim().isEmpty
+              ? 'N/A'
+              : _descriptionController.text.trim(),
+          imageUrls: imageUrls,
+        );
+
+        if (mounted) Navigator.pop(context);
       }
     } catch (e) {
       if (mounted) {

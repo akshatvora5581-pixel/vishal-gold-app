@@ -6,6 +6,9 @@ import 'package:vishal_gold/services/firebase_service.dart';
 /// Sort options exposed to the UI.
 enum ProductSortOrder { newestFirst, tagAsc, tagDesc, weightAsc, weightDesc }
 
+/// Inventory status filter options.
+enum InventoryStatusFilter { all, inStock, soldOut, onOrder }
+
 class ProductProvider with ChangeNotifier {
   final FirebaseService _firebaseService = FirebaseService();
 
@@ -19,6 +22,11 @@ class ProductProvider with ChangeNotifier {
   ProductSortOrder _currentSort = ProductSortOrder.newestFirst;
   bool _viewDrafts = false;
 
+  // ── Advanced Filters ───────────────────────────────────────────────────────
+  double? _minWeight;
+  double? _maxWeight;
+  InventoryStatusFilter _inventoryStatusFilter = InventoryStatusFilter.all;
+
   // Getters
   List<Product> get products =>
       _filteredProducts.isNotEmpty ? _filteredProducts : _products;
@@ -29,6 +37,16 @@ class ProductProvider with ChangeNotifier {
   bool get hasProducts => products.isNotEmpty;
   ProductSortOrder get currentSort => _currentSort;
   bool get viewDrafts => _viewDrafts;
+  double? get minWeightFilter => _minWeight;
+  double? get maxWeightFilter => _maxWeight;
+  InventoryStatusFilter get inventoryStatusFilter => _inventoryStatusFilter;
+
+  /// Returns true if any non-default filter is active.
+  bool get hasActiveFilters =>
+      _currentSort != ProductSortOrder.newestFirst ||
+      _minWeight != null ||
+      _maxWeight != null ||
+      _inventoryStatusFilter != InventoryStatusFilter.all;
 
   /// Load all products
   Future<void> loadProducts({List<QueryDocumentSnapshot>? stagedDocs}) async {
@@ -133,26 +151,44 @@ class ProductProvider with ChangeNotifier {
     notifyListeners();
   }
 
-  /// Apply filters (category + search) then sort
+  /// Apply filters (category + search + weight + inventory) then sort
   void _applyFilters() {
     _filteredProducts = _products.where((product) {
-      // Check search query
+      // — Search query —
       if (_searchQuery.isNotEmpty) {
         final matchesSearch =
             product.tagNumber.toLowerCase().contains(_searchQuery) ||
             (product.name?.toLowerCase().contains(_searchQuery) ?? false) ||
             (product.description?.toLowerCase().contains(_searchQuery) ??
                 false);
-
         if (!matchesSearch) return false;
       }
 
-      // Check subcategory
+      // — Subcategory —
       if (_currentSubcategory != null && _currentSubcategory!.isNotEmpty) {
         if (product.subcategory.toUpperCase() !=
             _currentSubcategory!.toUpperCase()) {
           return false;
         }
+      }
+
+      // — Weight range —
+      if (_minWeight != null && product.grossWeight < _minWeight!) {
+        return false;
+      }
+      if (_maxWeight != null && product.grossWeight > _maxWeight!) {
+        return false;
+      }
+
+      // — Inventory status —
+      if (_inventoryStatusFilter != InventoryStatusFilter.all) {
+        final statusString =
+            _inventoryStatusFilter == InventoryStatusFilter.inStock
+            ? 'in_stock'
+            : _inventoryStatusFilter == InventoryStatusFilter.soldOut
+            ? 'sold_out'
+            : 'on_order';
+        if (product.inventoryStatus != statusString) return false;
       }
 
       return true;
@@ -311,7 +347,33 @@ class ProductProvider with ChangeNotifier {
     }
   }
 
-  /// Clear filters
+  /// Set weight range filter (pass null to remove a bound).
+  void setWeightRange(double? min, double? max) {
+    _minWeight = min;
+    _maxWeight = max;
+    _applyFilters();
+    notifyListeners();
+  }
+
+  /// Set inventory status filter.
+  void setInventoryStatusFilter(InventoryStatusFilter status) {
+    _inventoryStatusFilter = status;
+    _applyFilters();
+    notifyListeners();
+  }
+
+  /// Clear all advanced filters AND reset sort to newest-first.
+  void clearAllFilters() {
+    _searchQuery = '';
+    _minWeight = null;
+    _maxWeight = null;
+    _inventoryStatusFilter = InventoryStatusFilter.all;
+    _currentSort = ProductSortOrder.newestFirst;
+    _applyFilters();
+    notifyListeners();
+  }
+
+  /// Clear filters (legacy – keeps category context)
   void clearFilters() {
     _searchQuery = '';
     _currentCategory = 'all';

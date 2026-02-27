@@ -7,6 +7,7 @@ import 'package:vishal_gold/services/firebase_service.dart';
 import 'package:vishal_gold/widgets/common/custom_app_bar.dart';
 import 'package:vishal_gold/models/sample_order.dart';
 import 'package:vishal_gold/services/local_storage_service.dart';
+import 'package:vishal_gold/services/whatsapp_service.dart';
 
 class SampleOrderScreen extends StatefulWidget {
   const SampleOrderScreen({super.key});
@@ -27,7 +28,7 @@ class _SampleOrderScreenState extends State<SampleOrderScreen> {
   String? _selectedGroup;
   bool _rodium = false;
   bool _huid = false;
-  File? _imageFile;
+  final List<File> _imageFiles = [];
   bool _isLoading = false;
   final FirebaseService _firebaseService = FirebaseService();
   Map<String, String> _userDetails = {};
@@ -60,14 +61,36 @@ class _SampleOrderScreenState extends State<SampleOrderScreen> {
   }
 
   Future<void> _pickImage() async {
-    final pickedFile = await ImagePicker().pickImage(
-      source: ImageSource.gallery,
+    final List<XFile> pickedFiles = await ImagePicker().pickMultiImage(
+      imageQuality: 85,
     );
-    if (pickedFile != null) {
-      setState(() {
-        _imageFile = File(pickedFile.path);
-      });
+
+    if (pickedFiles.isNotEmpty) {
+      if (_imageFiles.length + pickedFiles.length > 4) {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('Maximum 4 images allowed')),
+          );
+        }
+        // Add only up to 4
+        final remainingSlots = 4 - _imageFiles.length;
+        setState(() {
+          _imageFiles.addAll(
+            pickedFiles.take(remainingSlots).map((xFile) => File(xFile.path)),
+          );
+        });
+      } else {
+        setState(() {
+          _imageFiles.addAll(pickedFiles.map((xFile) => File(xFile.path)));
+        });
+      }
     }
+  }
+
+  void _removeImage(int index) {
+    setState(() {
+      _imageFiles.removeAt(index);
+    });
   }
 
   Future<void> _submitOrder() async {
@@ -99,11 +122,43 @@ class _SampleOrderScreenState extends State<SampleOrderScreen> {
         remarks: _remarksController.text.trim(),
       );
 
-      await _firebaseService.placeSampleOrder(sampleOrder.toJson(), _imageFile);
+      final result = await _firebaseService.placeSampleOrder(
+        sampleOrder.toJson(),
+        _imageFiles,
+        category: _selectedGroup!,
+      );
+
+      // Automated WhatsApp Notification
+      if (mounted) {
+        final List<String> imageUrls = (result['imageUrls'] ?? '')
+            .split(',')
+            .where((url) => url.isNotEmpty)
+            .toList();
+        await WhatsAppService.notifyAdmin(
+          context: context,
+          customerName: _userDetails['name'] ?? 'Customer',
+          customerPhone: _userDetails['phone'] ?? 'No Phone',
+          category: _selectedGroup ?? 'N/A',
+          itemName: _itemNameController.text.trim(),
+          qty: _qtyController.text.trim(),
+          size: _sizeController.text.trim(),
+          weight: _weightController.text.trim(),
+          totalWeight: _totalController.text.trim(),
+          rodium: _rodium,
+          huid: _huid,
+          remarks: _remarksController.text.trim().isEmpty
+              ? 'N/A'
+              : _remarksController.text.trim(),
+          imageUrls: imageUrls,
+        );
+      }
 
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Order placed successfully!')),
+          const SnackBar(
+            content: Text('✅ Designs uploaded! Order is Pending review.'),
+            duration: Duration(seconds: 3),
+          ),
         );
         Navigator.pop(context);
       }
@@ -321,52 +376,145 @@ class _SampleOrderScreenState extends State<SampleOrderScreen> {
               ),
               const SizedBox(height: 24),
 
-              // Image Picker
-              GestureDetector(
-                onTap: _pickImage,
-                child: Container(
-                  height: 100,
-                  width: 100,
-                  alignment: Alignment.centerLeft,
-                  child: Container(
-                    height: 100,
-                    width: 100,
-                    decoration: BoxDecoration(
-                      border: Border.all(
-                        color: Theme.of(
-                          context,
-                        ).colorScheme.primary.withValues(alpha: 0.5),
-                        width: 1.5,
-                      ),
-                      borderRadius: BorderRadius.circular(12),
-                      color: Theme.of(context).colorScheme.surface,
-                      image: _imageFile != null
-                          ? DecorationImage(
-                              image: FileImage(_imageFile!),
-                              fit: BoxFit.cover,
-                            )
-                          : null,
+              // Image Picker Section
+              Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    'REFERENCE IMAGES (MAX 4)',
+                    style: Theme.of(context).textTheme.titleSmall?.copyWith(
+                      color: Theme.of(context).colorScheme.primary,
+                      fontWeight: FontWeight.bold,
+                      fontSize: 12,
+                      letterSpacing: 1.0,
                     ),
-                    child: _imageFile == null
-                        ? Center(
-                            child: Icon(
-                              Icons.add_a_photo_outlined,
-                              color: Theme.of(
-                                context,
-                              ).colorScheme.primary.withValues(alpha: 0.6),
-                              size: 32,
+                  ),
+                  const SizedBox(height: 12),
+                  SizedBox(
+                    height: 100,
+                    child: _imageFiles.isEmpty
+                        ? GestureDetector(
+                            onTap: _pickImage,
+                            child: Container(
+                              width: 100,
+                              decoration: BoxDecoration(
+                                border: Border.all(
+                                  color: Theme.of(
+                                    context,
+                                  ).colorScheme.primary.withValues(alpha: 0.5),
+                                  width: 1.5,
+                                ),
+                                borderRadius: BorderRadius.circular(12),
+                                color: Theme.of(context).colorScheme.surface,
+                              ),
+                              child: Center(
+                                child: Icon(
+                                  Icons.add_a_photo_outlined,
+                                  color: Theme.of(
+                                    context,
+                                  ).colorScheme.primary.withValues(alpha: 0.5),
+                                  size: 30,
+                                ),
+                              ),
                             ),
                           )
-                        : null,
+                        : ListView.builder(
+                            scrollDirection: Axis.horizontal,
+                            itemCount:
+                                _imageFiles.length +
+                                (_imageFiles.length < 4 ? 1 : 0),
+                            itemBuilder: (context, index) {
+                              if (index == _imageFiles.length) {
+                                return GestureDetector(
+                                  onTap: _pickImage,
+                                  child: Container(
+                                    width: 100,
+                                    margin: const EdgeInsets.only(right: 12),
+                                    decoration: BoxDecoration(
+                                      border: Border.all(
+                                        color: Theme.of(context)
+                                            .colorScheme
+                                            .primary
+                                            .withValues(alpha: 0.5),
+                                        width: 1.5,
+                                      ),
+                                      borderRadius: BorderRadius.circular(12),
+                                      color: Theme.of(
+                                        context,
+                                      ).colorScheme.surface,
+                                    ),
+                                    child: Center(
+                                      child: Icon(
+                                        Icons.add_a_photo_outlined,
+                                        color: Theme.of(context)
+                                            .colorScheme
+                                            .primary
+                                            .withValues(alpha: 0.5),
+                                        size: 30,
+                                      ),
+                                    ),
+                                  ),
+                                );
+                              }
+                              return Container(
+                                width: 100,
+                                margin: const EdgeInsets.only(right: 12),
+                                child: Stack(
+                                  children: [
+                                    Container(
+                                      decoration: BoxDecoration(
+                                        border: Border.all(
+                                          color: Theme.of(context)
+                                              .colorScheme
+                                              .primary
+                                              .withValues(alpha: 0.5),
+                                          width: 1.5,
+                                        ),
+                                        borderRadius: BorderRadius.circular(12),
+                                        color: Theme.of(
+                                          context,
+                                        ).colorScheme.surface,
+                                        image: DecorationImage(
+                                          image: FileImage(_imageFiles[index]),
+                                          fit: BoxFit.cover,
+                                        ),
+                                      ),
+                                    ),
+                                    Positioned(
+                                      top: 4,
+                                      right: 4,
+                                      child: GestureDetector(
+                                        onTap: () => _removeImage(index),
+                                        child: Container(
+                                          width: 24,
+                                          height: 24,
+                                          decoration: BoxDecoration(
+                                            color: Colors.black.withValues(
+                                              alpha: 0.7,
+                                            ),
+                                            shape: BoxShape.circle,
+                                          ),
+                                          child: const Icon(
+                                            Icons.close,
+                                            color: Colors.white,
+                                            size: 16,
+                                          ),
+                                        ),
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              );
+                            },
+                          ),
                   ),
-                ),
+                ],
               ),
               const SizedBox(height: 24),
 
               // Remarks
               _buildTextField(_remarksController, 'Remarks', maxLines: 3),
               const SizedBox(height: 32),
-
               // Place Order Button
               ElevatedButton(
                 onPressed: _isLoading ? null : _submitOrder,
@@ -392,7 +540,7 @@ class _SampleOrderScreenState extends State<SampleOrderScreen> {
                         ),
                       )
                     : Text(
-                        'PLACE ORDER',
+                        'UPLOAD DESIGNS',
                         style: Theme.of(context).textTheme.labelLarge?.copyWith(
                           fontSize: 16,
                           fontWeight: FontWeight.bold,
@@ -401,6 +549,7 @@ class _SampleOrderScreenState extends State<SampleOrderScreen> {
                         ),
                       ),
               ),
+              const SizedBox(height: 24),
             ],
           ),
         ),

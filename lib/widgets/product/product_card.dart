@@ -5,6 +5,7 @@ import 'package:vishal_gold/constants/app_colors.dart';
 import 'package:vishal_gold/models/product.dart';
 import 'package:vishal_gold/providers/wishlist_provider.dart';
 import 'package:vishal_gold/screens/product/product_detail_screen.dart';
+import 'package:vishal_gold/widgets/common/shimmer_widget.dart';
 
 class ProductCard extends StatelessWidget {
   final Product product;
@@ -54,7 +55,7 @@ class ProductCard extends StatelessWidget {
                           end: Alignment.bottomCenter,
                           colors: [
                             Colors.transparent,
-                            Colors.black.withValues(alpha: 0.3),
+                            Colors.black.withOpacity(0.3),
                           ],
                           stops: const [0.7, 1.0],
                         ),
@@ -75,7 +76,7 @@ class ProductCard extends StatelessWidget {
                           child: Container(
                             padding: const EdgeInsets.all(6),
                             decoration: BoxDecoration(
-                              color: AppColors.background.withValues(alpha: 0.6),
+                              color: AppColors.background.withOpacity(0.6),
                               shape: BoxShape.circle,
                             ),
                             child: Icon(
@@ -170,15 +171,8 @@ class ProductCard extends StatelessWidget {
         imageUrl: imageUrl,
         fit: BoxFit.cover,
         width: double.infinity,
-        placeholder: (_, _) => Container(
-          color: AppColors.background,
-          child: Center(
-            child: CircularProgressIndicator(
-              strokeWidth: 2,
-              color: AppColors.gold.withValues(alpha: 0.5),
-            ),
-          ),
-        ),
+        placeholder: (context, url) =>
+            ShimmerWidget.rectangular(height: double.infinity),
         errorWidget: (_, _, _) => Container(
           color: AppColors.background,
           child: const Center(
