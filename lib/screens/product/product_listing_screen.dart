@@ -6,6 +6,7 @@ import 'package:vishal_gold/constants/app_colors.dart';
 import 'package:vishal_gold/providers/product_provider.dart';
 import 'package:vishal_gold/providers/auth_provider.dart';
 import 'package:vishal_gold/widgets/product/product_card.dart';
+import 'package:vishal_gold/widgets/product/product_skeleton.dart';
 
 // Brand accent for the Sort sheet
 const _kBrandPurple = Color(0xFF2D0B2B);
@@ -154,7 +155,7 @@ class _ProductListingScreenState extends State<ProductListingScreen> {
                       decoration: InputDecoration(
                         hintText: 'Search by tag, name…',
                         hintStyle: GoogleFonts.outfit(
-                          color: AppColors.white.withValues(alpha: 0.5),
+                          color: AppColors.white.withOpacity(0.5),
                           fontSize: 16,
                         ),
                         border: InputBorder.none,
@@ -191,9 +192,17 @@ class _ProductListingScreenState extends State<ProductListingScreen> {
               sliver: Consumer<ProductProvider>(
                 builder: (context, productProvider, child) {
                   if (productProvider.isLoading) {
-                    return const SliverFillRemaining(
-                      child: Center(
-                        child: CircularProgressIndicator(color: AppColors.gold),
+                    return SliverGrid(
+                      gridDelegate:
+                          const SliverGridDelegateWithFixedCrossAxisCount(
+                            crossAxisCount: 2,
+                            childAspectRatio: 0.7,
+                            crossAxisSpacing: 16,
+                            mainAxisSpacing: 16,
+                          ),
+                      delegate: SliverChildBuilderDelegate(
+                        (context, index) => ProductSkeleton(),
+                        childCount: 6,
                       ),
                     );
                   }
@@ -210,7 +219,7 @@ class _ProductListingScreenState extends State<ProductListingScreen> {
                               Icons.search_off_rounded,
                               size: 64,
                               // ignore: deprecated_member_use
-                              color: AppColors.grey.withValues(alpha: 0.3),
+                              color: AppColors.grey.withOpacity(0.3),
                             ),
                             const SizedBox(height: 16),
                             Text(
@@ -227,8 +236,8 @@ class _ProductListingScreenState extends State<ProductListingScreen> {
                               Text(
                                 'Try a different keyword',
                                 style: GoogleFonts.outfit(
-                                  color: AppColors.textSecondary.withValues(
-                                    alpha: 0.6,
+                                  color: AppColors.textSecondary.withOpacity(
+                                    0.6,
                                   ),
                                   fontSize: 13,
                                 ),

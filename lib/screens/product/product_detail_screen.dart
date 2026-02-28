@@ -13,6 +13,7 @@ import 'package:vishal_gold/screens/cart/cart_screen.dart';
 import 'package:vishal_gold/screens/product/full_screen_photo_viewer.dart';
 import 'package:vishal_gold/services/firebase_service.dart';
 import 'package:url_launcher/url_launcher.dart';
+import 'package:vishal_gold/widgets/common/shimmer_widget.dart';
 
 class ProductDetailScreen extends StatefulWidget {
   final Product product;
@@ -23,9 +24,9 @@ class ProductDetailScreen extends StatefulWidget {
   State<ProductDetailScreen> createState() => _ProductDetailScreenState();
 }
 
-class _ProductDetailScreenState extends State<ProductDetailScreen>
-    with SingleTickerProviderStateMixin {
+class _ProductDetailScreenState extends State<ProductDetailScreen> {
   int _quantity = 1;
+  int _currentImageIndex = 0;
   static const int _maxQuantity = 99; // BUG-004: bounded quantity
 
   /// 0.0 → details visible (image = 55% height)
@@ -49,458 +50,357 @@ class _ProductDetailScreenState extends State<ProductDetailScreen>
   @override
   void initState() {
     super.initState();
-    _controller = AnimationController(
-      vsync: this,
-      duration: const Duration(milliseconds: 420),
-      lowerBound: 0.0,
-      upperBound: 1.0,
-    );
     _imagePageController = PageController();
+    _imagePageController.addListener(() {
+      final page = _imagePageController.page?.round() ?? 0;
+      if (page != _currentImageIndex) {
+        setState(() => _currentImageIndex = page);
+      }
+    });
   }
 
   @override
   void dispose() {
-    _controller.dispose();
     _imagePageController.dispose();
     super.dispose();
-  }
-
-  // ── Gesture handlers ────────────────────────────────────────────────────────
-
-  void _onDragStart(DragStartDetails d) {
-    _controller.stop();
-    _dragAnchorY = d.globalPosition.dy;
-  }
-
-  void _onDragUpdate(DragUpdateDetails d) {
-    final delta = d.globalPosition.dy - _dragAnchorY;
-    _dragAnchorY = d.globalPosition.dy;
-    // Map screen-pixels → controller value (downward drag = positive = expand)
-    _controller.value = (_controller.value + delta / (_screenHeight * 0.6))
-        .clamp(0.0, 1.0);
-  }
-
-  void _onDragEnd(DragEndDetails d) {
-    const threshold = 0.35;
-    final velocity = d.primaryVelocity ?? 0; // positive = downward
-
-    if (velocity > 400 || _controller.value > threshold) {
-      // Snap to expanded image
-      _controller.animateTo(
-        1.0,
-        duration: const Duration(milliseconds: 380),
-        curve: Curves.easeOut,
-      );
-    } else if (velocity < -400 || _controller.value < (1.0 - threshold)) {
-      // Snap to details visible — use a spring-like curve
-      _controller.animateTo(
-        0.0,
-        duration: const Duration(milliseconds: 500),
-        curve: _ElasticOutClamped(),
-      );
-    } else {
-      // Snap back to whichever state is closer
-      if (_controller.value >= 0.5) {
-        _controller.animateTo(
-          1.0,
-          duration: const Duration(milliseconds: 300),
-          curve: Curves.easeOut,
-        );
-      } else {
-        _controller.animateTo(
-          0.0,
-          duration: const Duration(milliseconds: 300),
-          curve: Curves.easeOut,
-        );
-      }
-    }
-  }
-
-  void _showDetails() {
-    _controller.animateTo(
-      0.0,
-      duration: const Duration(milliseconds: 480),
-      curve: _ElasticOutClamped(),
-    );
   }
 
   // ── Build ────────────────────────────────────────────────────────────────────
 
   @override
   Widget build(BuildContext context) {
-    _screenHeight = MediaQuery.of(context).size.height;
+    final topPad = MediaQuery.of(context).padding.top;
 
     return Scaffold(
-      backgroundColor: AppColors.background,
-      body: GestureDetector(
-        // Use onPanXxx so we are not competing with PageView's horizontal scroll
-        onPanStart: _onDragStart,
-        onPanUpdate: (d) {
-          // Only respond to predominantly vertical movement
-          final dy = d.delta.dy.abs();
-          final dx = d.delta.dx.abs();
-          if (dy > dx) {
-            _onDragUpdate(
-              DragUpdateDetails(
-                globalPosition: d.globalPosition,
-                delta: d.delta,
-                sourceTimeStamp: d.sourceTimeStamp,
-              ),
-            );
-          }
-        },
-        onPanEnd: (d) {
-          _onDragEnd(
-            DragEndDetails(primaryVelocity: d.velocity.pixelsPerSecond.dy),
-          );
-        },
-        behavior: HitTestBehavior.translucent,
-        child: AnimatedBuilder(
-          animation: _controller,
-          builder: (context, _) {
-            final t = _controller.value; // 0 = details, 1 = full image
+      backgroundColor: AppColors.surface,
+      // ── Sticky Action Bar ──────────────────────────────────────────────────
+      bottomNavigationBar: _buildStickyActionBar(context),
+      body: Stack(
+        children: [
+          // ── Main Scrollable Content ──────────────────────────────────────
+          CustomScrollView(
+            physics: const BouncingScrollPhysics(),
+            slivers: [
+              // Image gallery block
+              SliverToBoxAdapter(child: _buildImageGallery()),
 
-            // Image height: 55% → 100%
-            final imageHeight = _screenHeight * (0.55 + 0.45 * t);
-            // Panel offset: 0 → panelHeight (slides off screen)
-            final panelHeight = _screenHeight * 0.55;
-            final panelOffset = panelHeight * t;
-            // Details opacity: 1 → 0 (fades in first half of drag)
-            final detailsOpacity = (1.0 - t * 2.0).clamp(0.0, 1.0);
-            // Peek strip opacity: fades in in second half of drag
-            final peekOpacity = ((t - 0.6) / 0.4).clamp(0.0, 1.0);
+              // Details block
+              SliverToBoxAdapter(child: _buildDetailsSection()),
+            ],
+          ),
 
-            return Stack(
-              clipBehavior: Clip.none,
+          // ── Back Button & Wishlist (floating overlay) ─────────────────
+          Positioned(
+            top: topPad + 10,
+            left: 20,
+            right: 20,
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                // ── Product Image ──────────────────────────────────────────────
-                SizedBox(
-                  height: imageHeight,
-                  width: double.infinity,
-                  child: widget.product.imageUrls.isNotEmpty
-                      ? PageView.builder(
-                          controller: _imagePageController,
-                          physics: t < 0.05
-                              ? const BouncingScrollPhysics()
-                              : const NeverScrollableScrollPhysics(),
-                          itemCount: widget.product.imageUrls.length,
-                          itemBuilder: (context, index) {
-                            final url = widget.product.imageUrls[index];
-                            final imageWidget =
-                                url.toLowerCase().contains('assets/')
-                                ? Image.asset(
-                                    url.trim(),
-                                    fit: BoxFit.cover,
-                                    width: double.infinity,
-                                    height: double.infinity,
-                                  )
-                                : CachedNetworkImage(
-                                    imageUrl: url,
-                                    fit: BoxFit.cover,
-                                    width: double.infinity,
-                                    height: double.infinity,
-                                    placeholder: (context, url) => Container(
-                                      color: AppColors.black,
-                                      child: const Center(
-                                        child: CircularProgressIndicator(
-                                          color: AppColors.gold,
-                                        ),
-                                      ),
-                                    ),
-                                    errorWidget: (context, url, err) =>
-                                        Container(color: AppColors.black),
-                                  );
-
-                            // Tap on image → open full-screen viewer
-                            return GestureDetector(
-                              onTap: () {
-                                Navigator.push(
-                                  context,
-                                  PageRouteBuilder(
-                                    pageBuilder:
-                                        (
-                                          context,
-                                          animation,
-                                          secondaryAnimation,
-                                        ) => FullScreenPhotoViewer(
-                                          imageUrls: widget.product.imageUrls,
-                                          initialIndex: index,
-                                        ),
-                                    transitionsBuilder:
-                                        (
-                                          context,
-                                          animation,
-                                          secondaryAnimation,
-                                          child,
-                                        ) {
-                                          return FadeTransition(
-                                            opacity: animation,
-                                            child: child,
-                                          );
-                                        },
-                                    transitionDuration: const Duration(
-                                      milliseconds: 300,
-                                    ),
-                                  ),
-                                );
-                              },
-                              child: imageWidget,
-                            );
-                          },
-                        )
-                      : Container(color: AppColors.black),
+                _buildCircularButton(
+                  icon: Icons.arrow_back_ios_new,
+                  onPressed: () => Navigator.pop(context),
                 ),
-
-                // ── Gradient at bottom of image ────────────────────────────────
-                if (t > 0.3)
-                  Positioned(
-                    top: imageHeight - 120,
-                    left: 0,
-                    right: 0,
-                    height: 120,
-                    child: Container(
-                      decoration: BoxDecoration(
-                        gradient: LinearGradient(
-                          begin: Alignment.topCenter,
-                          end: Alignment.bottomCenter,
-                          colors: [
-                            Colors.transparent,
-                            // ignore: deprecated_member_use
-                            AppColors.background.withValues(alpha: 0.6),
-                          ],
-                        ),
-                      ),
-                    ),
-                  ),
-
-                // ── Details Panel ──────────────────────────────────────────────
-                Positioned(
-                  bottom: 0,
-                  left: 0,
-                  right: 0,
-                  child: Transform.translate(
-                    offset: Offset(0, panelOffset),
-                    child: Opacity(
-                      opacity: detailsOpacity,
-                      child: IgnorePointer(
-                        ignoring: detailsOpacity < 0.05,
-                        child: Container(
-                          height: panelHeight,
-                          padding: const EdgeInsets.fromLTRB(24, 20, 24, 20),
-                          decoration: BoxDecoration(
-                            color: AppColors.surface,
-                            borderRadius: const BorderRadius.only(
-                              topLeft: Radius.circular(40),
-                              topRight: Radius.circular(40),
-                            ),
-                            boxShadow: [
-                              BoxShadow(
-                                // ignore: deprecated_member_use
-                                color: Colors.black.withValues(alpha: 0.5),
-                                blurRadius: 30,
-                                offset: const Offset(0, -10),
-                              ),
-                            ],
-                          ),
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              // Drag Handle
-                              Center(
-                                child: Container(
-                                  width: 40,
-                                  height: 4,
-                                  decoration: BoxDecoration(
-                                    // ignore: deprecated_member_use
-                                    color: AppColors.grey.withValues(
-                                      alpha: 0.3,
-                                    ),
-                                    borderRadius: BorderRadius.circular(2),
-                                  ),
-                                ),
-                              ),
-                              const SizedBox(height: 20),
-
-                              // Title & Purity badge
-                              Row(
-                                mainAxisAlignment:
-                                    MainAxisAlignment.spaceBetween,
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  Expanded(
-                                    child: Text(
-                                      widget.product.tagNumber,
-                                      style: GoogleFonts.playfairDisplay(
-                                        fontSize: 32,
-                                        fontWeight: FontWeight.bold,
-                                        color: AppColors.gold,
-                                      ),
-                                    ),
-                                  ),
-                                  Container(
-                                    padding: const EdgeInsets.symmetric(
-                                      horizontal: 12,
-                                      vertical: 6,
-                                    ),
-                                    decoration: BoxDecoration(
-                                      // ignore: deprecated_member_use
-                                      color: AppColors.gold.withValues(
-                                        alpha: 0.15,
-                                      ),
-                                      borderRadius: BorderRadius.circular(20),
-                                      border: Border.all(
-                                        color: AppColors.gold,
-                                        width: 1,
-                                      ),
-                                    ),
-                                    child: Text(
-                                      widget.product.purityDisplay,
-                                      style: GoogleFonts.outfit(
-                                        color: AppColors.gold,
-                                        fontWeight: FontWeight.w600,
-                                        fontSize: 12,
-                                      ),
-                                    ),
-                                  ),
-                                ],
-                              ),
-
-                              const SizedBox(height: 8),
-                              Text(
-                                widget.product.categoryDisplay.toUpperCase(),
-                                style: GoogleFonts.outfit(
-                                  fontSize: 12,
-                                  color: AppColors.textSecondary,
-                                  letterSpacing: 2.0,
-                                ),
-                              ),
-
-                              const SizedBox(height: 30),
-                              _buildEstimatedPriceSection(),
-                              const SizedBox(height: 30),
-
-                              // Specs row
-                              Row(
-                                children: [
-                                  _buildSpecItem(
-                                    'Gross Weight',
-                                    '${widget.product.grossWeight}g',
-                                  ),
-                                  _buildSpecItem(
-                                    'Net Weight',
-                                    '${widget.product.netWeight}g',
-                                  ),
-                                  _buildSpecItem(
-                                    'Purity',
-                                    '${widget.product.purity}%',
-                                  ),
-                                ],
-                              ),
-
-                              const Spacer(),
-                              _buildBottomActions(context),
-                            ],
-                          ),
-                        ),
-                      ),
-                    ),
-                  ),
-                ),
-
-                // ── Peek Strip (tap to bring details back) ─────────────────────
-                if (peekOpacity > 0)
-                  Positioned(
-                    bottom: 0,
-                    left: 0,
-                    right: 0,
-                    child: Opacity(
-                      opacity: peekOpacity,
-                      child: GestureDetector(
-                        onTap: _showDetails,
-                        child: Container(
-                          height: 60,
-                          decoration: BoxDecoration(
-                            // ignore: deprecated_member_use
-                            color: AppColors.surface.withValues(alpha: 0.92),
-                            borderRadius: const BorderRadius.only(
-                              topLeft: Radius.circular(28),
-                              topRight: Radius.circular(28),
-                            ),
-                            boxShadow: [
-                              BoxShadow(
-                                // ignore: deprecated_member_use
-                                color: AppColors.gold.withValues(alpha: 0.1),
-                                blurRadius: 20,
-                                offset: const Offset(0, -4),
-                              ),
-                            ],
-                          ),
-                          child: Column(
-                            mainAxisAlignment: MainAxisAlignment.center,
-                            children: [
-                              Container(
-                                width: 40,
-                                height: 4,
-                                decoration: BoxDecoration(
-                                  // ignore: deprecated_member_use
-                                  color: AppColors.gold.withValues(alpha: 0.7),
-                                  borderRadius: BorderRadius.circular(2),
-                                ),
-                              ),
-                              const SizedBox(height: 6),
-                              Text(
-                                '⬆  SWIPE UP FOR DETAILS',
-                                style: GoogleFonts.outfit(
-                                  fontSize: 10,
-                                  // ignore: deprecated_member_use
-                                  color: AppColors.gold.withValues(alpha: 0.85),
-                                  letterSpacing: 1.4,
-                                  fontWeight: FontWeight.w500,
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
-                      ),
-                    ),
-                  ),
-
-                // ── Back Button & Wishlist ─────────────────────────────────────
-                Positioned(
-                  top: MediaQuery.of(context).padding.top + 10,
-                  left: 20,
-                  right: 20,
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      _buildCircularButton(
-                        icon: Icons.arrow_back_ios_new,
-                        onPressed: () => Navigator.pop(context),
-                      ),
-                      Consumer<WishlistProvider>(
-                        builder: (context, wishlistProvider, child) {
-                          final isInWishlist = wishlistProvider.isInWishlist(
-                            widget.product.id,
-                          );
-                          return _buildCircularButton(
-                            icon: isInWishlist
-                                ? Icons.favorite
-                                : Icons.favorite_border,
-                            color: isInWishlist
-                                ? AppColors.errorRed
-                                : AppColors.black,
-                            onPressed: () =>
-                                wishlistProvider.toggleWishlist(widget.product),
-                          );
-                        },
-                      ),
-                    ],
-                  ),
+                Consumer<WishlistProvider>(
+                  builder: (context, wishlistProvider, child) {
+                    final isInWishlist = wishlistProvider.isInWishlist(
+                      widget.product.id,
+                    );
+                    return _buildCircularButton(
+                      icon: isInWishlist
+                          ? Icons.favorite
+                          : Icons.favorite_border,
+                      color: isInWishlist
+                          ? AppColors.errorRed
+                          : AppColors.black,
+                      onPressed: () =>
+                          wishlistProvider.toggleWishlist(widget.product),
+                    );
+                  },
                 ),
               ],
-            );
-          },
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  // ── Image Gallery ────────────────────────────────────────────────────────────
+
+  Widget _buildImageGallery() {
+    final imageUrls = widget.product.imageUrls;
+
+    return Stack(
+      children: [
+        // Square image frame — BoxFit.contain keeps entire image visible
+        AspectRatio(
+          aspectRatio: 1.0,
+          child: imageUrls.isNotEmpty
+              ? PageView.builder(
+                  controller: _imagePageController,
+                  itemCount: imageUrls.length,
+                  itemBuilder: (context, index) {
+                    final url = imageUrls[index];
+                    final imageWidget = url.toLowerCase().contains('assets/')
+                        ? Image.asset(
+                            url.trim(),
+                            fit: BoxFit.contain,
+                            width: double.infinity,
+                            height: double.infinity,
+                          )
+                        : CachedNetworkImage(
+                            imageUrl: url,
+                            fit: BoxFit.contain,
+                            width: double.infinity,
+                            height: double.infinity,
+                            placeholder: (context, url) =>
+                                const ShimmerWidget.rectangular(
+                                  height: double.infinity,
+                                ),
+                            errorWidget: (context, url, err) =>
+                                Container(color: AppColors.black),
+                          );
+
+                    return GestureDetector(
+                      onTap: () {
+                        Navigator.push(
+                          context,
+                          PageRouteBuilder(
+                            pageBuilder:
+                                (context, animation, secondaryAnimation) =>
+                                    FullScreenPhotoViewer(
+                                      imageUrls: imageUrls,
+                                      initialIndex: index,
+                                    ),
+                            transitionsBuilder:
+                                (
+                                  context,
+                                  animation,
+                                  secondaryAnimation,
+                                  child,
+                                ) {
+                                  return FadeTransition(
+                                    opacity: animation,
+                                    child: child,
+                                  );
+                                },
+                            transitionDuration: const Duration(
+                              milliseconds: 300,
+                            ),
+                          ),
+                        );
+                      },
+                      child: imageWidget,
+                    );
+                  },
+                )
+              : Container(color: AppColors.black),
         ),
+
+        // ── Nav Arrows (only with multiple images) ───────────────────────
+        if (imageUrls.length > 1) ..._buildGalleryArrows(),
+
+        // ── Pagination Dots ──────────────────────────────────────────────
+        if (imageUrls.length > 1)
+          Positioned(
+            bottom: 14,
+            left: 0,
+            right: 0,
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: List.generate(
+                imageUrls.length,
+                (i) => AnimatedContainer(
+                  duration: const Duration(milliseconds: 250),
+                  curve: Curves.easeInOut,
+                  margin: const EdgeInsets.symmetric(horizontal: 4),
+                  width: _currentImageIndex == i ? 18 : 7,
+                  height: 7,
+                  decoration: BoxDecoration(
+                    color: _currentImageIndex == i
+                        ? AppColors.gold
+                        // ignore: deprecated_member_use
+                        : AppColors.white.withOpacity(0.50),
+                    borderRadius: BorderRadius.circular(4),
+                  ),
+                ),
+              ),
+            ),
+          ),
+      ],
+    );
+  }
+
+  // ── Details Section ──────────────────────────────────────────────────────────
+
+  Widget _buildDetailsSection() {
+    return Container(
+      width: double.infinity,
+      decoration: const BoxDecoration(
+        color: AppColors.surface,
+        borderRadius: BorderRadius.only(
+          topLeft: Radius.circular(28),
+          topRight: Radius.circular(28),
+        ),
+      ),
+      padding: const EdgeInsets.fromLTRB(24, 28, 24, 32),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          // ── Title & Purity badge ─────────────────────────────────────
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Expanded(
+                child: Text(
+                  widget.product.tagNumber,
+                  style: GoogleFonts.playfairDisplay(
+                    fontSize: 30,
+                    fontWeight: FontWeight.bold,
+                    color: AppColors.gold,
+                  ),
+                ),
+              ),
+              const SizedBox(width: 12),
+              Container(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 12,
+                  vertical: 6,
+                ),
+                decoration: BoxDecoration(
+                  // ignore: deprecated_member_use
+                  color: AppColors.gold.withOpacity(0.15),
+                  borderRadius: BorderRadius.circular(20),
+                  border: Border.all(color: AppColors.gold, width: 1),
+                ),
+                child: Text(
+                  widget.product.purityDisplay,
+                  style: GoogleFonts.outfit(
+                    color: AppColors.gold,
+                    fontWeight: FontWeight.w600,
+                    fontSize: 12,
+                  ),
+                ),
+              ),
+            ],
+          ),
+
+          const SizedBox(height: 6),
+          Text(
+            widget.product.categoryDisplay.toUpperCase(),
+            style: GoogleFonts.outfit(
+              fontSize: 12,
+              color: AppColors.textSecondary,
+              letterSpacing: 2.0,
+            ),
+          ),
+
+          const SizedBox(height: 28),
+
+          // ── Spec chips ───────────────────────────────────────────────
+          Row(
+            children: [
+              _buildSpecItem('Gross Weight', '${widget.product.grossWeight}g'),
+              _buildSpecItem('Net Weight', '${widget.product.netWeight}g'),
+              _buildSpecItem('Purity', '${widget.product.purity}%'),
+            ],
+          ),
+
+          const SizedBox(height: 28),
+
+          // ── Estimated Price ──────────────────────────────────────────
+          _buildEstimatedPriceSection(),
+
+          const SizedBox(height: 16),
+        ],
+      ),
+    );
+  }
+
+  // ── Sticky Bottom Action Bar ─────────────────────────────────────────────────
+
+  Widget _buildStickyActionBar(BuildContext context) {
+    final bottomPad = MediaQuery.of(context).padding.bottom;
+    return Container(
+      padding: EdgeInsets.fromLTRB(16, 12, 16, bottomPad > 0 ? bottomPad : 16),
+      decoration: BoxDecoration(
+        // ignore: deprecated_member_use
+        color: AppColors.surface.withOpacity(0.97),
+        boxShadow: [
+          BoxShadow(
+            // ignore: deprecated_member_use
+            color: Colors.black.withOpacity(0.4),
+            blurRadius: 20,
+            offset: const Offset(0, -6),
+          ),
+        ],
+      ),
+      child: _buildBottomActions(context),
+    );
+  }
+
+  // ── Gallery Navigation Helpers ───────────────────────────────────────────────
+
+  void _goToImage(int index) {
+    final count = widget.product.imageUrls.length;
+    final target = ((index % count) + count) % count;
+    setState(() => _currentImageIndex = target);
+    _imagePageController.animateToPage(
+      target,
+      duration: const Duration(milliseconds: 300),
+      curve: Curves.easeInOut,
+    );
+  }
+
+  List<Widget> _buildGalleryArrows() {
+    return [
+      // Left arrow — vertically centred inside the AspectRatio block
+      Positioned(
+        left: 14,
+        top: 0,
+        bottom: 0,
+        child: Center(
+          child: _buildNavArrow(
+            icon: Icons.chevron_left_rounded,
+            onTap: () => _goToImage(_currentImageIndex - 1),
+          ),
+        ),
+      ),
+      // Right arrow
+      Positioned(
+        right: 14,
+        top: 0,
+        bottom: 0,
+        child: Center(
+          child: _buildNavArrow(
+            icon: Icons.chevron_right_rounded,
+            onTap: () => _goToImage(_currentImageIndex + 1),
+          ),
+        ),
+      ),
+    ];
+  }
+
+  Widget _buildNavArrow({required IconData icon, required VoidCallback onTap}) {
+    return GestureDetector(
+      onTap: onTap,
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 150),
+        width: 44,
+        height: 44,
+        decoration: BoxDecoration(
+          // ignore: deprecated_member_use
+          color: Colors.black.withOpacity(0.38),
+          shape: BoxShape.circle,
+          border: Border.all(
+            // ignore: deprecated_member_use
+            color: Colors.white.withOpacity(0.25),
+            width: 1,
+          ),
+        ),
+        child: Icon(icon, color: Colors.white, size: 28),
       ),
     );
   }
@@ -522,7 +422,7 @@ class _ProductDetailScreenState extends State<ProductDetailScreen>
           height: 44,
           decoration: BoxDecoration(
             // ignore: deprecated_member_use
-            color: AppColors.white.withValues(alpha: 0.90),
+            color: AppColors.white.withOpacity(0.90),
             shape: BoxShape.circle,
             boxShadow: const [BoxShadow(color: Colors.black26, blurRadius: 8)],
           ),
@@ -573,7 +473,7 @@ class _ProductDetailScreenState extends State<ProductDetailScreen>
             borderRadius: BorderRadius.circular(16),
             border: Border.all(
               // ignore: deprecated_member_use
-              color: AppColors.grey.withValues(alpha: 0.15),
+              color: AppColors.grey.withOpacity(0.15),
             ),
           ),
           child: Row(
@@ -598,8 +498,8 @@ class _ProductDetailScreenState extends State<ProductDetailScreen>
             ],
           ),
         ),
-        const SizedBox(width: 16),
-        // WhatsApp Query
+        const SizedBox(width: 12),
+        // WhatsApp Query button
         Container(
           height: 56,
           width: 56,
@@ -607,7 +507,8 @@ class _ProductDetailScreenState extends State<ProductDetailScreen>
             color: AppColors.surface,
             borderRadius: BorderRadius.circular(16),
             border: Border.all(
-              color: const Color(0xFF25D366).withValues(alpha: 0.3),
+              // ignore: deprecated_member_use
+              color: const Color(0xFF25D366).withOpacity(0.3),
             ),
           ),
           child: IconButton(
@@ -617,7 +518,7 @@ class _ProductDetailScreenState extends State<ProductDetailScreen>
           ),
         ),
         const SizedBox(width: 12),
-        // Add to Cart
+        // Add to Cart / View Cart
         Expanded(
           child: SizedBox(
             height: 56,
@@ -679,7 +580,6 @@ class _ProductDetailScreenState extends State<ProductDetailScreen>
       return;
     }
 
-    // Prepare message
     final message =
         'Hi, I am interested in this product:\n'
         'Tag: ${widget.product.tagNumber}\n'
@@ -695,7 +595,6 @@ class _ProductDetailScreenState extends State<ProductDetailScreen>
       if (await canLaunchUrl(whatsappUrl)) {
         await launchUrl(whatsappUrl);
       } else {
-        // Fallback to web link if app not installed
         final webUrl = Uri.parse(
           'https://wa.me/$number?text=${Uri.encodeComponent(message)}',
         );
@@ -739,7 +638,6 @@ class _ProductDetailScreenState extends State<ProductDetailScreen>
               catSnapshot.data!.id,
             );
 
-            // Determine base rate based on purity
             double baseRate = settings.goldRate24K;
             if (widget.product.purityDisplay.contains('22K') ||
                 widget.product.purity == 92) {
@@ -758,11 +656,11 @@ class _ProductDetailScreenState extends State<ProductDetailScreen>
               padding: const EdgeInsets.all(16),
               decoration: BoxDecoration(
                 // ignore: deprecated_member_use
-                color: AppColors.gold.withValues(alpha: 0.1),
+                color: AppColors.gold.withOpacity(0.10),
                 borderRadius: BorderRadius.circular(16),
                 border: Border.all(
                   // ignore: deprecated_member_use
-                  color: AppColors.gold.withValues(alpha: 0.3),
+                  color: AppColors.gold.withOpacity(0.30),
                 ),
               ),
               child: Column(
@@ -811,14 +709,5 @@ class _ProductDetailScreenState extends State<ProductDetailScreen>
         );
       },
     );
-  }
-}
-
-/// A custom curve that applies `elasticOut` but clamps the output to [0, 1]
-/// so the AnimationController never goes out of bounds.
-class _ElasticOutClamped extends Curve {
-  @override
-  double transformInternal(double t) {
-    return Curves.elasticOut.transform(t).clamp(0.0, 1.0);
   }
 }

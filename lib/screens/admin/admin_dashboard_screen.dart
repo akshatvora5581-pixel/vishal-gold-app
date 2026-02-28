@@ -214,14 +214,11 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
           decoration: BoxDecoration(
             color: const Color(0xFF1C1C1C),
             border: Border(
-              top: BorderSide(
-                color: AppColors.gold.withValues(alpha: 0.4),
-                width: 1,
-              ),
+              top: BorderSide(color: AppColors.gold.withOpacity(0.4), width: 1),
             ),
             boxShadow: [
               BoxShadow(
-                color: Colors.black.withValues(alpha: 0.4),
+                color: Colors.black.withOpacity(0.4),
                 blurRadius: 12,
                 offset: const Offset(0, -4),
               ),
@@ -237,11 +234,9 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
                     vertical: 6,
                   ),
                   decoration: BoxDecoration(
-                    color: AppColors.gold.withValues(alpha: 0.15),
+                    color: AppColors.gold.withOpacity(0.15),
                     borderRadius: BorderRadius.circular(8),
-                    border: Border.all(
-                      color: AppColors.gold.withValues(alpha: 0.5),
-                    ),
+                    border: Border.all(color: AppColors.gold.withOpacity(0.5)),
                   ),
                   child: Row(
                     children: [
@@ -410,7 +405,7 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
               begin: Alignment.topLeft,
               end: Alignment.bottomRight,
               colors: [
-                AppColors.gold.withValues(alpha: 0.15),
+                AppColors.gold.withOpacity(0.15),
                 const Color(0xFF141414),
               ],
             ),
@@ -423,7 +418,7 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
                 child: Icon(
                   Icons.admin_panel_settings,
                   size: 200,
-                  color: AppColors.gold.withValues(alpha: 0.03),
+                  color: AppColors.gold.withOpacity(0.03),
                 ),
               ),
               Padding(
@@ -442,7 +437,9 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
                           radius: 35,
                           backgroundColor: const Color(0xFF1E1E1E),
                           child: Text(
-                            _currentAdmin.fullName[0].toUpperCase(),
+                            _currentAdmin.fullName.isNotEmpty
+                                ? _currentAdmin.fullName[0].toUpperCase()
+                                : 'A',
                             style: GoogleFonts.outfit(
                               fontSize: 28,
                               fontWeight: FontWeight.bold,
@@ -575,7 +572,7 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
             border: Border.all(color: Colors.white10),
             boxShadow: [
               BoxShadow(
-                color: Colors.black.withValues(alpha: 0.3),
+                color: Colors.black.withOpacity(0.3),
                 blurRadius: 10,
                 offset: const Offset(0, 4),
               ),
@@ -666,7 +663,7 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
       style: GoogleFonts.outfit(
         fontSize: 18,
         fontWeight: FontWeight.bold,
-        color: AppColors.white.withValues(alpha: 0.9),
+        color: AppColors.white.withOpacity(0.9),
       ),
     );
   }
@@ -691,10 +688,10 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
             decoration: BoxDecoration(
               color: const Color(0xFF1A1A1A),
               borderRadius: BorderRadius.circular(16),
-              border: Border.all(color: Colors.white.withValues(alpha: 0.05)),
+              border: Border.all(color: Colors.white.withOpacity(0.05)),
               boxShadow: [
                 BoxShadow(
-                  color: Colors.black.withValues(alpha: 0.2),
+                  color: Colors.black.withOpacity(0.2),
                   blurRadius: 8,
                   offset: const Offset(0, 4),
                 ),
@@ -770,11 +767,11 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
       decoration: BoxDecoration(
         color: const Color(0xFF1A1A1A),
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: AppColors.gold.withValues(alpha: 0.1)),
+        border: Border.all(color: AppColors.gold.withOpacity(0.1)),
       ),
       child: Row(
         children: [
-          Icon(icon, size: 20, color: AppColors.gold.withValues(alpha: 0.5)),
+          Icon(icon, size: 20, color: AppColors.gold.withOpacity(0.5)),
           const SizedBox(width: 12),
           Expanded(
             child: Column(
@@ -1042,7 +1039,7 @@ class _EditAdminProfileSheetState extends State<_EditAdminProfileSheet> {
           borderSide: const BorderSide(color: AppColors.gold),
         ),
         filled: true,
-        fillColor: Colors.white.withValues(alpha: 0.03),
+        fillColor: Colors.white.withOpacity(0.03),
       ),
       validator: (v) => v!.isEmpty ? 'Required' : null,
     );
@@ -1203,7 +1200,7 @@ class _MarketRatesSheetState extends State<_MarketRatesSheet> {
           borderSide: const BorderSide(color: AppColors.gold),
         ),
         filled: true,
-        fillColor: Colors.white.withValues(alpha: 0.03),
+        fillColor: Colors.white.withOpacity(0.03),
       ),
       validator: (v) => v!.isEmpty ? 'Required' : null,
     );
@@ -1287,13 +1284,13 @@ class _WeightAnalyticsSheet extends StatelessWidget {
                       decoration: BoxDecoration(
                         gradient: LinearGradient(
                           colors: [
-                            AppColors.gold.withValues(alpha: 0.2),
-                            AppColors.gold.withValues(alpha: 0.05),
+                            AppColors.gold.withOpacity(0.2),
+                            AppColors.gold.withOpacity(0.05),
                           ],
                         ),
                         borderRadius: BorderRadius.circular(16),
                         border: Border.all(
-                          color: AppColors.gold.withValues(alpha: 0.2),
+                          color: AppColors.gold.withOpacity(0.2),
                         ),
                       ),
                       child: Row(
@@ -1511,7 +1508,7 @@ class _AnalyticsHubSheetState extends State<_AnalyticsHubSheet> {
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
         decoration: BoxDecoration(
           color: isSelected
-              ? AppColors.gold.withValues(alpha: 0.1)
+              ? AppColors.gold.withOpacity(0.1)
               : Colors.transparent,
           borderRadius: BorderRadius.circular(20),
           border: Border.all(
@@ -1598,7 +1595,7 @@ class _AnalyticsHubSheetState extends State<_AnalyticsHubSheet> {
               dotData: const FlDotData(show: true),
               belowBarData: BarAreaData(
                 show: true,
-                color: AppColors.gold.withValues(alpha: 0.1),
+                color: AppColors.gold.withOpacity(0.1),
               ),
             ),
           ],
@@ -1700,9 +1697,9 @@ class _AnalyticsHubSheetState extends State<_AnalyticsHubSheet> {
           margin: const EdgeInsets.only(bottom: 12),
           padding: const EdgeInsets.all(12),
           decoration: BoxDecoration(
-            color: Colors.white.withValues(alpha: 0.03),
+            color: Colors.white.withOpacity(0.03),
             borderRadius: BorderRadius.circular(12),
-            border: Border.all(color: Colors.white.withValues(alpha: 0.05)),
+            border: Border.all(color: Colors.white.withOpacity(0.05)),
           ),
           child: Row(
             children: [
@@ -1710,7 +1707,7 @@ class _AnalyticsHubSheetState extends State<_AnalyticsHubSheet> {
                 width: 48,
                 height: 48,
                 decoration: BoxDecoration(
-                  color: Colors.white.withValues(alpha: 0.05),
+                  color: Colors.white.withOpacity(0.05),
                   borderRadius: BorderRadius.circular(8),
                 ),
                 child:
@@ -1764,7 +1761,7 @@ class _AnalyticsHubSheetState extends State<_AnalyticsHubSheet> {
                   vertical: 6,
                 ),
                 decoration: BoxDecoration(
-                  color: AppColors.gold.withValues(alpha: 0.1),
+                  color: AppColors.gold.withOpacity(0.1),
                   borderRadius: BorderRadius.circular(20),
                 ),
                 child: Row(

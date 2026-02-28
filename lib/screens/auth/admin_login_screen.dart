@@ -138,10 +138,10 @@ class _AdminLoginScreenState extends State<AdminLoginScreen> {
                   padding: const EdgeInsets.all(12),
                   margin: const EdgeInsets.only(bottom: 24),
                   decoration: BoxDecoration(
-                    color: AppColors.errorRed.withValues(alpha: 0.1),
+                    color: AppColors.errorRed.withOpacity(0.1),
                     borderRadius: BorderRadius.circular(12),
                     border: Border.all(
-                      color: AppColors.errorRed.withValues(alpha: 0.3),
+                      color: AppColors.errorRed.withOpacity(0.3),
                     ),
                   ),
                   child: Text(

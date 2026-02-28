@@ -23,34 +23,40 @@ class AllSubcategoriesScreen extends StatelessWidget {
       appBar: CustomAppBar(title: title.toUpperCase()),
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(16),
-        child: GridView.builder(
-          shrinkWrap: true,
-          physics: const NeverScrollableScrollPhysics(),
-          gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-            crossAxisCount: 3,
-            crossAxisSpacing: 12,
-            mainAxisSpacing: 12,
-            childAspectRatio: 0.85,
-          ),
-          itemCount: subcategories.length,
-          itemBuilder: (context, index) {
-            final subcategory = subcategories[index];
-            return CategoryCard(
-              name: subcategory['name'],
-              imagePath: subcategory['image'],
-              onTap: () {
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                    builder: (context) => ProductListingScreen(
-                      category: category,
-                      subcategory: subcategory['name'],
-                    ),
-                  ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            // ── Subcategories Grid ─────────────────────────────────────────
+            GridView.builder(
+              shrinkWrap: true,
+              physics: const NeverScrollableScrollPhysics(),
+              gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                crossAxisCount: 3,
+                crossAxisSpacing: 12,
+                mainAxisSpacing: 12,
+                childAspectRatio: 0.85,
+              ),
+              itemCount: subcategories.length,
+              itemBuilder: (context, index) {
+                final subcategory = subcategories[index];
+                return CategoryCard(
+                  name: subcategory['name'],
+                  imagePath: subcategory['image'],
+                  onTap: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => ProductListingScreen(
+                          category: category,
+                          subcategory: subcategory['name'],
+                        ),
+                      ),
+                    );
+                  },
                 );
               },
-            );
-          },
+            ),
+          ],
         ),
       ),
     );
