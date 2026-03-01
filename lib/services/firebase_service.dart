@@ -3,10 +3,13 @@ import 'package:firebase_storage/firebase_storage.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'dart:io';
 import 'package:flutter/foundation.dart';
-import 'package:vishal_gold/models/product.dart';
-import 'package:vishal_gold/models/order.dart' as app_order;
-import 'package:vishal_gold/models/market_settings.dart';
 import 'package:vishal_gold/models/app_banner.dart';
+import 'package:vishal_gold/models/category.dart' as app_models;
+import 'package:vishal_gold/models/market_settings.dart';
+import 'package:vishal_gold/models/notification.dart';
+import 'package:vishal_gold/models/order.dart' as app_order;
+import 'package:vishal_gold/models/product.dart';
+import 'package:vishal_gold/models/subcategory.dart';
 
 class FirebaseService {
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
@@ -153,6 +156,84 @@ class FirebaseService {
     } catch (e) {
       throw 'Failed to discard all changes: ${e.toString()}';
     }
+  }
+
+  // Banners Methods
+
+  Future<String> uploadBannerImage(File imageFile) async {
+    try {
+      final String fileName =
+          'banner_${DateTime.now().millisecondsSinceEpoch}.jpg';
+      final Reference storageRef = _storage.ref().child('banners/$fileName');
+      final UploadTask uploadTask = storageRef.putFile(imageFile);
+      final TaskSnapshot snapshot = await uploadTask;
+      return await snapshot.ref.getDownloadURL();
+    } catch (e) {
+      throw 'Failed to upload image: ${e.toString()}';
+    }
+  }
+
+  /// ========== NOTIFICATION OPERATIONS ==========
+
+  /// Get notifications for a specific user
+  Stream<List<AppNotification>> getUserNotifications(String userId) {
+    return _firestore
+        .collection(notificationsCollection)
+        .where('user_id', isEqualTo: userId)
+        .orderBy('created_at', descending: true)
+        .snapshots()
+        .map(
+          (snapshot) => snapshot.docs
+              .map(
+                (doc) =>
+                    AppNotification.fromJson({...doc.data(), 'id': doc.id}),
+              )
+              .toList(),
+        );
+  }
+
+  /// Get notifications for admins (where user_id is null or specifically targeted to admin)
+  Stream<List<AppNotification>> getAdminNotifications() {
+    return _firestore
+        .collection(notificationsCollection)
+        .where(
+          'user_id',
+          isEqualTo: 'admin',
+        ) // Using 'admin' as a generic user_id for admin broadcast
+        .orderBy('created_at', descending: true)
+        .snapshots()
+        .map(
+          (snapshot) => snapshot.docs
+              .map(
+                (doc) =>
+                    AppNotification.fromJson({...doc.data(), 'id': doc.id}),
+              )
+              .toList(),
+        );
+  }
+
+  Future<void> markNotificationRead(String notificationId) async {
+    await _firestore
+        .collection(notificationsCollection)
+        .doc(notificationId)
+        .update({'is_read': true});
+  }
+
+  Future<void> markNotificationsRead(List<String> notificationIds) async {
+    final batch = _firestore.batch();
+    for (String id in notificationIds) {
+      batch.update(_firestore.collection(notificationsCollection).doc(id), {
+        'is_read': true,
+      });
+    }
+    await batch.commit();
+  }
+
+  /// Write a notification directly to the database (used alongside push notifications)
+  Future<void> createDbNotification(AppNotification notification) async {
+    await _firestore
+        .collection(notificationsCollection)
+        .add(notification.toJson());
   }
 
   /// ========== USER OPERATIONS ==========
@@ -504,7 +585,44 @@ class FirebaseService {
     }
   }
 
-  /// Upload new product
+  /// Get related items by subcategory, excluding the current product
+  Future<List<Product>> getRelatedProducts(
+    String subcategory,
+    String excludeProductId,
+  ) async {
+    try {
+      final snapshot = await _firestore
+          .collection(productsCollection)
+          .where('subcategory', isEqualTo: subcategory)
+          .where('status', isEqualTo: 'published')
+          .where('is_active', isEqualTo: true)
+          .limit(10)
+          .get();
+
+      return snapshot.docs
+          .where((doc) => doc.id != excludeProductId)
+          .map((doc) => Product.fromJson({...doc.data(), 'id': doc.id}))
+          .toList();
+    } catch (e) {
+      throw 'Failed to fetch related products: ${e.toString()}';
+    }
+  }
+
+  /// Get recent products ordered by creation date
+  Stream<QuerySnapshot> getRecentProducts({
+    int limit = 20,
+    String status = 'published',
+  }) {
+    return _firestore
+        .collection(productsCollection)
+        .where('is_active', isEqualTo: true)
+        .where('status', isEqualTo: status)
+        .orderBy('created_at', descending: true)
+        .limit(limit)
+        .snapshots();
+  }
+
+  /// ========== PRODUCT MANAGEMENT (ADMIN) ==========
   Future<String> uploadProduct({
     required String tagNumber,
     required String category,
@@ -649,6 +767,43 @@ class FirebaseService {
       query = query.where('is_active', isEqualTo: true);
     }
     return query.snapshots();
+  }
+
+  Future<app_models.Category?> getCategoryById(String id) async {
+    try {
+      final doc = await _firestore
+          .collection(categoriesCollection)
+          .doc(id)
+          .get();
+      if (doc.exists && doc.data() != null) {
+        return app_models.Category.fromJson(doc.data()!, doc.id);
+      }
+      return null;
+    } catch (e) {
+      debugPrint('Error fetching category by id: $e');
+      return null;
+    }
+  }
+
+  Future<List<Subcategory>> getSubcategoriesList(
+    String categoryId, {
+    bool onlyActive = true,
+  }) async {
+    try {
+      Query query = _firestore
+          .collection(subcategoriesCollection)
+          .where('category_id', isEqualTo: categoryId);
+      if (onlyActive) {
+        query = query.where('is_active', isEqualTo: true);
+      }
+      final snapshot = await query.get();
+      return snapshot.docs.map((doc) {
+        return Subcategory.fromJson(doc.data() as Map<String, dynamic>, doc.id);
+      }).toList();
+    } catch (e) {
+      debugPrint('Error fetching subcategories by category id: $e');
+      return [];
+    }
   }
 
   Future<void> addCategory(
@@ -1691,7 +1846,8 @@ class FirebaseService {
 
       return analytics;
     } catch (e) {
-      throw 'Failed to get weight analytics: ${e.toString()}';
+      debugPrint('Error getting weight analytics: $e');
+      return {};
     }
   }
 
@@ -1841,7 +1997,45 @@ class FirebaseService {
     }
   }
 
-  /// ========== ANALYTICS ENHANCEMENTS ==========
+
+  /// Sends a targeted CRM push to a list of user UIDs.
+  /// Stores one notification_request doc per user in Firestore.
+  Future<int> sendCrmPushToUsers({
+    required List<String> userIds,
+    required String title,
+    required String body,
+    required String performedBy,
+    String segment = 'custom',
+  }) async {
+    if (userIds.isEmpty) return 0;
+    int sent = 0;
+    final batch = _firestore.batch();
+    for (final uid in userIds) {
+      final ref = _firestore.collection(notificationsCollection).doc();
+      batch.set(ref, {
+        'title': title,
+        'body': body,
+        'target': uid,
+        'segment': segment,
+        'type': 'crm_push',
+        'createdBy': performedBy,
+        'createdAt': FieldValue.serverTimestamp(),
+        'status': 'pending',
+      });
+      sent++;
+    }
+    await batch.commit();
+    await logAdminAction(
+      adminId: performedBy,
+      action: 'CRM_PUSH_NOTIFICATION',
+      targetId: 'batch',
+      targetType: 'notification',
+      details: 'CRM push sent to ${sent} users (segment: ${segment}): ${title}',
+    );
+    return sent;
+  }
+
+    /// ========== ANALYTICS ENHANCEMENTS ==========
 
   Future<List<Map<String, dynamic>>> getTrendingProducts({
     int limit = 5,

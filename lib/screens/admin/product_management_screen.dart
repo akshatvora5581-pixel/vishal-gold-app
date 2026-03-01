@@ -256,6 +256,7 @@ class _ProductManagementScreenState extends State<ProductManagementScreen> {
     );
 
     if (confirmed == true) {
+      if (!mounted) return;
       final performerId =
           context.read<AuthProvider>().currentUser?.uid ?? 'unknown';
       try {
@@ -1001,7 +1002,7 @@ class _AddEditProductSheetState extends State<_AddEditProductSheet> {
 
   Widget _buildImagePicker() {
     return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
+      crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
         const Text(
           'Product Images',
@@ -1099,7 +1100,7 @@ class _AddEditProductSheetState extends State<_AddEditProductSheet> {
 
   Widget _buildInventoryStatusSelector() {
     return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
+      crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
         const Text(
           'Inventory Status',
@@ -1243,7 +1244,7 @@ class _AddEditProductSheetState extends State<_AddEditProductSheet> {
   Widget _buildPuritySelector() {
     final options = _categoryObj?.purityOptions ?? ['18K', '20K', '22K'];
     return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
+      crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
         const Text(
           'Purity',

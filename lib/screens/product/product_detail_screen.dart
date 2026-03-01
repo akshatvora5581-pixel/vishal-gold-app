@@ -13,6 +13,7 @@ import 'package:vishal_gold/screens/cart/cart_screen.dart';
 import 'package:vishal_gold/screens/product/full_screen_photo_viewer.dart';
 import 'package:vishal_gold/services/firebase_service.dart';
 import 'package:url_launcher/url_launcher.dart';
+import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:vishal_gold/widgets/common/shimmer_widget.dart';
 
 class ProductDetailScreen extends StatefulWidget {
@@ -29,15 +30,7 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
   int _currentImageIndex = 0;
   static const int _maxQuantity = 99; // BUG-004: bounded quantity
 
-  /// 0.0 → details visible (image = 55% height)
-  /// 1.0 → image fully expanded (full-screen), details hidden
-  late AnimationController _controller;
-
   late PageController _imagePageController;
-
-  // Cached sizes (set in build)
-  double _screenHeight = 0;
-  double _dragAnchorY = 0;
 
   void _incrementQuantity() {
     if (_quantity < _maxQuantity) setState(() => _quantity++);
@@ -220,8 +213,7 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
                   decoration: BoxDecoration(
                     color: _currentImageIndex == i
                         ? AppColors.gold
-                        // ignore: deprecated_member_use
-                        : AppColors.white.withOpacity(0.50),
+                        : AppColors.white.withValues(alpha: 0.50),
                     borderRadius: BorderRadius.circular(4),
                   ),
                 ),
@@ -270,8 +262,7 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
                   vertical: 6,
                 ),
                 decoration: BoxDecoration(
-                  // ignore: deprecated_member_use
-                  color: AppColors.gold.withOpacity(0.15),
+                  color: AppColors.gold.withValues(alpha: 0.15),
                   borderRadius: BorderRadius.circular(20),
                   border: Border.all(color: AppColors.gold, width: 1),
                 ),
@@ -319,19 +310,15 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
     );
   }
 
-  // ── Sticky Bottom Action Bar ─────────────────────────────────────────────────
-
   Widget _buildStickyActionBar(BuildContext context) {
     final bottomPad = MediaQuery.of(context).padding.bottom;
     return Container(
       padding: EdgeInsets.fromLTRB(16, 12, 16, bottomPad > 0 ? bottomPad : 16),
       decoration: BoxDecoration(
-        // ignore: deprecated_member_use
-        color: AppColors.surface.withOpacity(0.97),
+        color: AppColors.surface.withValues(alpha: 0.97),
         boxShadow: [
           BoxShadow(
-            // ignore: deprecated_member_use
-            color: Colors.black.withOpacity(0.4),
+            color: Colors.black.withValues(alpha: 0.4),
             blurRadius: 20,
             offset: const Offset(0, -6),
           ),
@@ -388,15 +375,11 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
       onTap: onTap,
       child: AnimatedContainer(
         duration: const Duration(milliseconds: 150),
-        width: 44,
-        height: 44,
         decoration: BoxDecoration(
-          // ignore: deprecated_member_use
-          color: Colors.black.withOpacity(0.38),
+          color: Colors.black.withValues(alpha: 0.38),
           shape: BoxShape.circle,
           border: Border.all(
-            // ignore: deprecated_member_use
-            color: Colors.white.withOpacity(0.25),
+            color: Colors.white.withValues(alpha: 0.25),
             width: 1,
           ),
         ),
@@ -421,8 +404,7 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
           width: 44,
           height: 44,
           decoration: BoxDecoration(
-            // ignore: deprecated_member_use
-            color: AppColors.white.withOpacity(0.90),
+            color: AppColors.white.withValues(alpha: 0.90),
             shape: BoxShape.circle,
             boxShadow: const [BoxShadow(color: Colors.black26, blurRadius: 8)],
           ),
@@ -471,10 +453,7 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
           decoration: BoxDecoration(
             color: AppColors.background,
             borderRadius: BorderRadius.circular(16),
-            border: Border.all(
-              // ignore: deprecated_member_use
-              color: AppColors.grey.withOpacity(0.15),
-            ),
+            border: Border.all(color: AppColors.grey.withValues(alpha: 0.15)),
           ),
           child: Row(
             mainAxisSize: MainAxisSize.min,
@@ -507,13 +486,15 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
             color: AppColors.surface,
             borderRadius: BorderRadius.circular(16),
             border: Border.all(
-              // ignore: deprecated_member_use
-              color: const Color(0xFF25D366).withOpacity(0.3),
+              color: const Color(0xFF25D366).withValues(alpha: 0.3),
             ),
           ),
           child: IconButton(
             onPressed: () => _launchWhatsApp(context),
-            icon: const Icon(Icons.chat_outlined, color: Color(0xFF25D366)),
+            icon: const FaIcon(
+              FontAwesomeIcons.whatsapp,
+              color: Color(0xFF25D366),
+            ),
             tooltip: 'Query on WhatsApp',
           ),
         ),
@@ -655,12 +636,10 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
             return Container(
               padding: const EdgeInsets.all(16),
               decoration: BoxDecoration(
-                // ignore: deprecated_member_use
-                color: AppColors.gold.withOpacity(0.10),
+                color: AppColors.gold.withValues(alpha: 0.10),
                 borderRadius: BorderRadius.circular(16),
                 border: Border.all(
-                  // ignore: deprecated_member_use
-                  color: AppColors.gold.withOpacity(0.30),
+                  color: AppColors.gold.withValues(alpha: 0.30),
                 ),
               ),
               child: Column(

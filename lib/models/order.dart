@@ -1,3 +1,5 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
+
 class Order {
   final String id;
   final String userId;
@@ -26,6 +28,13 @@ class Order {
   });
 
   factory Order.fromJson(Map<String, dynamic> json) {
+    DateTime parseDate(dynamic date) {
+      if (date == null) return DateTime.now();
+      if (date is Timestamp) return date.toDate();
+      if (date is String) return DateTime.tryParse(date) ?? DateTime.now();
+      return DateTime.now();
+    }
+
     return Order(
       id: json['id'] as String? ?? '',
       userId: json['userId'] as String? ?? '',
@@ -35,12 +44,8 @@ class Order {
       totalGrossWeight: (json['totalGrossWeight'] as num? ?? 0.0).toDouble(),
       totalNetWeight: (json['totalNetWeight'] as num? ?? 0.0).toDouble(),
       adminNotes: json['adminNotes'] as String?,
-      createdAt: json['createdAt'] != null
-          ? DateTime.parse(json['createdAt'] as String)
-          : DateTime.now(),
-      updatedAt: json['updatedAt'] != null
-          ? DateTime.parse(json['updatedAt'] as String)
-          : DateTime.now(),
+      createdAt: parseDate(json['createdAt']),
+      updatedAt: parseDate(json['updatedAt']),
       items: json['items'] != null
           ? (json['items'] as List)
                 .map((item) => OrderItem.fromJson(item as Map<String, dynamic>))

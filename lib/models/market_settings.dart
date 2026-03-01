@@ -14,13 +14,18 @@ class MarketSettings {
   });
 
   factory MarketSettings.fromJson(Map<String, dynamic> json) {
+    DateTime parseDate(dynamic date) {
+      if (date == null) return DateTime.now();
+      if (date is Timestamp) return date.toDate();
+      if (date is String) return DateTime.tryParse(date) ?? DateTime.now();
+      return DateTime.now();
+    }
+
     return MarketSettings(
       goldRate24K: (json['gold_rate_24k'] ?? 0.0).toDouble(),
       goldRate22K: (json['gold_rate_22k'] ?? 0.0).toDouble(),
       goldRate18K: (json['gold_rate_18k'] ?? 0.0).toDouble(),
-      updatedAt: json['updated_at'] is Timestamp
-          ? (json['updated_at'] as Timestamp).toDate()
-          : DateTime.now(),
+      updatedAt: parseDate(json['updated_at']),
     );
   }
 

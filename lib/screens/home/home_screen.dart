@@ -1,4 +1,6 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
+import 'package:google_fonts/google_fonts.dart';
 import 'package:provider/provider.dart';
 import 'package:vishal_gold/constants/app_colors.dart';
 import 'package:vishal_gold/providers/auth_provider.dart';
@@ -8,10 +10,11 @@ import 'package:vishal_gold/screens/profile/profile_screen.dart';
 import 'package:vishal_gold/screens/recent/recent_designs_screen.dart';
 import 'package:vishal_gold/widgets/common/custom_bottom_nav.dart';
 import 'package:vishal_gold/widgets/common/custom_order_fab.dart';
+import 'package:vishal_gold/widgets/common/global_cart_icon.dart';
 import 'package:vishal_gold/widgets/home/banner_carousel.dart';
 import 'package:vishal_gold/widgets/home/category_section.dart';
-import 'package:vishal_gold/screens/home/all_subcategories_screen.dart';
-import 'package:vishal_gold/config/category_data.dart';
+import 'package:vishal_gold/models/category.dart' as app_models;
+import 'package:vishal_gold/services/firebase_service.dart';
 import 'package:vishal_gold/providers/preview_provider.dart';
 import 'package:vishal_gold/screens/search/global_search_screen.dart';
 
@@ -61,6 +64,17 @@ class _HomeScreenState extends State<HomeScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: AppColors.background,
+      appBar: AppBar(
+        title: Text(
+          'VISHAL GOLD',
+          style: GoogleFonts.playfairDisplay(
+            color: AppColors.gold,
+            fontWeight: FontWeight.bold,
+          ),
+        ),
+        backgroundColor: AppColors.surface,
+        actions: const [GlobalCartIcon(), SizedBox(width: 8)],
+      ),
       body: Column(
         children: [
           _buildPreviewBanner(context),
@@ -259,73 +273,44 @@ class _HomeTabState extends State<HomeTab> {
                     const SizedBox(height: 10),
                     const BannerCarousel(),
                     const SizedBox(height: 16),
-                    CategorySection(
-                      title: '84 MELTING',
-                      category: CategoryData.category84,
-                      onViewAll: () {
-                        final subs = CategoryData.getSubcategories(
-                          CategoryData.category84,
-                        );
-                        Navigator.push(
-                          context,
-                          MaterialPageRoute(
-                            builder: (_) => AllSubcategoriesScreen(
-                              title: '84 MELTING',
-                              category: CategoryData.category84,
-                              subcategories: subs,
+                    StreamBuilder<QuerySnapshot>(
+                      stream: FirebaseService().getCategories(onlyActive: true),
+                      builder: (context, snapshot) {
+                        if (snapshot.connectionState ==
+                            ConnectionState.waiting) {
+                          return const Center(
+                            child: CircularProgressIndicator(
+                              color: AppColors.gold,
                             ),
-                          ),
+                          );
+                        }
+                        if (snapshot.hasError ||
+                            !snapshot.hasData ||
+                            snapshot.data!.docs.isEmpty) {
+                          return const SizedBox.shrink();
+                        }
+
+                        final categories = snapshot.data!.docs.map((doc) {
+                          return app_models.Category.fromJson(
+                            doc.data() as Map<String, dynamic>,
+                            doc.id,
+                          );
+                        }).toList();
+
+                        // Sort categories by creation date or keep them naturally ordered
+                        categories.sort(
+                          (a, b) => a.createdAt.compareTo(b.createdAt),
+                        );
+
+                        return Column(
+                          children: categories.map((cat) {
+                            return Padding(
+                              padding: const EdgeInsets.only(bottom: 24.0),
+                              child: CategorySection(category: cat),
+                            );
+                          }).toList(),
                         );
                       },
-                      subcategories: CategoryData.getSubcategories(
-                        CategoryData.category84,
-                      ),
-                    ),
-                    const SizedBox(height: 24),
-                    CategorySection(
-                      title: '92 MELTING',
-                      category: CategoryData.category92,
-                      onViewAll: () {
-                        final subs = CategoryData.getSubcategories(
-                          CategoryData.category92,
-                        );
-                        Navigator.push(
-                          context,
-                          MaterialPageRoute(
-                            builder: (_) => AllSubcategoriesScreen(
-                              title: '92 MELTING',
-                              category: CategoryData.category92,
-                              subcategories: subs,
-                            ),
-                          ),
-                        );
-                      },
-                      subcategories: CategoryData.getSubcategories(
-                        CategoryData.category92,
-                      ),
-                    ),
-                    const SizedBox(height: 24),
-                    CategorySection(
-                      title: '92 MELTING CHAIN',
-                      category: CategoryData.categoryChains92,
-                      onViewAll: () {
-                        final subs = CategoryData.getSubcategories(
-                          CategoryData.categoryChains92,
-                        );
-                        Navigator.push(
-                          context,
-                          MaterialPageRoute(
-                            builder: (_) => AllSubcategoriesScreen(
-                              title: '92 MELTING CHAIN',
-                              category: CategoryData.categoryChains92,
-                              subcategories: subs,
-                            ),
-                          ),
-                        );
-                      },
-                      subcategories: CategoryData.getSubcategories(
-                        CategoryData.categoryChains92,
-                      ),
                     ),
                     const SizedBox(height: 32),
                   ],

@@ -78,7 +78,9 @@ class _FullScreenPhotoViewerState extends State<FullScreenPhotoViewer> {
                           shape: BoxShape.rectangle,
                           boxShadow: [
                             BoxShadow(
-                              color: const Color(0xFFD4AF37).withOpacity(0.2),
+                              color: const Color(
+                                0xFFD4AF37,
+                              ).withValues(alpha: 0.2),
                               blurRadius: 40,
                               spreadRadius: 5,
                             ),
@@ -124,7 +126,6 @@ class _FullScreenPhotoViewerState extends State<FullScreenPhotoViewer> {
                       begin: Alignment.topCenter,
                       end: Alignment.bottomCenter,
                       colors: [
-                        // ignore: deprecated_member_use
                         Colors.black.withValues(alpha: 0.65),
                         Colors.transparent,
                       ],
@@ -158,11 +159,9 @@ class _FullScreenPhotoViewerState extends State<FullScreenPhotoViewer> {
                             vertical: 6,
                           ),
                           decoration: BoxDecoration(
-                            // ignore: deprecated_member_use
                             color: Colors.black.withValues(alpha: 0.5),
                             borderRadius: BorderRadius.circular(20),
                             border: Border.all(
-                              // ignore: deprecated_member_use
                               color: AppColors.gold.withValues(alpha: 0.4),
                             ),
                           ),
@@ -204,7 +203,6 @@ class _FullScreenPhotoViewerState extends State<FullScreenPhotoViewer> {
                         decoration: BoxDecoration(
                           color: i == _currentIndex
                               ? AppColors.gold
-                              // ignore: deprecated_member_use
                               : Colors.white.withValues(alpha: 0.4),
                           borderRadius: BorderRadius.circular(4),
                         ),
@@ -298,16 +296,16 @@ class _NavCircleButtonState extends State<_NavCircleButton> {
             width: 50,
             height: 50,
             decoration: BoxDecoration(
-              color: Colors.black.withOpacity(0.45),
+              color: Colors.black.withValues(alpha: 0.45),
               shape: BoxShape.circle,
               border: Border.all(
-                color: Colors.white.withOpacity(0.2),
+                color: Colors.white.withValues(alpha: 0.2),
                 width: 1,
               ),
               boxShadow: [
                 if (_isPressed)
                   BoxShadow(
-                    color: AppColors.gold.withOpacity(0.6),
+                    color: AppColors.gold.withValues(alpha: 0.6),
                     blurRadius: 15,
                     spreadRadius: 2,
                   ),
@@ -341,10 +339,10 @@ class _GlassButton extends StatelessWidget {
             width: 44,
             height: 44,
             decoration: BoxDecoration(
-              color: Colors.white.withOpacity(0.12),
+              color: Colors.white.withValues(alpha: 0.12),
               shape: BoxShape.circle,
               border: Border.all(
-                color: Colors.white.withOpacity(0.25),
+                color: Colors.white.withValues(alpha: 0.25),
                 width: 0.5,
               ),
             ),

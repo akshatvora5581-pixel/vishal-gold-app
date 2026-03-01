@@ -26,25 +26,24 @@ class Admin {
   });
 
   factory Admin.fromJson(Map<String, dynamic> json, String id) {
+    DateTime parseDate(dynamic date) {
+      if (date == null) return DateTime.now();
+      if (date is Timestamp) return date.toDate();
+      if (date is String) return DateTime.tryParse(date) ?? DateTime.now();
+      return DateTime.now();
+    }
+
     return Admin(
       id: id,
-      fullName: json['full_name'] as String,
-      email: json['email'] as String,
+      fullName: json['full_name'] as String? ?? 'Unnamed Admin',
+      email: json['email'] as String? ?? '',
       whatsappNumber: json['whatsapp_number'] as String?,
       secondaryEmail: json['secondary_email'] as String?,
       role: json['role'] as String? ?? 'editor',
       contactDetails: json['contact_details'] as Map<String, dynamic>?,
       isActive: json['is_active'] as bool? ?? true,
-      createdAt: json['created_at'] != null
-          ? (json['created_at'] is String
-                ? DateTime.parse(json['created_at'] as String)
-                : (json['created_at'] as Timestamp).toDate())
-          : DateTime.now(),
-      updatedAt: json['updated_at'] != null
-          ? (json['updated_at'] is String
-                ? DateTime.parse(json['updated_at'] as String)
-                : (json['updated_at'] as Timestamp).toDate())
-          : DateTime.now(),
+      createdAt: parseDate(json['created_at']),
+      updatedAt: parseDate(json['updated_at']),
     );
   }
 

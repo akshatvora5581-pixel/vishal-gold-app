@@ -22,10 +22,12 @@ class _SplashScreenState extends State<SplashScreen> {
   }
 
   Future<void> _navigateToHome() async {
-    await Future.delayed(const Duration(seconds: 3));
-    if (mounted) {
-      await LocalStorageService.init();
+    try {
+      await Future.delayed(const Duration(seconds: 3));
       if (!mounted) return;
+
+      // Ensure storage is initialized (redundant but safe)
+      await LocalStorageService.init();
 
       final bool infoProvided = await LocalStorageService.isUserInfoProvided();
       if (!mounted) return;
@@ -51,6 +53,22 @@ class _SplashScreenState extends State<SplashScreen> {
           MaterialPageRoute(builder: (context) => const HomeScreen()),
         );
       }
+    } catch (e) {
+      debugPrint('Splash navigation error: $e');
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Initialization Error: $e'),
+            backgroundColor: Colors.red,
+            duration: const Duration(seconds: 10),
+            action: SnackBarAction(
+              label: 'RETRY',
+              textColor: Colors.white,
+              onPressed: _navigateToHome,
+            ),
+          ),
+        );
+      }
     }
   }
 
@@ -70,7 +88,7 @@ class _SplashScreenState extends State<SplashScreen> {
             ),
             const SizedBox(height: 32),
             const CircularProgressIndicator(
-              valueColor: AlwaysStoppedAnimation(AppColors.black),
+              valueColor: AlwaysStoppedAnimation(AppColors.gold),
             ),
           ],
         ),

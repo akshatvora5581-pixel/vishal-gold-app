@@ -347,24 +347,18 @@ class _UploadDesignScreenState extends State<UploadDesignScreen> {
                       'Purity',
                       style: TextStyle(fontWeight: FontWeight.bold),
                     ),
-                    Row(
-                      children: [
-                        Radio<int>(
-                          value: 84,
-                          groupValue: _selectedPurity,
-                          onChanged: (v) =>
-                              setState(() => _selectedPurity = v!),
-                        ),
-                        const Text('84 (20K)'),
-                        const SizedBox(width: 20),
-                        Radio<int>(
-                          value: 92,
-                          groupValue: _selectedPurity,
-                          onChanged: (v) =>
-                              setState(() => _selectedPurity = v!),
-                        ),
-                        const Text('92 (22K)'),
-                      ],
+                    RadioGroup<int>(
+                      groupValue: _selectedPurity,
+                      onChanged: (v) => setState(() => _selectedPurity = v!),
+                      child: Row(
+                        children: [
+                          Radio<int>(value: 84),
+                          const Text('84 (20K)'),
+                          const SizedBox(width: 20),
+                          Radio<int>(value: 92),
+                          const Text('92 (22K)'),
+                        ],
+                      ),
                     ),
                     const SizedBox(height: 16),
 

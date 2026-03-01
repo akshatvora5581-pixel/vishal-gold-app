@@ -6,8 +6,14 @@ import 'package:vishal_gold/constants/app_colors.dart';
 import 'package:vishal_gold/providers/auth_provider.dart';
 import 'package:vishal_gold/screens/auth/phone_auth_screen.dart';
 import 'package:vishal_gold/screens/order/order_history_screen.dart';
-import 'package:vishal_gold/screens/info/contact_us_screen.dart';
-import 'package:vishal_gold/screens/info/policy_screen.dart';
+import 'package:vishal_gold/screens/info/privacy_policy_screen.dart';
+import 'package:vishal_gold/screens/profile/edit_profile_screen.dart';
+import 'package:vishal_gold/screens/profile/quick_login_settings_screen.dart';
+import 'package:vishal_gold/screens/settings/language_settings_screen.dart';
+import 'package:vishal_gold/screens/settings/notification_settings_screen.dart';
+import 'package:vishal_gold/screens/settings/security_center_screen.dart';
+import 'package:vishal_gold/screens/settings/storage_settings_screen.dart';
+import 'package:vishal_gold/screens/settings/support_hub_screen.dart';
 import 'package:vishal_gold/services/local_storage_service.dart';
 
 class ProfileScreen extends StatefulWidget {
@@ -165,17 +171,49 @@ class _ProfileScreenState extends State<ProfileScreen> {
                     ],
                   ),
                   const SizedBox(height: 16),
-                  Text(
-                    _localUserName.isNotEmpty
-                        ? _localUserName
-                        : (userProfile['fullName'] as String? ??
-                              userProfile['name'] as String? ??
-                              'User'),
-                    style: GoogleFonts.playfairDisplay(
-                      fontSize: 28,
-                      fontWeight: FontWeight.bold,
-                      color: AppColors.white,
-                    ),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Flexible(
+                        child: Text(
+                          _localUserName.isNotEmpty
+                              ? _localUserName
+                              : (userProfile['fullName'] as String? ??
+                                    userProfile['name'] as String? ??
+                                    'User'),
+                          style: GoogleFonts.playfairDisplay(
+                            fontSize: 28,
+                            fontWeight: FontWeight.bold,
+                            color: AppColors.white,
+                          ),
+                          textAlign: TextAlign.center,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                      ),
+                      const SizedBox(width: 8),
+                      GestureDetector(
+                        onTap: () {
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (_) => const EditProfileScreen(),
+                            ),
+                          ).then((_) => _loadLocalName());
+                        },
+                        child: Container(
+                          padding: const EdgeInsets.all(6),
+                          decoration: BoxDecoration(
+                            color: AppColors.gold.withValues(alpha: 0.1),
+                            shape: BoxShape.circle,
+                          ),
+                          child: const Icon(
+                            Icons.edit,
+                            color: AppColors.gold,
+                            size: 18,
+                          ),
+                        ),
+                      ),
+                    ],
                   ),
                   const SizedBox(height: 8),
                   Container(
@@ -252,21 +290,76 @@ class _ProfileScreenState extends State<ProfileScreen> {
                         ),
                       ),
                     ),
-                    _MenuRow(
-                      icon: Icons.info_outline,
-                      title: 'About App',
-                      onTap: () => showAboutDialog(
-                        context: context,
-                        applicationName: 'Vishal Gold',
+                    if (userProfile['role'] == 'ADMIN' ||
+                        userProfile['role'] == 'SUPER_ADMIN')
+                      _MenuRow(
+                        icon: Icons.security,
+                        title: 'Quick Login Settings',
+                        onTap: () => Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (_) => const QuickLoginSettingsScreen(),
+                          ),
+                        ),
                       ),
-                    ),
+
+                    if (userProfile['role'] == 'ADMIN' ||
+                        userProfile['role'] == 'SUPER_ADMIN')
+                      _MenuRow(
+                        icon: Icons.security_outlined,
+                        title: 'Security Center',
+                        onTap: () => Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (_) => const SecurityCenterScreen(),
+                          ),
+                        ),
+                      ),
+
+                    if (userProfile['role'] == 'ADMIN' ||
+                        userProfile['role'] == 'SUPER_ADMIN')
+                      _MenuRow(
+                        icon: Icons.notifications_none_outlined,
+                        title: 'Notification Preferences',
+                        onTap: () => Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (_) => const NotificationSettingsScreen(),
+                          ),
+                        ),
+                      ),
+
                     _MenuRow(
-                      icon: Icons.support_agent_outlined,
-                      title: 'Contact Us',
+                      icon: Icons.language_outlined,
+                      title: 'App Language',
                       onTap: () => Navigator.push(
                         context,
                         MaterialPageRoute(
-                          builder: (_) => const ContactUsScreen(),
+                          builder: (_) => const LanguageSettingsScreen(),
+                        ),
+                      ),
+                    ),
+
+                    if (userProfile['role'] == 'ADMIN' ||
+                        userProfile['role'] == 'SUPER_ADMIN')
+                      _MenuRow(
+                        icon: Icons.storage_outlined,
+                        title: 'Storage & Data',
+                        onTap: () => Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (_) => const StorageSettingsScreen(),
+                          ),
+                        ),
+                      ),
+
+                    _MenuRow(
+                      icon: Icons.support_agent_outlined,
+                      title: 'Support Hub',
+                      onTap: () => Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (_) => const SupportHubScreen(),
                         ),
                       ),
                     ),
@@ -276,10 +369,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                       onTap: () => Navigator.push(
                         context,
                         MaterialPageRoute(
-                          builder: (_) => const PolicyScreen(
-                            title: 'Privacy Policy',
-                            content: 'Privacy Content...',
-                          ),
+                          builder: (_) => const PrivacyPolicyScreen(),
                         ),
                       ),
                     ),

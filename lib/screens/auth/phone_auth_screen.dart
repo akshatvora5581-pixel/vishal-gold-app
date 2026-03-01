@@ -5,6 +5,8 @@ import 'package:vishal_gold/services/firebase_auth_service.dart';
 import 'package:vishal_gold/services/firebase_service.dart';
 import 'package:vishal_gold/constants/app_colors.dart';
 import 'package:vishal_gold/screens/home/home_screen.dart';
+import 'package:vishal_gold/screens/auth/admin_login_screen.dart';
+import 'dart:async';
 
 class PhoneAuthScreen extends StatefulWidget {
   const PhoneAuthScreen({super.key});
@@ -33,6 +35,8 @@ class _PhoneAuthScreenState extends State<PhoneAuthScreen> {
   bool _showNameField = false;
   // OTP rate limiting (VAPT-004): 60s cooldown after each OTP request
   int _otpCooldownSecondsRemaining = 0;
+  Timer? _adminTriggerTimer;
+  bool _isAdminTriggerActive = false;
 
   @override
   void dispose() {
@@ -210,12 +214,18 @@ class _PhoneAuthScreenState extends State<PhoneAuthScreen> {
     }
   }
 
-  // VAPT-003: Removed _navigateToAdminLogin() hidden gesture entry point.
-  // Admin access via deep link or explicitly secured route only.
+  // VAPT-003: Restricted admin access.
+  // Re-implemented per user request with a 5-second hold requirement.
+  void _navigateToAdminLogin() {
+    Navigator.of(
+      context,
+    ).push(MaterialPageRoute(builder: (_) => const AdminLoginScreen()));
+  }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      resizeToAvoidBottomInset: false,
       backgroundColor: AppColors.background,
       body: SafeArea(
         child: Center(
@@ -225,26 +235,40 @@ class _PhoneAuthScreenState extends State<PhoneAuthScreen> {
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
                 // Logo Section — no hidden gesture (VAPT-003 fix)
-                Container(
-                  width: 140,
-                  height: 140,
-                  decoration: BoxDecoration(
-                    shape: BoxShape.circle,
-                    border: Border.all(color: AppColors.gold, width: 2),
-                    boxShadow: [
-                      BoxShadow(
-                        // ignore: deprecated_member_use
-                        color: AppColors.gold.withValues(alpha: 0.2),
-                        blurRadius: 20,
-                        spreadRadius: 5,
-                      ),
-                    ],
-                  ),
-                  padding: const EdgeInsets.all(25),
-                  child: Image.asset(
-                    'assets/logo.png',
-                    fit: BoxFit.contain,
-                    color: AppColors.gold,
+                GestureDetector(
+                  onLongPressStart: (_) {
+                    _isAdminTriggerActive = true;
+                    _adminTriggerTimer = Timer(const Duration(seconds: 5), () {
+                      if (_isAdminTriggerActive) {
+                        _navigateToAdminLogin();
+                      }
+                    });
+                  },
+                  onLongPressEnd: (_) {
+                    _isAdminTriggerActive = false;
+                    _adminTriggerTimer?.cancel();
+                  },
+                  child: Container(
+                    width: 140,
+                    height: 140,
+                    decoration: BoxDecoration(
+                      shape: BoxShape.circle,
+                      border: Border.all(color: AppColors.gold, width: 2),
+                      boxShadow: [
+                        BoxShadow(
+                          // ignore: deprecated_member_use
+                          color: AppColors.gold.withValues(alpha: 0.2),
+                          blurRadius: 20,
+                          spreadRadius: 5,
+                        ),
+                      ],
+                    ),
+                    padding: const EdgeInsets.all(25),
+                    child: Image.asset(
+                      'assets/logo.png',
+                      fit: BoxFit.contain,
+                      color: AppColors.gold,
+                    ),
                   ),
                 ),
 
@@ -442,7 +466,7 @@ class _PhoneAuthScreenState extends State<PhoneAuthScreen> {
     TextCapitalization textCapitalization = TextCapitalization.none,
   }) {
     return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
+      crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
         Text(
           label.toUpperCase(),

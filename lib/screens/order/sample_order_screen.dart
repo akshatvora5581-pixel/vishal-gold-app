@@ -489,9 +489,7 @@ class _SampleOrderScreenState extends State<SampleOrderScreen> {
                                           width: 24,
                                           height: 24,
                                           decoration: BoxDecoration(
-                                            color: Colors.black.withValues(
-                                              alpha: 0.7,
-                                            ),
+                                            color: Colors.black.withValues(alpha: 0.7),
                                             shape: BoxShape.circle,
                                           ),
                                           child: const Icon(
