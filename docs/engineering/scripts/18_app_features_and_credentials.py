@@ -60,20 +60,29 @@ add_table(doc,
     ]
 )
 
-add_h2(doc, "2.2 Default Super Admin Credentials")
+add_h2(doc, "2.2 System Accounts & Core Credentials")
+add_note(doc, "CRITICAL", "Do not lose these credentials. They provide root access to Google services, Firebase, and Gmail.")
+add_table(doc,
+    headers=["Account Type", "ID / Email", "Password / Key"],
+    rows=[
+        ["Gmail & Firebase Console", "vishalgoldapp@gmail.com", "VishalGold123$%^"],
+    ]
+)
+
+add_h2(doc, "2.3 Default Super Admin Credentials")
 add_note(doc, "IMPORTANT",
     "These are the initial Super Admin credentials. Change the password immediately after first login.")
 add_table(doc,
     headers=["Field", "Default Value"],
     rows=[
         ["Email",          "admin@vishalgold.com"],
-        ["Password",       "[PROVIDED SECURELY — change on first login]"],
+        ["Password",       "Vishal!@#456"],
         ["Role",           "SUPER_ADMIN"],
         ["Firestore Path", "admins/{adminDocumentId}"],
     ]
 )
 
-add_h2(doc, "2.3 Admin Account — Firestore Fields")
+add_h2(doc, "2.4 Admin Account — Firestore Fields")
 add_table(doc,
     headers=["Field", "Type", "Description"],
     rows=[
@@ -86,7 +95,7 @@ add_table(doc,
     ]
 )
 
-add_h2(doc, "2.4 Customer / Wholesaler Account — Firestore Fields")
+add_h2(doc, "2.5 Customer / Wholesaler Account — Firestore Fields")
 add_table(doc,
     headers=["Field", "Type", "Description"],
     rows=[
@@ -105,7 +114,7 @@ add_table(doc,
     ]
 )
 
-add_h2(doc, "2.5 Quick-Login PIN (Admin Only)")
+add_h2(doc, "2.6 Quick-Login PIN (Admin Only)")
 add_table(doc,
     headers=["Setting", "Detail"],
     rows=[
