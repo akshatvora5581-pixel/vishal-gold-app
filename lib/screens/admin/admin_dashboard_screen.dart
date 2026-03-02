@@ -23,6 +23,7 @@ import 'package:vishal_gold/screens/admin/crm_hub_screen.dart';
 import 'package:vishal_gold/screens/admin/flash_sale_creator_screen.dart';
 import 'package:vishal_gold/screens/admin/design_to_social_screen.dart';
 import 'package:vishal_gold/screens/admin/audit_trail_screen.dart';
+import 'package:vishal_gold/screens/admin/contact_management_screen.dart';
 import 'package:vishal_gold/services/firebase_service.dart';
 import 'package:vishal_gold/utils/app_layout.dart';
 
@@ -101,153 +102,173 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
                   const SizedBox(height: 32),
 
                   // Catalog Management
-                  _buildSectionHeader(
-                    'Catalog Management',
-                    Icons.inventory_2_outlined,
-                  ),
-                  const SizedBox(height: 14),
-                  _buildModuleGrid([
-                    _MenuAction(
-                      title: 'Products',
-                      icon: Icons.inventory_2_outlined,
-                      color: const Color(0xFFFFB347),
-                      onTap: () => Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                          builder: (_) => const ProductManagementScreen(),
+                  if (_currentAdmin.hasPermission('manage_products')) ...[
+                    _buildSectionHeader(
+                      'Catalog Management',
+                      Icons.inventory_2_outlined,
+                    ),
+                    const SizedBox(height: 14),
+                    _buildModuleGrid([
+                      _MenuAction(
+                        title: 'Products',
+                        icon: Icons.inventory_2_outlined,
+                        color: const Color(0xFFFFB347),
+                        onTap: () => Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (_) => const ProductManagementScreen(),
+                          ),
                         ),
                       ),
-                    ),
-                    _MenuAction(
-                      title: 'Categories',
-                      icon: Icons.category_outlined,
-                      color: const Color(0xFF42A5F5),
-                      onTap: () => Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                          builder: (_) => const CategoryManagementScreen(),
+                      _MenuAction(
+                        title: 'Categories',
+                        icon: Icons.category_outlined,
+                        color: const Color(0xFF42A5F5),
+                        onTap: () => Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (_) => const CategoryManagementScreen(),
+                          ),
                         ),
                       ),
-                    ),
-                    _MenuAction(
-                      title: 'Subcategories',
-                      icon: Icons.account_tree_outlined,
-                      color: const Color(0xFF66BB6A),
-                      onTap: () => Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                          builder: (_) =>
-                              const SubcategoryManagementScreen(category: null),
+                      _MenuAction(
+                        title: 'Subcategories',
+                        icon: Icons.account_tree_outlined,
+                        color: const Color(0xFF66BB6A),
+                        onTap: () => Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (_) => const SubcategoryManagementScreen(
+                              category: null,
+                            ),
+                          ),
                         ),
                       ),
-                    ),
-                    _MenuAction(
-                      title: 'Banners',
-                      icon: Icons.photo_library_outlined,
-                      color: const Color(0xFFEF5350),
-                      onTap: () => Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                          builder: (_) => const BannerManagementScreen(),
+                      _MenuAction(
+                        title: 'Banners',
+                        icon: Icons.photo_library_outlined,
+                        color: const Color(0xFFEF5350),
+                        onTap: () => Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (_) => const BannerManagementScreen(),
+                          ),
                         ),
                       ),
-                    ),
-                  ]),
+                    ]),
 
-                  const SizedBox(height: 32),
+                    const SizedBox(height: 32),
+                  ],
 
                   // Operations & Sales
-                  _buildSectionHeader(
-                    'Operations & Sales',
-                    Icons.shopping_bag_outlined,
-                  ),
-                  const SizedBox(height: 14),
-                  _buildModuleGrid([
-                    _MenuAction(
-                      title: 'Orders',
-                      icon: Icons.shopping_bag_outlined,
-                      color: const Color(0xFF64B5F6),
-                      onTap: () => Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                          builder: (_) => const AdminOrdersScreen(),
+                  if (_currentAdmin.hasPermission('manage_orders') ||
+                      _currentAdmin.hasPermission('manage_products') ||
+                      _currentAdmin.hasPermission('view_analytics')) ...[
+                    _buildSectionHeader(
+                      'Operations & Sales',
+                      Icons.shopping_bag_outlined,
+                    ),
+                    const SizedBox(height: 14),
+                    _buildModuleGrid([
+                      if (_currentAdmin.hasPermission('manage_orders'))
+                        _MenuAction(
+                          title: 'Orders',
+                          icon: Icons.shopping_bag_outlined,
+                          color: const Color(0xFF64B5F6),
+                          onTap: () => Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (_) => const AdminOrdersScreen(),
+                            ),
+                          ),
                         ),
-                      ),
-                    ),
-                    _MenuAction(
-                      title: 'Inventory',
-                      icon: Icons.inventory_outlined,
-                      color: const Color(0xFF26A69A),
-                      onTap: () => _openWeightAnalytics(context),
-                    ),
-                    _MenuAction(
-                      title: 'Analytics',
-                      icon: Icons.insights_rounded,
-                      color: const Color(0xFFD4AF37),
-                      onTap: () => Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                          builder: (_) => const AnalyticsDashboardScreen(),
+                      if (_currentAdmin.hasPermission('manage_products'))
+                        _MenuAction(
+                          title: 'Inventory',
+                          icon: Icons.inventory_outlined,
+                          color: const Color(0xFF26A69A),
+                          onTap: () => _openWeightAnalytics(context),
                         ),
-                      ),
-                    ),
-                    _MenuAction(
-                      title: 'Flash Sale',
-                      icon: Icons.flash_on_rounded,
-                      color: const Color(0xFFFF7043),
-                      onTap: () => Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                          builder: (_) => const FlashSaleCreatorScreen(),
+                      if (_currentAdmin.hasPermission('view_analytics'))
+                        _MenuAction(
+                          title: 'Analytics',
+                          icon: Icons.insights_rounded,
+                          color: const Color(0xFFD4AF37),
+                          onTap: () => Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (_) => const AnalyticsDashboardScreen(),
+                            ),
+                          ),
                         ),
-                      ),
-                    ),
-                  ]),
+                      if (_currentAdmin.hasPermission('manage_products'))
+                        _MenuAction(
+                          title: 'Flash Sale',
+                          icon: Icons.flash_on_rounded,
+                          color: const Color(0xFFFF7043),
+                          onTap: () => Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (_) => const FlashSaleCreatorScreen(),
+                            ),
+                          ),
+                        ),
+                    ]),
 
-                  const SizedBox(height: 32),
+                    const SizedBox(height: 32),
+                  ],
 
                   // Marketing & CRM
-                  _buildSectionHeader(
-                    'Marketing & CRM',
-                    Icons.campaign_rounded,
-                  ),
-                  const SizedBox(height: 14),
-                  _buildModuleGrid([
-                    _MenuAction(
-                      title: 'CRM Hub',
-                      icon: Icons.people_alt_rounded,
-                      color: const Color(0xFF42A5F5),
-                      onTap: () => Navigator.push(
-                        context,
-                        MaterialPageRoute(builder: (_) => const CRMHubScreen()),
-                      ),
+                  if (_currentAdmin.hasPermission('manage_users') ||
+                      _currentAdmin.hasPermission('manage_products') ||
+                      _currentAdmin.hasPermission('manage_settings')) ...[
+                    _buildSectionHeader(
+                      'Marketing & CRM',
+                      Icons.campaign_rounded,
                     ),
-                    _MenuAction(
-                      title: 'Promotions',
-                      icon: Icons.auto_awesome_rounded,
-                      color: const Color(0xFFEC407A),
-                      onTap: () => Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                          builder: (_) => const DesignToSocialScreen(),
+                    const SizedBox(height: 14),
+                    _buildModuleGrid([
+                      if (_currentAdmin.hasPermission('manage_users'))
+                        _MenuAction(
+                          title: 'CRM Hub',
+                          icon: Icons.people_alt_rounded,
+                          color: const Color(0xFF42A5F5),
+                          onTap: () => Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (_) => const CRMHubScreen(),
+                            ),
+                          ),
                         ),
-                      ),
-                    ),
-                    _MenuAction(
-                      title: 'Alerts',
-                      icon: Icons.campaign_outlined,
-                      color: const Color(0xFFD4AF37),
-                      onTap: () => Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                          builder: (_) =>
-                              AdminFCMConsoleScreen(admin: _currentAdmin),
+                      if (_currentAdmin.hasPermission('manage_products'))
+                        _MenuAction(
+                          title: 'Promotions',
+                          icon: Icons.auto_awesome_rounded,
+                          color: const Color(0xFFEC407A),
+                          onTap: () => Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (_) => const DesignToSocialScreen(),
+                            ),
+                          ),
                         ),
-                      ),
-                    ),
-                  ]),
+                      if (_currentAdmin.hasPermission('manage_settings'))
+                        _MenuAction(
+                          title: 'Alerts',
+                          icon: Icons.campaign_outlined,
+                          color: const Color(0xFFD4AF37),
+                          onTap: () => Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (_) =>
+                                  AdminFCMConsoleScreen(admin: _currentAdmin),
+                            ),
+                          ),
+                        ),
+                    ]),
 
-                  const SizedBox(height: 32),
+                    const SizedBox(height: 32),
+                  ],
 
                   // Security & Admin
                   _buildSectionHeader(
@@ -256,38 +277,46 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
                   ),
                   const SizedBox(height: 14),
                   _buildModuleGrid([
-                    _MenuAction(
-                      title: 'Audit Trail',
-                      icon: Icons.history_edu_rounded,
-                      color: const Color(0xFF90A4AE),
-                      onTap: () => Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                          builder: (_) => const AuditTrailScreen(),
+                    if (_currentAdmin.hasPermission('view_analytics'))
+                      _MenuAction(
+                        title: 'Audit Trail',
+                        icon: Icons.history_edu_rounded,
+                        color: const Color(0xFF90A4AE),
+                        onTap: () => Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (_) => const AuditTrailScreen(),
+                          ),
                         ),
                       ),
-                    ),
-                    _MenuAction(
-                      title: 'Admins',
-                      icon: Icons.admin_panel_settings_outlined,
-                      color: const Color(0xFF66BB6A),
-                      onTap: () {
-                        if (_currentAdmin.role == 'super') {
+                    if (_currentAdmin.hasPermission('manage_settings'))
+                      _MenuAction(
+                        title: 'Contact Info',
+                        icon: Icons.contact_mail_outlined,
+                        color: const Color(0xFFAB47BC),
+                        onTap: () {
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (_) => const ContactManagementScreen(),
+                            ),
+                          );
+                        },
+                      ),
+                    if (_currentAdmin.isSuperAdmin)
+                      _MenuAction(
+                        title: 'Admins',
+                        icon: Icons.admin_panel_settings_outlined,
+                        color: const Color(0xFF66BB6A),
+                        onTap: () {
                           Navigator.push(
                             context,
                             MaterialPageRoute(
                               builder: (_) => const SubAdminManagementScreen(),
                             ),
                           );
-                        } else {
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            const SnackBar(
-                              content: Text('Super Admin access required'),
-                            ),
-                          );
-                        }
-                      },
-                    ),
+                        },
+                      ),
                     _MenuAction(
                       title: 'Quick Login',
                       icon: Icons.fingerprint_rounded,
@@ -556,32 +585,39 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
 
   Widget _buildQuickActionsRow() {
     final actions = [
-      {
-        'label': 'Orders',
-        'icon': Icons.shopping_bag_outlined,
-        'screen': const AdminOrdersScreen(),
-      },
-      {
-        'label': 'Products',
-        'icon': Icons.inventory_2_outlined,
-        'screen': const ProductManagementScreen(),
-      },
-      {
-        'label': 'CRM',
-        'icon': Icons.people_alt_rounded,
-        'screen': const CRMHubScreen(),
-      },
-      {
-        'label': 'Alerts',
-        'icon': Icons.campaign_outlined,
-        'screen': AdminFCMConsoleScreen(admin: _currentAdmin),
-      },
-      {
-        'label': 'Analytics',
-        'icon': Icons.bar_chart_rounded,
-        'screen': const AnalyticsDashboardScreen(),
-      },
+      if (_currentAdmin.hasPermission('manage_orders'))
+        {
+          'label': 'Orders',
+          'icon': Icons.shopping_bag_outlined,
+          'screen': const AdminOrdersScreen(),
+        },
+      if (_currentAdmin.hasPermission('manage_products'))
+        {
+          'label': 'Products',
+          'icon': Icons.inventory_2_outlined,
+          'screen': const ProductManagementScreen(),
+        },
+      if (_currentAdmin.hasPermission('manage_users'))
+        {
+          'label': 'CRM',
+          'icon': Icons.people_alt_rounded,
+          'screen': const CRMHubScreen(),
+        },
+      if (_currentAdmin.hasPermission('manage_settings'))
+        {
+          'label': 'Alerts',
+          'icon': Icons.campaign_outlined,
+          'screen': AdminFCMConsoleScreen(admin: _currentAdmin),
+        },
+      if (_currentAdmin.hasPermission('view_analytics'))
+        {
+          'label': 'Analytics',
+          'icon': Icons.bar_chart_rounded,
+          'screen': const AnalyticsDashboardScreen(),
+        },
     ];
+
+    if (actions.isEmpty) return const SizedBox.shrink();
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,

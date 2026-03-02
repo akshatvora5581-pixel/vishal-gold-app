@@ -995,6 +995,52 @@ class FirebaseService {
     }
   }
 
+  // ========== GLOBAL CONTACT INFO ==========
+
+  Future<Map<String, dynamic>> getGlobalContactInfo() async {
+    try {
+      final doc = await _firestore
+          .collection('settings')
+          .doc('contact_info')
+          .get();
+      if (doc.exists && doc.data() != null) {
+        return doc.data()!;
+      }
+
+      // Default fallback
+      return {
+        'address':
+            '1180, Madan Gopal Haveli Marg, Old City,\nMANEKCHOWK, Ahmedabad, 380001, Gujarat',
+        'phone': '+91 9898475380',
+        'email': 'rajendragold9160@gmail.com',
+        'website': 'https://rajendragold.com/',
+      };
+    } catch (e) {
+      debugPrint('Error getting global contact info: $e');
+      // Return defaults on error
+      return {
+        'address':
+            '1180, Madan Gopal Haveli Marg, Old City,\nMANEKCHOWK, Ahmedabad, 380001, Gujarat',
+        'phone': '+91 9898475380',
+        'email': 'rajendragold9160@gmail.com',
+        'website': 'https://rajendragold.com/',
+      };
+    }
+  }
+
+  Future<void> updateGlobalContactInfo(Map<String, dynamic> data) async {
+    try {
+      await _firestore
+          .collection('settings')
+          .doc('contact_info')
+          .set(data, SetOptions(merge: true));
+      debugPrint('Global contact info updated successfully');
+    } catch (e) {
+      debugPrint('Error updating global contact info: $e');
+      throw 'Failed to update contact info: ${e.toString()}';
+    }
+  }
+
   /// ========== CART OPERATIONS ==========
 
   /// Get user cart items
@@ -1997,7 +2043,6 @@ class FirebaseService {
     }
   }
 
-
   /// Sends a targeted CRM push to a list of user UIDs.
   /// Stores one notification_request doc per user in Firestore.
   Future<int> sendCrmPushToUsers({
@@ -2035,7 +2080,7 @@ class FirebaseService {
     return sent;
   }
 
-    /// ========== ANALYTICS ENHANCEMENTS ==========
+  /// ========== ANALYTICS ENHANCEMENTS ==========
 
   Future<List<Map<String, dynamic>>> getTrendingProducts({
     int limit = 5,
