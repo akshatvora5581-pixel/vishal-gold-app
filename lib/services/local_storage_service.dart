@@ -1,93 +1,128 @@
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:flutter_secure_storage/flutter_secure_storage.dart';
+import 'package:flutter/foundation.dart';
 
-/// Service for managing local storage using SharedPreferences
+/// Service for managing local storage.
+/// PII fields (name, phone, city, state, role) use FlutterSecureStorage (encrypted).
+/// Non-PII flags and JSON blobs (cart, wishlist) use SharedPreferences.
 class LocalStorageService {
-  static const String _keyUserRole = 'user_role';
+  // Non-PII SharedPreferences keys
   static const String _keyIsFirstLaunch = 'is_first_launch';
-  static const String _keyUserName = 'user_name';
-  static const String _keyUserCity = 'user_city';
-  static const String _keyUserState = 'user_state';
-  static const String _keyUserPhone = 'user_phone';
   static const String _keyIsUserInfoProvided = 'is_user_info_provided';
 
+  // PII SecureStorage keys (stored encrypted)
+  static const String _secureKeyUserRole = 'secure_user_role';
+  static const String _secureKeyUserName = 'secure_user_name';
+  static const String _secureKeyUserCity = 'secure_user_city';
+  static const String _secureKeyUserState = 'secure_user_state';
+  static const String _secureKeyUserPhone = 'secure_user_phone';
+
   static SharedPreferences? _prefs;
+  static const FlutterSecureStorage _secureStorage = FlutterSecureStorage(
+    aOptions: AndroidOptions.defaultOptions,
+  );
 
   /// Initialize SharedPreferences
   static Future<void> init() async {
     _prefs ??= await SharedPreferences.getInstance();
   }
 
-  /// Save user role (retailer or wholesaler)
-  static Future<bool> saveUserRole(String role) async {
-    await init();
-    return await _prefs!.setString(_keyUserRole, role);
+  // ==================== PII - Encrypted Secure Storage ====================
+
+  /// Save user role securely (VAPT-001 fix: was plaintext SharedPreferences)
+  static Future<void> saveUserRole(String role) async {
+    await _secureStorage.write(key: _secureKeyUserRole, value: role);
   }
 
-  /// Get user role
+  /// Get user role from secure storage
   static Future<String?> getUserRole() async {
-    await init();
-    return _prefs!.getString(_keyUserRole);
+    try {
+      return await _secureStorage.read(key: _secureKeyUserRole);
+    } catch (e) {
+      if (kDebugMode) debugPrint('SecureStorage read error: $e');
+      return null;
+    }
   }
 
   /// Check if user has selected a role
   static Future<bool> isRoleSelected() async {
-    await init();
-    return _prefs!.containsKey(_keyUserRole);
+    final role = await getUserRole();
+    return role != null && role.isNotEmpty;
   }
 
-  /// Clear user role (for testing/logout)
-  static Future<bool> clearUserRole() async {
-    await init();
-    return await _prefs!.remove(_keyUserRole);
+  /// Clear user role securely
+  static Future<void> clearUserRole() async {
+    await _secureStorage.delete(key: _secureKeyUserRole);
   }
 
-  /// Save user name
-  static Future<bool> saveUserName(String name) async {
-    await init();
-    return await _prefs!.setString(_keyUserName, name);
+  /// Save user name securely
+  static Future<void> saveUserName(String name) async {
+    await _secureStorage.write(key: _secureKeyUserName, value: name);
   }
 
   /// Get user name
   static Future<String?> getUserName() async {
-    await init();
-    return _prefs!.getString(_keyUserName);
+    try {
+      return await _secureStorage.read(key: _secureKeyUserName);
+    } catch (e) {
+      return null;
+    }
   }
 
-  /// Save user city
-  static Future<bool> saveUserCity(String city) async {
-    await init();
-    return await _prefs!.setString(_keyUserCity, city);
+  /// Save user city securely
+  static Future<void> saveUserCity(String city) async {
+    await _secureStorage.write(key: _secureKeyUserCity, value: city);
   }
 
   /// Get user city
   static Future<String?> getUserCity() async {
-    await init();
-    return _prefs!.getString(_keyUserCity);
+    try {
+      return await _secureStorage.read(key: _secureKeyUserCity);
+    } catch (e) {
+      return null;
+    }
   }
 
-  /// Save user state
-  static Future<bool> saveUserState(String state) async {
-    await init();
-    return await _prefs!.setString(_keyUserState, state);
+  /// Save user state securely
+  static Future<void> saveUserState(String state) async {
+    await _secureStorage.write(key: _secureKeyUserState, value: state);
   }
 
   /// Get user state
   static Future<String?> getUserState() async {
-    await init();
-    return _prefs!.getString(_keyUserState);
+    try {
+      return await _secureStorage.read(key: _secureKeyUserState);
+    } catch (e) {
+      return null;
+    }
   }
 
-  /// Save user phone
-  static Future<bool> saveUserPhone(String phone) async {
-    await init();
-    return await _prefs!.setString(_keyUserPhone, phone);
+  /// Save user phone securely
+  static Future<void> saveUserPhone(String phone) async {
+    await _secureStorage.write(key: _secureKeyUserPhone, value: phone);
   }
 
   /// Get user phone
   static Future<String?> getUserPhone() async {
-    await init();
-    return _prefs!.getString(_keyUserPhone);
+    try {
+      return await _secureStorage.read(key: _secureKeyUserPhone);
+    } catch (e) {
+      return null;
+    }
   }
+
+  /// Clear all PII from secure storage
+  static Future<void> clearAllPII() async {
+    await Future.wait([
+      _secureStorage.delete(key: _secureKeyUserRole),
+      _secureStorage.delete(key: _secureKeyUserName),
+      _secureStorage.delete(key: _secureKeyUserCity),
+      _secureStorage.delete(key: _secureKeyUserState),
+      _secureStorage.delete(key: _secureKeyUserPhone),
+    ]);
+  }
+
+  // ==================== Non-PII SharedPreferences ====================
 
   /// Mark user info as provided
   static Future<bool> setUserInfoProvided() async {
@@ -111,9 +146,10 @@ class LocalStorageService {
     return isFirst;
   }
 
-  /// Clear all data (for testing/reset)
+  /// Clear all non-PII data (for testing/reset)
   static Future<bool> clearAll() async {
     await init();
+    await clearAllPII(); // also wipe PII
     return await _prefs!.clear();
   }
 

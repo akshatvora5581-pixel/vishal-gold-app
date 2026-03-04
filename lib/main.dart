@@ -2,8 +2,11 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:firebase_core/firebase_core.dart';
-import 'firebase_options.dart'; // <--- Professional setup import
+import 'package:firebase_app_check/firebase_app_check.dart';
+import 'package:firebase_analytics/firebase_analytics.dart';
+import 'firebase_options.dart';
 import 'package:vishal_gold/services/firebase_service.dart';
+import 'package:vishal_gold/services/local_storage_service.dart';
 import 'package:vishal_gold/constants/app_colors.dart';
 import 'package:vishal_gold/constants/app_strings.dart';
 import 'package:vishal_gold/providers/auth_provider.dart';
@@ -12,8 +15,12 @@ import 'package:vishal_gold/providers/product_provider.dart';
 import 'package:vishal_gold/providers/order_provider.dart';
 import 'package:vishal_gold/providers/wishlist_provider.dart';
 import 'package:vishal_gold/providers/preview_provider.dart';
+import 'package:vishal_gold/providers/notification_provider.dart';
+import 'package:vishal_gold/providers/language_provider.dart';
+import 'package:vishal_gold/providers/notification_settings_provider.dart';
 import 'package:vishal_gold/screens/splash_screen.dart';
 import 'package:vishal_gold/services/fcm_service.dart';
+import 'package:vishal_gold/services/analytics_service.dart';
 
 /// Global navigator key — used by FCMService for deep-link navigation
 /// when a push notification is tapped from background/terminated state.
@@ -22,16 +29,25 @@ final GlobalKey<NavigatorState> navigatorKey = GlobalKey<NavigatorState>();
 void main() async {
   try {
     WidgetsFlutterBinding.ensureInitialized();
+    await LocalStorageService.init();
 
     // --- Firebase Setup ---
     await Firebase.initializeApp(
       options: DefaultFirebaseOptions.currentPlatform,
     );
 
+    await FirebaseAppCheck.instance.activate(
+      providerAndroid: const AndroidPlayIntegrityProvider(),
+      providerApple: const AppleDeviceCheckProvider(),
+    );
+
     // Initialize FCM and inject the navigator key for deep-link navigation
     final fcmService = FCMService();
     fcmService.navigatorKey = navigatorKey;
     await fcmService.initialize();
+
+    // Initialize Analytics
+    FirebaseAnalytics.instance.setAnalyticsCollectionEnabled(true);
 
     // Seed initial data in background (don't block the UI)
     FirebaseService().seedInitialData().catchError((e) {
@@ -57,6 +73,13 @@ class MyApp extends StatelessWidget {
         ChangeNotifierProvider(create: (_) => OrderProvider()),
         ChangeNotifierProvider(create: (_) => WishlistProvider()),
         ChangeNotifierProvider(create: (_) => PreviewProvider()),
+        ChangeNotifierProxyProvider<AuthProvider, NotificationProvider>(
+          create: (_) => NotificationProvider(),
+          update: (_, auth, notif) =>
+              notif!..updateUser(auth.currentUser?.uid, isAdmin: auth.isAdmin),
+        ),
+        ChangeNotifierProvider(create: (_) => LanguageProvider()),
+        ChangeNotifierProvider(create: (_) => NotificationSettingsProvider()),
       ],
       child: MaterialApp(
         title: AppStrings.appName,
@@ -149,8 +172,42 @@ class MyApp extends StatelessWidget {
             hintStyle: const TextStyle(color: AppColors.textTertiary),
           ),
         ),
-        home: const SplashScreen(),
+        home: const PresenceWrapper(child: SplashScreen()),
       ),
     );
   }
+}
+
+class PresenceWrapper extends StatefulWidget {
+  final Widget child;
+  const PresenceWrapper({super.key, required this.child});
+
+  @override
+  State<PresenceWrapper> createState() => _PresenceWrapperState();
+}
+
+class _PresenceWrapperState extends State<PresenceWrapper> {
+  @override
+  void initState() {
+    super.initState();
+    _setupPresence();
+  }
+
+  void _setupPresence() {
+    // Listen to auth changes and update presence
+    final authProvider = context.read<AuthProvider>();
+    final analyticsService = AnalyticsService();
+    authProvider.addListener(() {
+      final user = authProvider.currentUser;
+      if (user != null) {
+        analyticsService.updatePresence(
+          user.uid,
+          authProvider.userRole ?? 'retailer',
+        );
+      }
+    });
+  }
+
+  @override
+  Widget build(BuildContext context) => widget.child;
 }

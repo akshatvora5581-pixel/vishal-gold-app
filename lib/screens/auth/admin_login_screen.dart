@@ -5,9 +5,15 @@ import 'package:vishal_gold/constants/app_colors.dart';
 import 'package:vishal_gold/services/firebase_service.dart';
 import 'package:vishal_gold/models/admin.dart';
 import 'package:vishal_gold/screens/admin/admin_dashboard_screen.dart';
+import 'package:provider/provider.dart';
+import 'package:vishal_gold/providers/auth_provider.dart';
+import 'package:vishal_gold/screens/auth/quick_login_setup_screen.dart';
+import 'package:vishal_gold/screens/auth/pin_unlock_screen.dart';
 
 class AdminLoginScreen extends StatefulWidget {
-  const AdminLoginScreen({super.key});
+  final bool returnFromQuickLogin;
+
+  const AdminLoginScreen({super.key, this.returnFromQuickLogin = false});
 
   @override
   State<AdminLoginScreen> createState() => _AdminLoginScreenState();
@@ -19,6 +25,31 @@ class _AdminLoginScreenState extends State<AdminLoginScreen> {
   final FirebaseService _firebaseService = FirebaseService();
   bool _loading = false;
   String? _errorMessage;
+
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _checkQuickLogin();
+    });
+  }
+
+  void _checkQuickLogin() {
+    if (widget.returnFromQuickLogin) return;
+
+    final authProvider = Provider.of<AuthProvider>(context, listen: false);
+
+    // Trigger Quick Login if setup exists, regardless of current Firebase authentication state.
+    // This allows PIN/Biometric to perform a background login after a manual logout.
+    if (authProvider.hasPinSetup || authProvider.isBiometricEnabled) {
+      if (!authProvider.hasOptedOutQuickLogin) {
+        Navigator.pushReplacement(
+          context,
+          MaterialPageRoute(builder: (_) => const PinUnlockScreen()),
+        );
+      }
+    }
+  }
 
   @override
   void dispose() {
@@ -67,7 +98,39 @@ class _AdminLoginScreenState extends State<AdminLoginScreen> {
           final adminId = adminData['id'] as String? ?? credential.user!.uid;
           final admin = Admin.fromJson(adminData, adminId);
           if (admin.isActive) {
-            _navigateToAdminDashboard(admin);
+            if (!mounted) return;
+            final authProvider = Provider.of<AuthProvider>(
+              context,
+              listen: false,
+            );
+
+            // If quick login is already enabled, update credentials
+            if (authProvider.hasPinSetup || authProvider.isBiometricEnabled) {
+              if (mounted) {
+                await authProvider.signInAdmin(
+                  inputEmail,
+                  _passwordController.text.trim(),
+                );
+              }
+            }
+
+            if (!authProvider.hasPinSetup &&
+                !authProvider.isBiometricEnabled &&
+                !authProvider.hasOptedOutQuickLogin) {
+              if (mounted) {
+                Navigator.pushReplacement(
+                  context,
+                  MaterialPageRoute(
+                    builder: (_) => QuickLoginSetupScreen(
+                      password: _passwordController.text.trim(),
+                      onSkip: () => _navigateToAdminDashboard(admin),
+                    ),
+                  ),
+                );
+              }
+            } else {
+              _navigateToAdminDashboard(admin);
+            }
           } else {
             setState(() => _errorMessage = 'Admin account is disabled');
             await firebase_auth.FirebaseAuth.instance.signOut();
@@ -101,6 +164,7 @@ class _AdminLoginScreenState extends State<AdminLoginScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      resizeToAvoidBottomInset: false,
       backgroundColor: AppColors.background,
       appBar: AppBar(
         backgroundColor: Colors.transparent,
@@ -126,11 +190,7 @@ class _AdminLoginScreenState extends State<AdminLoginScreen> {
             mainAxisAlignment: MainAxisAlignment.center,
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              const Icon(
-                Icons.security_rounded,
-                size: 80,
-                color: AppColors.gold,
-              ),
+              Image.asset('assets/logo.png', height: 120, fit: BoxFit.contain),
               const SizedBox(height: 40),
 
               if (_errorMessage != null)
@@ -138,10 +198,10 @@ class _AdminLoginScreenState extends State<AdminLoginScreen> {
                   padding: const EdgeInsets.all(12),
                   margin: const EdgeInsets.only(bottom: 24),
                   decoration: BoxDecoration(
-                    color: AppColors.errorRed.withOpacity(0.1),
+                    color: AppColors.errorRed.withValues(alpha: 0.1),
                     borderRadius: BorderRadius.circular(12),
                     border: Border.all(
-                      color: AppColors.errorRed.withOpacity(0.3),
+                      color: AppColors.errorRed.withValues(alpha: 0.3),
                     ),
                   ),
                   child: Text(
@@ -183,7 +243,7 @@ class _AdminLoginScreenState extends State<AdminLoginScreen> {
     bool isPassword = false,
   }) {
     return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
+      crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
         Text(
           label,

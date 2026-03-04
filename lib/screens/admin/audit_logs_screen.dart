@@ -197,8 +197,16 @@ class _AuditLogsScreenState extends State<AuditLogsScreen> {
   }
 
   Widget _buildLogCard(Map<String, dynamic> log) {
-    final timestamp = log['timestamp'] as Timestamp;
-    final dateStr = DateFormat('MMM dd, yyyy HH:mm').format(timestamp.toDate());
+    final dynamic timestampData = log['timestamp'];
+    DateTime? dateTime;
+    if (timestampData is Timestamp) {
+      dateTime = timestampData.toDate();
+    } else if (timestampData is String) {
+      dateTime = DateTime.tryParse(timestampData);
+    }
+    dateTime ??= DateTime.now();
+
+    final dateStr = DateFormat('MMM dd, yyyy HH:mm').format(dateTime);
     final action = log['action'] as String;
     final details = log['details'] as String? ?? '';
     final adminId = log['admin_id'] as String;

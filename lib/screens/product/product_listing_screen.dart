@@ -5,6 +5,7 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:vishal_gold/constants/app_colors.dart';
 import 'package:vishal_gold/providers/product_provider.dart';
 import 'package:vishal_gold/providers/auth_provider.dart';
+import 'package:vishal_gold/utils/app_layout.dart';
 import 'package:vishal_gold/widgets/product/product_card.dart';
 import 'package:vishal_gold/widgets/product/product_skeleton.dart';
 
@@ -155,7 +156,7 @@ class _ProductListingScreenState extends State<ProductListingScreen> {
                       decoration: InputDecoration(
                         hintText: 'Search by tag, name…',
                         hintStyle: GoogleFonts.outfit(
-                          color: AppColors.white.withOpacity(0.5),
+                          color: AppColors.white.withValues(alpha: 0.5),
                           fontSize: 16,
                         ),
                         border: InputBorder.none,
@@ -191,15 +192,15 @@ class _ProductListingScreenState extends State<ProductListingScreen> {
               padding: const EdgeInsets.all(16),
               sliver: Consumer<ProductProvider>(
                 builder: (context, productProvider, child) {
+                  final layout = AppLayout.of(context);
                   if (productProvider.isLoading) {
                     return SliverGrid(
-                      gridDelegate:
-                          const SliverGridDelegateWithFixedCrossAxisCount(
-                            crossAxisCount: 2,
-                            childAspectRatio: 0.7,
-                            crossAxisSpacing: 16,
-                            mainAxisSpacing: 16,
-                          ),
+                      gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+                        crossAxisCount: layout.productGridColumns,
+                        childAspectRatio: layout.productCardAspectRatio,
+                        crossAxisSpacing: 16,
+                        mainAxisSpacing: 16,
+                      ),
                       delegate: SliverChildBuilderDelegate(
                         (context, index) => ProductSkeleton(),
                         childCount: 6,
@@ -218,8 +219,7 @@ class _ProductListingScreenState extends State<ProductListingScreen> {
                             Icon(
                               Icons.search_off_rounded,
                               size: 64,
-                              // ignore: deprecated_member_use
-                              color: AppColors.grey.withOpacity(0.3),
+                              color: AppColors.grey.withValues(alpha: 0.3),
                             ),
                             const SizedBox(height: 16),
                             Text(
@@ -236,8 +236,8 @@ class _ProductListingScreenState extends State<ProductListingScreen> {
                               Text(
                                 'Try a different keyword',
                                 style: GoogleFonts.outfit(
-                                  color: AppColors.textSecondary.withOpacity(
-                                    0.6,
+                                  color: AppColors.textSecondary.withValues(
+                                    alpha: 0.6,
                                   ),
                                   fontSize: 13,
                                 ),
@@ -251,13 +251,12 @@ class _ProductListingScreenState extends State<ProductListingScreen> {
 
                   return AnimationLimiter(
                     child: SliverGrid(
-                      gridDelegate:
-                          const SliverGridDelegateWithFixedCrossAxisCount(
-                            crossAxisCount: 2,
-                            childAspectRatio: 0.7,
-                            crossAxisSpacing: 16,
-                            mainAxisSpacing: 16,
-                          ),
+                      gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+                        crossAxisCount: layout.productGridColumns,
+                        childAspectRatio: layout.productCardAspectRatio,
+                        crossAxisSpacing: 16,
+                        mainAxisSpacing: 16,
+                      ),
                       delegate: SliverChildBuilderDelegate((
                         BuildContext context,
                         int index,
@@ -265,7 +264,7 @@ class _ProductListingScreenState extends State<ProductListingScreen> {
                         return AnimationConfiguration.staggeredGrid(
                           position: index,
                           duration: const Duration(milliseconds: 500),
-                          columnCount: 2,
+                          columnCount: layout.productGridColumns,
                           child: ScaleAnimation(
                             child: FadeInAnimation(
                               child: ProductCard(product: products[index]),
@@ -404,27 +403,33 @@ class _SortBottomSheetState extends State<_SortBottomSheet> {
             ),
 
             // Radio options
-            for (final opt in _options)
-              RadioListTile<ProductSortOrder>(
-                value: opt.order,
-                groupValue: _selected,
-                onChanged: (v) => _select(v!),
-                activeColor: _kBrandPurple,
-                title: Text(
-                  opt.label,
-                  style: GoogleFonts.outfit(
-                    fontSize: 15,
-                    fontWeight: _selected == opt.order
-                        ? FontWeight.w600
-                        : FontWeight.normal,
-                    color: _selected == opt.order
-                        ? _kBrandPurple
-                        : Colors.black87,
-                  ),
-                ),
-                dense: true,
-                controlAffinity: ListTileControlAffinity.leading,
+            RadioGroup<ProductSortOrder>(
+              groupValue: _selected,
+              onChanged: (v) => _select(v!),
+              child: Column(
+                children: [
+                  for (final opt in _options)
+                    RadioListTile<ProductSortOrder>(
+                      value: opt.order,
+                      activeColor: _kBrandPurple,
+                      title: Text(
+                        opt.label,
+                        style: GoogleFonts.outfit(
+                          fontSize: 15,
+                          fontWeight: _selected == opt.order
+                              ? FontWeight.w600
+                              : FontWeight.normal,
+                          color: _selected == opt.order
+                              ? _kBrandPurple
+                              : Colors.black87,
+                        ),
+                      ),
+                      dense: true,
+                      controlAffinity: ListTileControlAffinity.leading,
+                    ),
+                ],
               ),
+            ),
 
             const SizedBox(height: 12),
           ],

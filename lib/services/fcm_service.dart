@@ -191,6 +191,13 @@ class FCMService {
     if (token != null) {
       await _firebaseService.updateFcmToken(uid, token, isAdmin: isAdmin);
     }
-    await _fcm.subscribeToTopic('all_users');
+    if (isAdmin) {
+      // Admins subscribe to admin topic to receive order notifications
+      await _fcm.subscribeToTopic('admin');
+      // Optionally unsubscribe from all_users so they don't get customer alerts
+      // await _fcm.unsubscribeFromTopic('all_users');
+    } else {
+      await _fcm.subscribeToTopic('all_users');
+    }
   }
 }

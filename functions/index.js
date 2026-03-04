@@ -162,7 +162,12 @@ exports.sendManualNotification = onDocumentCreated(
         }
 
         // Determine FCM topic from the `target` field set by the admin console
-        const topic = target === "wholesalers" ? "wholesalers" : "all_users";
+        const topic =
+            target === "wholesalers"
+                ? "wholesalers"
+                : target === "admin"
+                    ? "admin"
+                    : "all_users";
 
         const message = {
             topic: topic,

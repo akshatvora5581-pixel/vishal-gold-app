@@ -164,7 +164,7 @@ class _SubAdminManagementScreenState extends State<SubAdminManagementScreen> {
             const PopupMenuItem(
               value: 'edit',
               child: Text(
-                'Change Role',
+                'Change Role & Permissions',
                 style: TextStyle(color: AppColors.textPrimary),
               ),
             ),
@@ -182,9 +182,7 @@ class _SubAdminManagementScreenState extends State<SubAdminManagementScreen> {
     switch (role) {
       case 'super':
         return AppColors.gold;
-      case 'manager':
-        return Colors.blue;
-      case 'editor':
+      case 'admin':
         return Colors.green;
       default:
         return AppColors.textSecondary;
@@ -194,7 +192,14 @@ class _SubAdminManagementScreenState extends State<SubAdminManagementScreen> {
   void _showAddAdminSheet(BuildContext context) {
     final nameController = TextEditingController();
     final emailController = TextEditingController();
-    String selectedRole = 'editor';
+    String selectedRole = 'admin';
+    Map<String, bool> permissions = {
+      'manage_products': false,
+      'manage_users': false,
+      'manage_orders': false,
+      'manage_settings': false,
+      'view_analytics': false,
+    };
 
     showModalBottomSheet(
       context: context,
@@ -212,94 +217,132 @@ class _SubAdminManagementScreenState extends State<SubAdminManagementScreen> {
             left: 20,
             right: 20,
           ),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                'Add New Admin',
-                style: GoogleFonts.playfairDisplay(
-                  color: AppColors.gold,
-                  fontSize: 20,
-                  fontWeight: FontWeight.bold,
+          child: SingleChildScrollView(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  'Add New Admin',
+                  style: GoogleFonts.playfairDisplay(
+                    color: AppColors.gold,
+                    fontSize: 20,
+                    fontWeight: FontWeight.bold,
+                  ),
                 ),
-              ),
-              const SizedBox(height: 20),
-              TextField(
-                controller: nameController,
-                style: const TextStyle(color: AppColors.textPrimary),
-                decoration: _inputDecoration('Full Name', Icons.person),
-              ),
-              const SizedBox(height: 16),
-              TextField(
-                controller: emailController,
-                style: const TextStyle(color: AppColors.textPrimary),
-                decoration: _inputDecoration('Email Address', Icons.email),
-              ),
-              const SizedBox(height: 16),
-              const Text(
-                'Role',
-                style: TextStyle(color: AppColors.textSecondary, fontSize: 14),
-              ),
-              const SizedBox(height: 8),
-              Row(
-                children: ['editor', 'manager', 'super'].map((role) {
-                  bool isSelected = selectedRole == role;
-                  return Padding(
-                    padding: const EdgeInsets.only(right: 8),
-                    child: ChoiceChip(
-                      label: Text(role.toUpperCase()),
-                      selected: isSelected,
-                      onSelected: (val) {
-                        if (val) setSheetState(() => selectedRole = role);
+                const SizedBox(height: 20),
+                TextField(
+                  controller: nameController,
+                  style: const TextStyle(color: AppColors.textPrimary),
+                  decoration: _inputDecoration('Full Name', Icons.person),
+                ),
+                const SizedBox(height: 16),
+                TextField(
+                  controller: emailController,
+                  style: const TextStyle(color: AppColors.textPrimary),
+                  decoration: _inputDecoration('Email Address', Icons.email),
+                ),
+                const SizedBox(height: 16),
+                const Text(
+                  'Role',
+                  style: TextStyle(
+                    color: AppColors.textSecondary,
+                    fontSize: 14,
+                  ),
+                ),
+                const SizedBox(height: 8),
+                Row(
+                  children: ['admin', 'super'].map((role) {
+                    bool isSelected = selectedRole == role;
+                    return Padding(
+                      padding: const EdgeInsets.only(right: 8),
+                      child: ChoiceChip(
+                        label: Text(role.toUpperCase()),
+                        selected: isSelected,
+                        onSelected: (val) {
+                          if (val) setSheetState(() => selectedRole = role);
+                        },
+                        selectedColor: AppColors.gold.withValues(alpha: 0.2),
+                        backgroundColor: AppColors.background,
+                        labelStyle: TextStyle(
+                          color: isSelected
+                              ? AppColors.gold
+                              : AppColors.textSecondary,
+                          fontSize: 12,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                    );
+                  }).toList(),
+                ),
+                if (selectedRole == 'admin') ...[
+                  const SizedBox(height: 20),
+                  const Text(
+                    'Permissions',
+                    style: TextStyle(
+                      color: AppColors.textSecondary,
+                      fontSize: 14,
+                    ),
+                  ),
+                  const SizedBox(height: 8),
+                  ...permissions.keys.map((perm) {
+                    return CheckboxListTile(
+                      title: Text(
+                        perm
+                            .split('_')
+                            .map((e) => e[0].toUpperCase() + e.substring(1))
+                            .join(' '),
+                        style: const TextStyle(color: AppColors.textPrimary),
+                      ),
+                      value: permissions[perm],
+                      onChanged: (val) {
+                        setSheetState(() => permissions[perm] = val ?? false);
                       },
-                      selectedColor: AppColors.gold.withValues(alpha: 0.2),
-                      backgroundColor: AppColors.background,
-                      labelStyle: TextStyle(
-                        color: isSelected
-                            ? AppColors.gold
-                            : AppColors.textSecondary,
-                        fontSize: 12,
-                        fontWeight: FontWeight.bold,
+                      activeColor: AppColors.gold,
+                      checkColor: AppColors.black,
+                      contentPadding: EdgeInsets.zero,
+                      controlAffinity: ListTileControlAffinity.leading,
+                    );
+                  }).toList(),
+                ],
+                const SizedBox(height: 24),
+                SizedBox(
+                  width: double.infinity,
+                  child: ElevatedButton(
+                    onPressed: () async {
+                      if (nameController.text.isEmpty ||
+                          emailController.text.isEmpty) {
+                        return;
+                      }
+                      final performerId =
+                          context.read<AuthProvider>().currentUser?.uid ??
+                          'unknown';
+                      await _firebaseService.addAdmin({
+                        'full_name': nameController.text.trim(),
+                        'email': emailController.text.trim(),
+                        'role': selectedRole,
+                        'permissions': selectedRole == 'admin'
+                            ? permissions
+                            : null,
+                      }, performerId);
+                      if (context.mounted) Navigator.pop(context);
+                    },
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: AppColors.gold,
+                      foregroundColor: AppColors.black,
+                      padding: const EdgeInsets.symmetric(vertical: 16),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12),
                       ),
                     ),
-                  );
-                }).toList(),
-              ),
-              const SizedBox(height: 24),
-              SizedBox(
-                width: double.infinity,
-                child: ElevatedButton(
-                  onPressed: () async {
-                    if (nameController.text.isEmpty ||
-                        emailController.text.isEmpty) {
-                      return;
-                    }
-                    final performerId =
-                        context.read<AuthProvider>().currentUser?.uid ??
-                        'unknown';
-                    await _firebaseService.addAdmin({
-                      'full_name': nameController.text.trim(),
-                      'email': emailController.text.trim(),
-                      'role': selectedRole,
-                    }, performerId);
-                    if (context.mounted) Navigator.pop(context);
-                  },
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: AppColors.gold,
-                    foregroundColor: AppColors.black,
-                    padding: const EdgeInsets.symmetric(vertical: 16),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(12),
+                    child: const Text(
+                      'Add Admin',
+                      style: TextStyle(fontWeight: FontWeight.bold),
                     ),
                   ),
-                  child: const Text(
-                    'Add Admin',
-                    style: TextStyle(fontWeight: FontWeight.bold),
-                  ),
                 ),
-              ),
-            ],
+              ],
+            ),
           ),
         ),
       ),
@@ -308,9 +351,22 @@ class _SubAdminManagementScreenState extends State<SubAdminManagementScreen> {
 
   void _showEditRoleSheet(BuildContext context, Admin admin) {
     String selectedRole = admin.role;
+    Map<String, bool> permissions = Map.from(admin.permissions);
+
+    // Ensure all keys exist
+    for (String perm in [
+      'manage_products',
+      'manage_users',
+      'manage_orders',
+      'manage_settings',
+      'view_analytics',
+    ]) {
+      permissions.putIfAbsent(perm, () => false);
+    }
 
     showModalBottomSheet(
       context: context,
+      isScrollControlled: true,
       backgroundColor: Colors.transparent,
       builder: (context) => StatefulBuilder(
         builder: (context, setSheetState) => Container(
@@ -318,74 +374,116 @@ class _SubAdminManagementScreenState extends State<SubAdminManagementScreen> {
             color: AppColors.surface,
             borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
           ),
-          padding: const EdgeInsets.all(20),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                'Update Role for ${admin.fullName}',
-                style: GoogleFonts.playfairDisplay(
-                  color: AppColors.gold,
-                  fontSize: 18,
-                  fontWeight: FontWeight.bold,
+          padding: EdgeInsets.only(
+            bottom: MediaQuery.of(context).viewInsets.bottom + 20,
+            top: 20,
+            left: 20,
+            right: 20,
+          ),
+          child: SingleChildScrollView(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  'Update Role for ${admin.fullName}',
+                  style: GoogleFonts.playfairDisplay(
+                    color: AppColors.gold,
+                    fontSize: 18,
+                    fontWeight: FontWeight.bold,
+                  ),
                 ),
-              ),
-              const SizedBox(height: 20),
-              Row(
-                children: ['editor', 'manager', 'super'].map((role) {
-                  bool isSelected = selectedRole == role;
-                  return Padding(
-                    padding: const EdgeInsets.only(right: 8),
-                    child: ChoiceChip(
-                      label: Text(role.toUpperCase()),
-                      selected: isSelected,
-                      onSelected: (val) {
-                        if (val) setSheetState(() => selectedRole = role);
+                const SizedBox(height: 20),
+                Row(
+                  children: ['admin', 'super'].map((role) {
+                    bool isSelected = selectedRole == role;
+                    return Padding(
+                      padding: const EdgeInsets.only(right: 8),
+                      child: ChoiceChip(
+                        label: Text(role.toUpperCase()),
+                        selected: isSelected,
+                        onSelected: (val) {
+                          if (val) setSheetState(() => selectedRole = role);
+                        },
+                        selectedColor: AppColors.gold.withValues(alpha: 0.2),
+                        backgroundColor: AppColors.background,
+                        labelStyle: TextStyle(
+                          color: isSelected
+                              ? AppColors.gold
+                              : AppColors.textSecondary,
+                          fontSize: 12,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                    );
+                  }).toList(),
+                ),
+                if (selectedRole == 'admin') ...[
+                  const SizedBox(height: 20),
+                  const Text(
+                    'Permissions',
+                    style: TextStyle(
+                      color: AppColors.textSecondary,
+                      fontSize: 14,
+                    ),
+                  ),
+                  const SizedBox(height: 8),
+                  ...permissions.keys.map((perm) {
+                    return CheckboxListTile(
+                      title: Text(
+                        perm
+                            .split('_')
+                            .map((e) => e[0].toUpperCase() + e.substring(1))
+                            .join(' '),
+                        style: const TextStyle(color: AppColors.textPrimary),
+                      ),
+                      value: permissions[perm],
+                      onChanged: (val) {
+                        setSheetState(() => permissions[perm] = val ?? false);
                       },
-                      selectedColor: AppColors.gold.withValues(alpha: 0.2),
-                      backgroundColor: AppColors.background,
-                      labelStyle: TextStyle(
-                        color: isSelected
-                            ? AppColors.gold
-                            : AppColors.textSecondary,
-                        fontSize: 12,
-                        fontWeight: FontWeight.bold,
+                      activeColor: AppColors.gold,
+                      checkColor: AppColors.black,
+                      contentPadding: EdgeInsets.zero,
+                      controlAffinity: ListTileControlAffinity.leading,
+                    );
+                  }).toList(),
+                ],
+                const SizedBox(height: 24),
+                SizedBox(
+                  width: double.infinity,
+                  child: ElevatedButton(
+                    onPressed: () async {
+                      final performerId =
+                          context.read<AuthProvider>().currentUser?.uid ??
+                          'unknown';
+                      await _firebaseService.updateAdmin(
+                        adminId: admin.id,
+                        updates: {
+                          'role': selectedRole,
+                          'permissions': selectedRole == 'admin'
+                              ? permissions
+                              : null,
+                        },
+                        performedBy: performerId,
+                      );
+                      if (context.mounted) Navigator.pop(context);
+                    },
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: AppColors.gold,
+                      foregroundColor: AppColors.black,
+                      padding: const EdgeInsets.symmetric(vertical: 16),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12),
                       ),
                     ),
-                  );
-                }).toList(),
-              ),
-              const SizedBox(height: 24),
-              SizedBox(
-                width: double.infinity,
-                child: ElevatedButton(
-                  onPressed: () async {
-                    final performerId =
-                        context.read<AuthProvider>().currentUser?.uid ??
-                        'unknown';
-                    await _firebaseService.updateAdmin(
-                      adminId: admin.id,
-                      updates: {'role': selectedRole},
-                      performedBy: performerId,
-                    );
-                    if (context.mounted) Navigator.pop(context);
-                  },
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: AppColors.gold,
-                    foregroundColor: AppColors.black,
-                    padding: const EdgeInsets.symmetric(vertical: 16),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(12),
+                    child: const Text(
+                      'Save Changes',
+                      style: TextStyle(fontWeight: FontWeight.bold),
                     ),
                   ),
-                  child: const Text(
-                    'Save Changes',
-                    style: TextStyle(fontWeight: FontWeight.bold),
-                  ),
                 ),
-              ),
-            ],
+              ],
+            ),
           ),
         ),
       ),

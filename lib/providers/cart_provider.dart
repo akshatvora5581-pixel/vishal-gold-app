@@ -1,5 +1,6 @@
 import 'dart:convert';
 import 'package:flutter/foundation.dart';
+import 'package:uuid/uuid.dart';
 import 'package:vishal_gold/models/product.dart';
 import 'package:vishal_gold/models/cart_item.dart';
 import 'package:vishal_gold/services/firebase_service.dart';
@@ -55,7 +56,7 @@ class CartProvider with ChangeNotifier {
       final cartData = await _firebaseService.getCartItems(_userId!);
       _items = cartData.map((item) => CartItem.fromJson(item)).toList();
     } catch (e) {
-      debugPrint('Failed to load cart from Firestore: $e');
+      if (kDebugMode) debugPrint('Failed to load cart from Firestore: $e');
       _items = [];
     }
   }
@@ -71,7 +72,7 @@ class CartProvider with ChangeNotifier {
         _items = [];
       }
     } catch (e) {
-      debugPrint('Failed to load cart from local storage: $e');
+      if (kDebugMode) debugPrint('Failed to load cart from local storage: $e');
       _items = [];
     }
   }
@@ -99,7 +100,7 @@ class CartProvider with ChangeNotifier {
       final cartData = _items.map((item) => item.toJson()).toList();
       await _firebaseService.updateCart(_userId!, cartData);
     } catch (e) {
-      debugPrint('Failed to save cart to Firestore: $e');
+      if (kDebugMode) debugPrint('Failed to save cart to Firestore: $e');
     }
   }
 
@@ -109,7 +110,7 @@ class CartProvider with ChangeNotifier {
       final cartJson = jsonEncode(_items.map((item) => item.toJson()).toList());
       await LocalStorageService.saveCart(cartJson);
     } catch (e) {
-      debugPrint('Failed to save cart to local storage: $e');
+      if (kDebugMode) debugPrint('Failed to save cart to local storage: $e');
     }
   }
 
@@ -129,7 +130,8 @@ class CartProvider with ChangeNotifier {
       // Add new item
       _items.add(
         CartItem(
-          id: DateTime.now().millisecondsSinceEpoch.toString(),
+          id: const Uuid()
+              .v4(), // VAPT-005: use random UUID instead of timestamp
           userId: _userId ?? 'guest',
           productId: product.id,
           product: product,

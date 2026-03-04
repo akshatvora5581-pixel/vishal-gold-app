@@ -1,3 +1,4 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:vishal_gold/models/product.dart';
 
 class WishlistItem {
@@ -16,16 +17,19 @@ class WishlistItem {
   });
 
   factory WishlistItem.fromJson(Map<String, dynamic> json) {
+    DateTime parseDate(dynamic date) {
+      if (date == null) return DateTime.now();
+      if (date is Timestamp) return date.toDate();
+      if (date is String) return DateTime.tryParse(date) ?? DateTime.now();
+      return DateTime.now();
+    }
+
     return WishlistItem(
       id: json['id'] as String? ?? json['productId'] as String? ?? '',
       userId: json['user_id'] as String? ?? json['userId'] as String? ?? '',
       productId:
           json['product_id'] as String? ?? json['productId'] as String? ?? '',
-      addedAt: json['added_at'] != null
-          ? DateTime.parse(json['added_at'] as String)
-          : (json['addedAt'] != null
-                ? DateTime.parse(json['addedAt'] as String)
-                : DateTime.now()),
+      addedAt: parseDate(json['added_at'] ?? json['addedAt']),
       product: json['product'] != null
           ? Product.fromJson(json['product'] as Map<String, dynamic>)
           : (json['products'] != null

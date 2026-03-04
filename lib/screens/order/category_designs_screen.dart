@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:vishal_gold/constants/app_colors.dart';
+import 'package:vishal_gold/utils/app_layout.dart';
 import 'package:vishal_gold/widgets/common/custom_app_bar.dart';
 
 /// Displays customer-uploaded sample designs for a given [categoryName],
@@ -141,11 +142,11 @@ class CategoryDesignsScreen extends StatelessWidget {
           }
 
           return Padding(
-            padding: const EdgeInsets.all(12),
+            padding: EdgeInsets.all(AppLayout.of(context).horizontalPadding),
             child: GridView.builder(
               physics: const BouncingScrollPhysics(),
-              gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                crossAxisCount: 2,
+              gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+                crossAxisCount: AppLayout.of(context).productGridColumns,
                 crossAxisSpacing: 12,
                 mainAxisSpacing: 12,
                 childAspectRatio: 0.82,
@@ -174,7 +175,7 @@ class CategoryDesignsScreen extends StatelessWidget {
       PageRouteBuilder(
         opaque: false,
         barrierColor: Colors.black87,
-        pageBuilder: (_, __, ___) =>
+        pageBuilder: (_, _, _) =>
             _FullImageViewer(imageUrl: imageUrl, heroTag: 'design_$index'),
       ),
     );
@@ -235,7 +236,7 @@ class _DesignCard extends StatelessWidget {
                       );
                     },
                     // ── Error fallback ────────────────────────────────────────
-                    errorBuilder: (_, __, ___) => const _PlaceholderTile(),
+                    errorBuilder: (_, _, _) => const _PlaceholderTile(),
                   ),
           ),
         ),
@@ -284,7 +285,7 @@ class _LoadingShimmerState extends State<_LoadingShimmer>
   Widget build(BuildContext context) {
     return AnimatedBuilder(
       animation: _anim,
-      builder: (_, __) => Container(
+      builder: (_, _) => Container(
         color: AppColors.surface,
         child: Center(
           child: Column(
@@ -391,7 +392,7 @@ class _FullImageViewer extends StatelessWidget {
                           ),
                         );
                       },
-                      errorBuilder: (_, __, ___) => const Center(
+                      errorBuilder: (_, _, _) => const Center(
                         child: Icon(
                           Icons.broken_image_outlined,
                           color: AppColors.grey,

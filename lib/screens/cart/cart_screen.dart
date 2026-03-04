@@ -2,11 +2,14 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:url_launcher/url_launcher.dart';
 import 'package:vishal_gold/constants/app_colors.dart';
 import 'package:vishal_gold/providers/auth_provider.dart';
 import 'package:vishal_gold/providers/cart_provider.dart';
 import 'package:vishal_gold/providers/order_provider.dart';
+import 'package:vishal_gold/services/firebase_service.dart';
 import 'package:vishal_gold/screens/order/order_confirmation_screen.dart';
+import 'package:vishal_gold/models/notification.dart';
 
 class CartScreen extends StatelessWidget {
   const CartScreen({super.key});
@@ -59,18 +62,88 @@ class CartScreen extends StatelessWidget {
 
     if (confirmed != true || !context.mounted) return;
 
+    // Capture navigator ref before any async gap
+    final navigator = Navigator.of(context);
+
+    // Capture user details for the WhatsApp message
+    final userName = authProvider.currentUser?.displayName ?? 'A customer';
+    final userEmail = authProvider.currentUser?.email ?? 'Unknown Email';
+
+    // Capture cart items details before clearing the cart
+    final cartItemsText = cartProvider.items
+        .map((item) {
+          final p = item.product;
+          return p != null
+              ? '- ${item.quantity}x ${p.tagNumber} (${p.categoryDisplay})'
+              : '';
+        })
+        .where((s) => s.isNotEmpty)
+        .join('\n');
+
+    // Fetch user profile for full customer details
+    final userProfile = authProvider.userProfile;
+    final customerInfo = {
+      'customerName':
+          userProfile?['fullName'] ?? userProfile?['name'] ?? userName,
+      'customerEmail': userProfile?['email'] ?? userEmail,
+      'customerPhone': userProfile?['phone'] ?? '',
+      'customerWhatsApp':
+          userProfile?['whatsapp'] ?? userProfile?['phone'] ?? '',
+      'customerAddress': userProfile?['address'] ?? '',
+      'customerCity': userProfile?['city'] ?? '',
+      'customerCompany': userProfile?['company_name'] ?? '',
+      'userId': authProvider.currentUser!.uid,
+    };
+
     final orderId = await orderProvider.createOrder(
       userId: authProvider.currentUser!.uid,
       cartItems: cartProvider.items,
+      additionalData: customerInfo,
     );
 
     if (!context.mounted) return;
 
     if (orderId != null) {
       await cartProvider.clearCart();
+
+      // Send Push Notification via Firebase Cloud Functions
+      try {
+        final firebaseService = FirebaseService();
+        await firebaseService.sendNotificationRequest(
+          notificationData: {
+            'title': 'New Order Received! 🛍️',
+            'body': 'Order $orderId placed by $userName',
+            'target': 'admin',
+          },
+          performedBy: authProvider.currentUser?.uid ?? 'system',
+        );
+
+        // Also create a persistent database notification for the admin inbox
+        await firebaseService.createDbNotification(
+          AppNotification(
+            id: '', // Firestore will auto-generate document ID
+            userId: 'admin',
+            title: 'New Order Received! 🛍️',
+            message: 'Order $orderId placed by $userName',
+            type: 'order_update',
+            relatedId: orderId,
+            createdAt: DateTime.now(),
+          ),
+        );
+      } catch (e) {
+        debugPrint('Failed to send admin push notification: $e');
+      }
+
+      // WhatsApp Notification to Admin
+      await _notifyAdminViaWhatsApp(
+        orderId: orderId,
+        userName: userName,
+        userEmail: userEmail,
+        itemsText: cartItemsText,
+      );
+
       if (!context.mounted) return;
-      Navigator.pushReplacement(
-        context,
+      navigator.pushReplacement(
         MaterialPageRoute(
           builder: (context) => OrderConfirmationScreen(orderId: orderId),
         ),
@@ -82,6 +155,43 @@ class CartScreen extends StatelessWidget {
           backgroundColor: AppColors.errorRed,
         ),
       );
+    }
+  }
+
+  Future<void> _notifyAdminViaWhatsApp({
+    required String orderId,
+    required String userName,
+    required String userEmail,
+    required String itemsText,
+  }) async {
+    try {
+      final firebaseService = FirebaseService();
+      final support = await firebaseService.getSupportContact();
+      final number = support['whatsapp'];
+
+      if (number == null || number.isEmpty) return; // Silent fail if no number
+
+      final message =
+          'New Order Alert! 🛍️\n\n'
+          'Order ID: $orderId\n'
+          'Customer: $userName ($userEmail)\n\n'
+          'Items Ordered:\n$itemsText\n\n'
+          'Please process this order.';
+
+      final whatsappUrl = Uri.parse(
+        'whatsapp://send?phone=$number&text=${Uri.encodeComponent(message)}',
+      );
+
+      if (await canLaunchUrl(whatsappUrl)) {
+        await launchUrl(whatsappUrl);
+      } else {
+        final webUrl = Uri.parse(
+          'https://wa.me/$number?text=${Uri.encodeComponent(message)}',
+        );
+        await launchUrl(webUrl, mode: LaunchMode.externalApplication);
+      }
+    } catch (e) {
+      debugPrint('WhatsApp launch failed: $e');
     }
   }
 

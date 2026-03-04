@@ -1,9 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:google_fonts/google_fonts.dart';
-import 'package:vishal_gold/config/category_data.dart';
 import 'package:vishal_gold/constants/app_colors.dart';
 import 'package:vishal_gold/models/product.dart';
+import 'package:vishal_gold/models/category.dart';
+import 'package:vishal_gold/models/subcategory.dart';
 import 'package:vishal_gold/screens/home/all_subcategories_screen.dart';
 import 'package:vishal_gold/screens/product/product_detail_screen.dart';
 import 'package:vishal_gold/screens/product/product_listing_screen.dart';
@@ -21,8 +22,8 @@ class _SearchResult {
   final String subtitle;
   final String? imageUrl;
   // For navigation
-  final String? category;
-  final String? subcategory;
+  final Category? category;
+  final Subcategory? subcategory;
   final Product? product;
 
   const _SearchResult({
@@ -50,106 +51,25 @@ class GlobalSearchScreen extends StatefulWidget {
 class _GlobalSearchScreenState extends State<GlobalSearchScreen> {
   final TextEditingController _controller = TextEditingController();
   final FocusNode _focusNode = FocusNode();
+  final FirebaseService _firebaseService = FirebaseService();
 
   // All data loaded once
   List<Product> _allProducts = [];
+  List<Category> _allCategories = [];
+  List<Subcategory> _allSubcategories = [];
+
+  List<_SearchResult> _categoryResults = [];
+  List<_SearchResult> _subcategoryResults = [];
+
   bool _loading = true;
 
   // Filtered results
   List<_SearchResult> _results = [];
 
-  // Flat list of all categories
-  static final List<_SearchResult> _staticCategoryResults = [
-    _SearchResult(
-      type: _ResultType.category,
-      title: '84 MELTING',
-      subtitle: '${CategoryData.subcategories84.length} sub-categories',
-      category: CategoryData.category84,
-      imageUrl: null,
-    ),
-    _SearchResult(
-      type: _ResultType.category,
-      title: '92 MELTING',
-      subtitle: '${CategoryData.subcategories92.length} sub-categories',
-      category: CategoryData.category92,
-      imageUrl: null,
-    ),
-    _SearchResult(
-      type: _ResultType.category,
-      title: '92 MELTING CHAIN',
-      subtitle: '${CategoryData.subcategoriesChains92.length} sub-categories',
-      category: CategoryData.categoryChains92,
-      imageUrl: null,
-    ),
-  ];
-
-  // Build subcategory results list statically
-  static List<_SearchResult> _buildSubcategoryResults() {
-    final List<_SearchResult> out = [];
-
-    for (final sub in CategoryData.subcategories84) {
-      out.add(
-        _SearchResult(
-          type: _ResultType.subcategory,
-          title: sub,
-          subtitle: '84 MELTING',
-          category: CategoryData.category84,
-          subcategory: sub,
-          imageUrl:
-              CategoryData.getSubcategories(CategoryData.category84).firstWhere(
-                    (m) => m['name'] == sub,
-                    orElse: () => {},
-                  )['image']
-                  as String?,
-        ),
-      );
-    }
-    for (final sub in CategoryData.subcategories92) {
-      out.add(
-        _SearchResult(
-          type: _ResultType.subcategory,
-          title: sub,
-          subtitle: '92 MELTING',
-          category: CategoryData.category92,
-          subcategory: sub,
-          imageUrl:
-              CategoryData.getSubcategories(CategoryData.category92).firstWhere(
-                    (m) => m['name'] == sub,
-                    orElse: () => {},
-                  )['image']
-                  as String?,
-        ),
-      );
-    }
-    for (final sub in CategoryData.subcategoriesChains92) {
-      out.add(
-        _SearchResult(
-          type: _ResultType.subcategory,
-          title: sub,
-          subtitle: '92 MELTING CHAIN',
-          category: CategoryData.categoryChains92,
-          subcategory: sub,
-          imageUrl:
-              CategoryData.getSubcategories(
-                    CategoryData.categoryChains92,
-                  ).firstWhere(
-                    (m) => m['name'] == sub,
-                    orElse: () => {},
-                  )['image']
-                  as String?,
-        ),
-      );
-    }
-    return out;
-  }
-
-  static final List<_SearchResult> _staticSubResults =
-      _buildSubcategoryResults();
-
   @override
   void initState() {
     super.initState();
-    _loadProducts();
+    _loadAllData();
     _controller.addListener(_onQueryChanged);
     // Auto-focus
     WidgetsBinding.instance.addPostFrameCallback(
@@ -165,12 +85,65 @@ class _GlobalSearchScreenState extends State<GlobalSearchScreen> {
     super.dispose();
   }
 
-  Future<void> _loadProducts() async {
+  Future<void> _loadAllData() async {
     try {
-      final products = await FirebaseService().getAllProducts();
+      final productsFuture = _firebaseService.getAllProducts();
+      final categoriesSnapshotFuture = _firebaseService
+          .getCategories(onlyActive: true)
+          .first;
+
+      final products = await productsFuture;
+      final categoriesSnapshot = await categoriesSnapshotFuture;
+
+      final categories = categoriesSnapshot.docs
+          .map(
+            (doc) =>
+                Category.fromJson(doc.data() as Map<String, dynamic>, doc.id),
+          )
+          .toList();
+
+      List<Subcategory> subcategories = [];
+      for (var cat in categories) {
+        final subs = await _firebaseService.getSubcategoriesList(
+          cat.id,
+          onlyActive: true,
+        );
+        subcategories.addAll(subs);
+      }
+
       if (mounted) {
         setState(() {
           _allProducts = products;
+          _allCategories = categories;
+          _allSubcategories = subcategories;
+
+          _categoryResults = _allCategories
+              .map(
+                (c) => _SearchResult(
+                  type: _ResultType.category,
+                  title: c.name.toUpperCase(),
+                  subtitle: 'Category',
+                  category: c,
+                  imageUrl: c.imageUrl,
+                ),
+              )
+              .toList();
+
+          _subcategoryResults = _allSubcategories.map((s) {
+            final parentCat = _allCategories.firstWhere(
+              (c) => c.id == s.categoryId,
+              orElse: () => _allCategories.first,
+            );
+            return _SearchResult(
+              type: _ResultType.subcategory,
+              title: s.name,
+              subtitle: parentCat.name.toUpperCase(),
+              category: parentCat,
+              subcategory: s,
+              imageUrl: s.imageUrl,
+            );
+          }).toList();
+
           _loading = false;
         });
         // Trigger initial filter (empty → show nothing)
@@ -191,14 +164,14 @@ class _GlobalSearchScreenState extends State<GlobalSearchScreen> {
     final List<_SearchResult> matched = [];
 
     // 1. Categories
-    for (final cat in _staticCategoryResults) {
+    for (final cat in _categoryResults) {
       if (cat.title.toLowerCase().contains(q)) {
         matched.add(cat);
       }
     }
 
     // 2. Subcategories
-    for (final sub in _staticSubResults) {
+    for (final sub in _subcategoryResults) {
       if (sub.title.toLowerCase().contains(q) ||
           sub.subtitle.toLowerCase().contains(q)) {
         matched.add(sub);
@@ -226,21 +199,24 @@ class _GlobalSearchScreenState extends State<GlobalSearchScreen> {
     setState(() => _results = matched);
   }
 
-  void _onTap(_SearchResult result) {
+  void _onTap(_SearchResult result) async {
     FocusScope.of(context).unfocus();
     switch (result.type) {
       case _ResultType.category:
-        final subs = CategoryData.getSubcategories(result.category!);
-        Navigator.push(
-          context,
-          MaterialPageRoute(
-            builder: (_) => AllSubcategoriesScreen(
-              title: result.title,
-              category: result.category!,
-              subcategories: subs,
-            ),
-          ),
+        final subs = await _firebaseService.getSubcategoriesList(
+          result.category!.id,
         );
+        if (mounted) {
+          Navigator.push(
+            context,
+            MaterialPageRoute(
+              builder: (_) => AllSubcategoriesScreen(
+                category: result.category!,
+                subcategories: subs,
+              ),
+            ),
+          );
+        }
         break;
 
       case _ResultType.subcategory:
@@ -248,8 +224,8 @@ class _GlobalSearchScreenState extends State<GlobalSearchScreen> {
           context,
           MaterialPageRoute(
             builder: (_) => ProductListingScreen(
-              category: result.category,
-              subcategory: result.subcategory,
+              category: result.category!.id,
+              subcategory: result.subcategory!.id,
             ),
           ),
         );
@@ -312,7 +288,6 @@ class _GlobalSearchScreenState extends State<GlobalSearchScreen> {
                       decoration: InputDecoration(
                         hintText: 'Search categories, sub-types, tag no...',
                         hintStyle: GoogleFonts.outfit(
-                          // ignore: deprecated_member_use
                           color: AppColors.white.withValues(alpha: 0.4),
                           fontSize: 14,
                         ),
@@ -377,7 +352,6 @@ class _GlobalSearchScreenState extends State<GlobalSearchScreen> {
           Icon(
             Icons.search_rounded,
             size: 64,
-            // ignore: deprecated_member_use
             color: AppColors.gold.withValues(alpha: 0.25),
           ),
           const SizedBox(height: 16),
@@ -392,7 +366,6 @@ class _GlobalSearchScreenState extends State<GlobalSearchScreen> {
           Text(
             'Categories, sub-types, tag numbers...',
             style: GoogleFonts.outfit(
-              // ignore: deprecated_member_use
               color: AppColors.textSecondary.withValues(alpha: 0.6),
               fontSize: 13,
             ),
@@ -410,7 +383,6 @@ class _GlobalSearchScreenState extends State<GlobalSearchScreen> {
           Icon(
             Icons.search_off_rounded,
             size: 64,
-            // ignore: deprecated_member_use
             color: AppColors.grey.withValues(alpha: 0.3),
           ),
           const SizedBox(height: 16),
@@ -425,7 +397,6 @@ class _GlobalSearchScreenState extends State<GlobalSearchScreen> {
           Text(
             'Try a different keyword',
             style: GoogleFonts.outfit(
-              // ignore: deprecated_member_use
               color: AppColors.textSecondary.withValues(alpha: 0.5),
               fontSize: 13,
             ),
@@ -497,7 +468,6 @@ class _ResultTile extends StatelessWidget {
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
                       style: GoogleFonts.outfit(
-                        // ignore: deprecated_member_use
                         color: AppColors.textSecondary.withValues(alpha: 0.8),
                         fontSize: 12,
                       ),
@@ -537,13 +507,12 @@ class _ResultTile extends StatelessWidget {
                 width: 48,
                 height: 48,
                 fit: BoxFit.contain,
-                placeholder: (_, __) => Container(
+                placeholder: (_, _) => Container(
                   color: AppColors.background,
                   width: 48,
                   height: 48,
                 ),
-                errorWidget: (_, __, ___) =>
-                    _iconBox(Icons.image_not_supported),
+                errorWidget: (_, _, _) => _iconBox(Icons.image_not_supported),
               ),
       );
     }
@@ -556,7 +525,7 @@ class _ResultTile extends StatelessWidget {
           width: 48,
           height: 48,
           fit: BoxFit.cover,
-          errorBuilder: (_, __, ___) => _iconBox(Icons.diamond_outlined),
+          errorBuilder: (_, _, _) => _iconBox(Icons.diamond_outlined),
         ),
       );
     }
@@ -567,7 +536,6 @@ class _ResultTile extends StatelessWidget {
           ? Icons.grid_view_rounded
           : Icons.diamond_outlined,
       bg: result.type == _ResultType.category
-          // ignore: deprecated_member_use
           ? AppColors.gold.withValues(alpha: 0.15)
           : AppColors.background,
       iconColor: result.type == _ResultType.category
@@ -598,25 +566,19 @@ class _ResultTile extends StatelessWidget {
         break;
       case _ResultType.subcategory:
         label = 'Sub-type';
-        // ignore: deprecated_member_use
         color = Colors.blueAccent.withValues(alpha: 0.85);
         break;
       case _ResultType.product:
         label = 'Product';
-        // ignore: deprecated_member_use
         color = Colors.greenAccent.withValues(alpha: 0.75);
         break;
     }
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
       decoration: BoxDecoration(
-        // ignore: deprecated_member_use
         color: color.withValues(alpha: 0.15),
         borderRadius: BorderRadius.circular(20),
-        border: Border.all(
-          // ignore: deprecated_member_use
-          color: color.withValues(alpha: 0.4),
-        ),
+        border: Border.all(color: color.withValues(alpha: 0.4)),
       ),
       child: Text(
         label,
