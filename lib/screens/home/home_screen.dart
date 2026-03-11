@@ -17,6 +17,7 @@ import 'package:vishal_gold/models/category.dart' as app_models;
 import 'package:vishal_gold/services/firebase_service.dart';
 import 'package:vishal_gold/providers/preview_provider.dart';
 import 'package:vishal_gold/screens/search/global_search_screen.dart';
+import 'package:vishal_gold/utils/app_layout.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -171,155 +172,209 @@ class HomeTab extends StatefulWidget {
 }
 
 class _HomeTabState extends State<HomeTab> {
+  late final Stream<QuerySnapshot> _categoryStream;
+
+  @override
+  void initState() {
+    super.initState();
+    // Memoization: Initialize stream once in initState to prevent "Loading" loop on rebuilds
+    _categoryStream = FirebaseService().getCategories(onlyActive: true);
+  }
+
   @override
   Widget build(BuildContext context) {
+    final layout = AppLayout.of(context);
+
     return Scaffold(
       body: SafeArea(
-        child: Column(
-          children: [
-            // Search Bar and Profile Button
-            Padding(
-              padding: const EdgeInsets.symmetric(
-                horizontal: 20.0,
-                vertical: 10,
-              ),
-              child: Row(
-                children: [
-                  Expanded(
-                    child: GestureDetector(
-                      onTap: () {
-                        Navigator.push(
-                          context,
-                          PageRouteBuilder(
-                            pageBuilder: (ctx, a, b) =>
-                                const GlobalSearchScreen(),
-                            transitionsBuilder: (ctx, anim, _, child) =>
-                                FadeTransition(opacity: anim, child: child),
-                            transitionDuration: const Duration(
-                              milliseconds: 220,
-                            ),
-                          ),
-                        );
-                      },
-                      child: AbsorbPointer(
-                        child: TextField(
-                          readOnly: true,
-                          decoration: InputDecoration(
-                            hintText: 'Search for jewelry...',
-                            prefixIcon: const Icon(
-                              Icons.search,
-                              color: AppColors.textSecondary,
-                            ),
-                            fillColor: AppColors.surface,
-                            filled: true,
-                            border: OutlineInputBorder(
-                              borderRadius: BorderRadius.circular(30),
-                              borderSide: BorderSide.none,
-                            ),
-                            contentPadding: const EdgeInsets.symmetric(
-                              horizontal: 20,
-                            ),
-                          ),
-                        ),
-                      ),
-                    ),
+        child: Center(
+          child: Container(
+            constraints: const BoxConstraints(maxWidth: 1000),
+            child: CustomScrollView(
+              physics: const AlwaysScrollableScrollPhysics(),
+              slivers: [
+                // Top Search Bar (Floating)
+                _buildSliverSearchHeader(layout),
+
+                // Main Content
+                SliverPadding(
+                  padding: const EdgeInsets.symmetric(vertical: 8),
+                  sliver: SliverToBoxAdapter(
+                    child: RepaintBoundary(child: const BannerCarousel()),
                   ),
-                  const SizedBox(width: 12),
-                  // Profile Button
-                  GestureDetector(
-                    onTap: () {
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                          builder: (context) => const ProfileScreen(),
-                        ),
-                      );
-                    },
-                    child: Container(
-                      width: 48,
-                      height: 48,
-                      decoration: BoxDecoration(
-                        gradient: LinearGradient(
-                          begin: Alignment.topLeft,
-                          end: Alignment.bottomRight,
-                          colors: [
-                            AppColors.gold,
-                            AppColors.gold.withValues(alpha: 0.8),
-                          ],
-                        ),
-                        shape: BoxShape.circle,
-                        boxShadow: [
-                          BoxShadow(
-                            color: AppColors.gold.withValues(alpha: 0.3),
-                            blurRadius: 8,
-                            offset: const Offset(0, 4),
-                          ),
-                        ],
-                      ),
-                      child: const Icon(
-                        Icons.person,
-                        color: AppColors.black,
-                        size: 24,
-                      ),
-                    ),
-                  ),
-                ],
-              ),
-            ),
-            Expanded(
-              child: SingleChildScrollView(
-                child: Column(
-                  children: [
-                    const SizedBox(height: 10),
-                    const BannerCarousel(),
-                    const SizedBox(height: 16),
-                    StreamBuilder<QuerySnapshot>(
-                      stream: FirebaseService().getCategories(onlyActive: true),
-                      builder: (context, snapshot) {
-                        if (snapshot.connectionState ==
-                            ConnectionState.waiting) {
-                          return const Center(
+                ),
+
+                // Categories
+                StreamBuilder<QuerySnapshot>(
+                  stream: _categoryStream,
+                  builder: (context, snapshot) {
+                    if (snapshot.connectionState == ConnectionState.waiting) {
+                      return const SliverToBoxAdapter(
+                        child: Center(
+                          child: Padding(
+                            padding: EdgeInsets.symmetric(vertical: 40),
                             child: CircularProgressIndicator(
                               color: AppColors.gold,
                             ),
-                          );
-                        }
-                        if (snapshot.hasError ||
-                            !snapshot.hasData ||
-                            snapshot.data!.docs.isEmpty) {
-                          return const SizedBox.shrink();
-                        }
+                          ),
+                        ),
+                      );
+                    }
 
-                        final categories = snapshot.data!.docs.map((doc) {
-                          return app_models.Category.fromJson(
-                            doc.data() as Map<String, dynamic>,
-                            doc.id,
-                          );
-                        }).toList();
+                    if (snapshot.hasError) {
+                      return SliverToBoxAdapter(
+                        child: Center(
+                          child: Text(
+                            'Could not load categories.',
+                            style: TextStyle(color: AppColors.textSecondary),
+                          ),
+                        ),
+                      );
+                    }
 
-                        // Sort categories by creation date or keep them naturally ordered
-                        categories.sort(
-                          (a, b) => a.createdAt.compareTo(b.createdAt),
-                        );
+                    final docs = snapshot.data?.docs ?? [];
+                    if (docs.isEmpty) {
+                      return const SliverToBoxAdapter(
+                        child: Center(child: Text('No Categories Available')),
+                      );
+                    }
 
-                        return Column(
-                          children: categories.map((cat) {
-                            return Padding(
-                              padding: const EdgeInsets.only(bottom: 24.0),
-                              child: CategorySection(category: cat),
+                    final categories =
+                        docs.map((doc) {
+                            return app_models.Category.fromJson(
+                              doc.data() as Map<String, dynamic>,
+                              doc.id,
                             );
-                          }).toList(),
+                          }).toList()
+                          ..sort((a, b) => a.createdAt.compareTo(b.createdAt));
+
+                    return SliverList(
+                      delegate: SliverChildBuilderDelegate((context, index) {
+                        return RepaintBoundary(
+                          child: Padding(
+                            padding: const EdgeInsets.only(bottom: 24.0),
+                            child: CategorySection(category: categories[index]),
+                          ),
                         );
-                      },
-                    ),
-                    const SizedBox(height: 32),
-                  ],
+                      }, childCount: categories.length),
+                    );
+                  },
                 ),
-              ),
+
+                const SliverToBoxAdapter(child: SizedBox(height: 32)),
+              ],
             ),
-          ],
+          ),
         ),
       ),
     );
   }
+
+  Widget _buildSliverSearchHeader(AppLayout layout) {
+    return SliverPersistentHeader(
+      pinned: true,
+      delegate: _SearchHeaderDelegate(layout: layout),
+    );
+  }
+}
+
+class _SearchHeaderDelegate extends SliverPersistentHeaderDelegate {
+  final AppLayout layout;
+
+  _SearchHeaderDelegate({required this.layout});
+
+  @override
+  Widget build(
+    BuildContext context,
+    double shrinkOffset,
+    bool overlapsContent,
+  ) {
+    return Container(
+      color: AppColors.background,
+      padding: EdgeInsets.symmetric(
+        horizontal: layout.horizontalPadding,
+        vertical: 10,
+      ),
+      child: Row(
+        children: [
+          Expanded(
+            child: GestureDetector(
+              onTap: () {
+                Navigator.push(
+                  context,
+                  PageRouteBuilder(
+                    pageBuilder: (ctx, a, b) => const GlobalSearchScreen(),
+                    transitionsBuilder: (ctx, anim, _, child) =>
+                        FadeTransition(opacity: anim, child: child),
+                    transitionDuration: const Duration(milliseconds: 220),
+                  ),
+                );
+              },
+              child: AbsorbPointer(
+                child: TextField(
+                  readOnly: true,
+                  decoration: InputDecoration(
+                    hintText: 'Search for jewelry...',
+                    prefixIcon: const Icon(
+                      Icons.search,
+                      color: AppColors.textSecondary,
+                    ),
+                    fillColor: AppColors.surface,
+                    filled: true,
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(30),
+                      borderSide: BorderSide.none,
+                    ),
+                    contentPadding: const EdgeInsets.symmetric(horizontal: 20),
+                  ),
+                ),
+              ),
+            ),
+          ),
+          const SizedBox(width: 12),
+          GestureDetector(
+            onTap: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(builder: (context) => const ProfileScreen()),
+              );
+            },
+            child: Container(
+              width: 48,
+              height: 48,
+              decoration: BoxDecoration(
+                gradient: LinearGradient(
+                  begin: Alignment.topLeft,
+                  end: Alignment.bottomRight,
+                  colors: [
+                    AppColors.gold,
+                    AppColors.gold.withValues(alpha: 0.8),
+                  ],
+                ),
+                shape: BoxShape.circle,
+                boxShadow: [
+                  BoxShadow(
+                    color: AppColors.gold.withValues(alpha: 0.3),
+                    blurRadius: 8,
+                    offset: const Offset(0, 4),
+                  ),
+                ],
+              ),
+              child: const Icon(Icons.person, color: AppColors.black, size: 24),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  @override
+  double get maxExtent => 68;
+
+  @override
+  double get minExtent => 68;
+
+  @override
+  bool shouldRebuild(covariant SliverPersistentHeaderDelegate oldDelegate) =>
+      false;
 }

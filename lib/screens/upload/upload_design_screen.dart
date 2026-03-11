@@ -71,25 +71,42 @@ class _UploadDesignScreenState extends State<UploadDesignScreen> {
   }
 
   Future<void> _handleUpload() async {
-    if (!_formKey.currentState!.validate()) return;
+    // 1. Explicit Validation
     if (_selectedImages.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Please select at least one image')),
+        const SnackBar(
+          content: Text('Please select a design image first'),
+          backgroundColor: Colors.red,
+        ),
       );
       return;
     }
 
+    if (!_formKey.currentState!.validate()) {
+      return; // Form shows field errors
+    }
+
     final authProvider = Provider.of<AuthProvider>(context, listen: false);
+    if (authProvider.currentUser == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Authentication required. Please log in.'),
+          backgroundColor: Colors.red,
+        ),
+      );
+      return;
+    }
+
     final productProvider = Provider.of<ProductProvider>(
       context,
       listen: false,
     );
 
-    if (authProvider.currentUser == null) return;
-
+    // 2. Visual Loading State
     setState(() => _isUploading = true);
 
     try {
+      // 3. Safe Upload Logic (Try-Catch)
       // 1. Upload images to Firebase Storage
       final imageUrls = await _firebaseService.uploadMultipleImages(
         imageFiles: _selectedImages,
@@ -99,8 +116,8 @@ class _UploadDesignScreenState extends State<UploadDesignScreen> {
       // 2. Save product metadata to Firestore
       await productProvider.uploadProduct(
         tagNumber: _tagController.text.trim(),
-        category: _selectedCategory,
-        subcategory: _selectedSubcategory,
+        category: _selectedCategory.trim(),
+        subcategory: _selectedSubcategory.trim(),
         grossWeight: double.parse(_grossWeightController.text),
         netWeight: double.parse(_netWeightController.text),
         purity: _selectedPurity,
@@ -112,11 +129,17 @@ class _UploadDesignScreenState extends State<UploadDesignScreen> {
         description: _descriptionController.text.trim().isEmpty
             ? null
             : _descriptionController.text.trim(),
+        status: 'published',
       );
 
       if (mounted) {
+        // Success Handling
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Product uploaded successfully!')),
+          const SnackBar(
+            content: Text('✅ Product uploaded successfully!'),
+            backgroundColor: Colors.green,
+            duration: Duration(seconds: 3),
+          ),
         );
 
         // 3. Send WhatsApp Notification
@@ -131,31 +154,34 @@ class _UploadDesignScreenState extends State<UploadDesignScreen> {
           itemName: _nameController.text.trim().isEmpty
               ? _selectedSubcategory
               : _nameController.text.trim(),
-          qty: '1', // Default for single product upload
+          qty: '1',
           size: 'N/A',
           weight: _grossWeightController.text,
           totalWeight: _grossWeightController.text,
-          rodium: false, // Default for standard upload
-          huid: false, // Default for standard upload
+          rodium: false,
+          huid: false,
           remarks: _descriptionController.text.trim().isEmpty
               ? 'N/A'
               : _descriptionController.text.trim(),
           imageUrls: imageUrls,
         );
 
-        if (mounted) Navigator.pop(context);
+        if (mounted) {
+          // Clear and pop
+          Navigator.pop(context);
+        }
       }
     } catch (e) {
       if (mounted) {
+        setState(() => _isUploading = false);
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('Upload failed: $e'),
-            backgroundColor: AppColors.errorRed,
+            content: Text('Upload failed: ${e.toString()}'),
+            backgroundColor: Colors.red,
+            duration: const Duration(seconds: 5),
           ),
         );
       }
-    } finally {
-      if (mounted) setState(() => _isUploading = false);
     }
   }
 
@@ -174,27 +200,13 @@ class _UploadDesignScreenState extends State<UploadDesignScreen> {
     return Scaffold(
       backgroundColor: AppColors.background,
       appBar: AppBar(title: const Text('Upload Design')),
-      body: _isUploading
-          ? Center(
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  const CircularProgressIndicator(color: AppColors.gold),
-                  const SizedBox(height: 16),
-                  Text(
-                    'Uploading design...',
-                    style: TextStyle(color: AppColors.gold),
-                  ),
-                ],
-              ),
-            )
-          : SingleChildScrollView(
-              padding: const EdgeInsets.all(16),
-              child: Form(
-                key: _formKey,
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
+      body: SingleChildScrollView(
+        padding: const EdgeInsets.all(16),
+        child: Form(
+          key: _formKey,
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
                     // Image Picker Section
                     const Text(
                       'Product Images',
@@ -385,15 +397,27 @@ class _UploadDesignScreenState extends State<UploadDesignScreen> {
                       child: ElevatedButton(
                         style: ElevatedButton.styleFrom(
                           backgroundColor: AppColors.gold,
-                        ),
-                        onPressed: _handleUpload,
-                        child: const Text(
-                          'UPLOAD DESIGN',
-                          style: TextStyle(
-                            color: Colors.black,
-                            fontWeight: FontWeight.bold,
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(8),
                           ),
                         ),
+                        onPressed: _isUploading ? null : _handleUpload,
+                        child: _isUploading
+                            ? const SizedBox(
+                                height: 20,
+                                width: 20,
+                                child: CircularProgressIndicator(
+                                  strokeWidth: 2,
+                                  color: Colors.black,
+                                ),
+                              )
+                            : const Text(
+                                'UPLOAD DESIGN',
+                                style: TextStyle(
+                                  color: Colors.black,
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              ),
                       ),
                     ),
                     const SizedBox(height: 40),

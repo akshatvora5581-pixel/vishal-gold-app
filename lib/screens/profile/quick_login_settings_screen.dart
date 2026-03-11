@@ -4,6 +4,7 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:vishal_gold/constants/app_colors.dart';
 import 'package:vishal_gold/providers/auth_provider.dart';
 import 'package:vishal_gold/screens/auth/setup_pin_screen.dart';
+import 'package:vishal_gold/models/admin.dart';
 
 class QuickLoginSettingsScreen extends StatefulWidget {
   const QuickLoginSettingsScreen({super.key});
@@ -146,15 +147,15 @@ class _QuickLoginSettingsScreenState extends State<QuickLoginSettingsScreen> {
                 if (password != null &&
                     password.isNotEmpty &&
                     context.mounted) {
+                  final admin = Admin.fromJson(
+                    authProvider.userProfile!,
+                    authProvider.currentUser!.uid,
+                  );
                   Navigator.push(
                     context,
                     MaterialPageRoute(
-                      builder: (_) => SetupPinScreen(
-                        password: password,
-                        onSetupComplete: () {
-                          setState(() {});
-                        },
-                      ),
+                      builder: (_) =>
+                          SetupPinScreen(password: password, admin: admin),
                     ),
                   );
                 }

@@ -1,7 +1,10 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:vishal_gold/constants/app_colors.dart';
+import 'package:vishal_gold/providers/auth_provider.dart';
 import 'package:vishal_gold/screens/auth/setup_pin_screen.dart';
+import 'package:vishal_gold/models/admin.dart';
 
 class SecurityCenterScreen extends StatefulWidget {
   const SecurityCenterScreen({super.key});
@@ -108,20 +111,16 @@ class _SecurityCenterScreenState extends State<SecurityCenterScreen> {
                 if (password != null &&
                     password.isNotEmpty &&
                     context.mounted) {
+                  final authProvider = context.read<AuthProvider>();
+                  final admin = Admin.fromJson(
+                    authProvider.userProfile!,
+                    authProvider.currentUser!.uid,
+                  );
                   Navigator.push(
                     context,
                     MaterialPageRoute(
-                      builder: (_) => SetupPinScreen(
-                        password: password,
-                        onSetupComplete: () {
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            const SnackBar(
-                              content: Text('PIN updated successfully!'),
-                              backgroundColor: AppColors.gold,
-                            ),
-                          );
-                        },
-                      ),
+                      builder: (_) =>
+                          SetupPinScreen(password: password, admin: admin),
                     ),
                   );
                 }

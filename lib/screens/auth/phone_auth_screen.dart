@@ -1,11 +1,14 @@
 import 'package:flutter/material.dart';
-import 'package:firebase_auth/firebase_auth.dart';
+import 'package:firebase_auth/firebase_auth.dart' hide AuthProvider;
 import 'package:google_fonts/google_fonts.dart';
 import 'package:vishal_gold/services/firebase_auth_service.dart';
 import 'package:vishal_gold/services/firebase_service.dart';
 import 'package:vishal_gold/constants/app_colors.dart';
 import 'package:vishal_gold/screens/home/home_screen.dart';
 import 'package:vishal_gold/screens/auth/admin_login_screen.dart';
+import 'package:vishal_gold/screens/auth/pin_unlock_screen.dart';
+import 'package:provider/provider.dart';
+import 'package:vishal_gold/providers/auth_provider.dart';
 import 'dart:async';
 
 class PhoneAuthScreen extends StatefulWidget {
@@ -32,7 +35,7 @@ class _PhoneAuthScreenState extends State<PhoneAuthScreen> {
   bool _otpSent = false;
   bool _loading = false;
   String? _errorMessage;
-  bool _showNameField = false;
+  final bool _showNameField = false;
   // OTP rate limiting (VAPT-004): 60s cooldown after each OTP request
   int _otpCooldownSecondsRemaining = 0;
   Timer? _adminTriggerTimer;
@@ -68,8 +71,14 @@ class _PhoneAuthScreenState extends State<PhoneAuthScreen> {
     }
 
     String phoneNumber = _phoneController.text.trim();
-    if (!phoneNumber.startsWith('+')) {
-      phoneNumber = '+91$phoneNumber'; // Default to India
+    
+    // Auto-prepend +91 if not present (VAPT-005: Robust input handling)
+    if (phoneNumber.startsWith('+91')) {
+      // Already has +91
+    } else if (phoneNumber.startsWith('91') && phoneNumber.length > 10) {
+      phoneNumber = '+$phoneNumber';
+    } else {
+      phoneNumber = '+91$phoneNumber';
     }
 
     // Client-side OTP rate limiting (VAPT-004)
@@ -94,12 +103,13 @@ class _PhoneAuthScreenState extends State<PhoneAuthScreen> {
           _verificationId = verificationId;
           _otpSent = true;
           _loading = false;
+          _errorMessage = null; // Clear any old errors
         });
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(
               content: Text('OTP sent successfully!'),
-              backgroundColor: AppColors.gold,
+              backgroundColor: Colors.green, // Success should be green
               behavior: SnackBarBehavior.floating,
             ),
           );
@@ -111,6 +121,29 @@ class _PhoneAuthScreenState extends State<PhoneAuthScreen> {
             _errorMessage = error;
             _loading = false;
           });
+          // Explicit requirement: Display SnackBar for quota/blocked errors
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text(error),
+              backgroundColor: AppColors.errorRed,
+              behavior: SnackBarBehavior.floating,
+            ),
+          );
+        }
+      },
+      onTimeout: () {
+        if (mounted) {
+          setState(() {
+            _loading = false; // Stop loading on timeout
+            _errorMessage = 'OTP Auto-retrieval timed out. You can still enter it manually.';
+          });
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('Verification taking longer than usual. Please check your SMS.'),
+              backgroundColor: Colors.orange,
+              behavior: SnackBarBehavior.floating,
+            ),
+          );
         }
       },
       onAutoVerified: (user) async {
@@ -155,15 +188,8 @@ class _PhoneAuthScreenState extends State<PhoneAuthScreen> {
         user.uid,
       );
 
-      if (userData == null) {
-        setState(() {
-          _showNameField = true;
-          _loading = false;
-        });
-      } else {
-        _navigateToHome();
-      }
-    } catch (e) {
+      _navigateToHome();
+        } catch (e) {
       if (mounted) {
         setState(() {
           _errorMessage = 'Failed to load user data';
@@ -217,15 +243,22 @@ class _PhoneAuthScreenState extends State<PhoneAuthScreen> {
   // VAPT-003: Restricted admin access.
   // Re-implemented per user request with a 5-second hold requirement.
   void _navigateToAdminLogin() {
-    Navigator.of(
-      context,
-    ).push(MaterialPageRoute(builder: (_) => const AdminLoginScreen()));
+    final authProvider = Provider.of<AuthProvider>(context, listen: false);
+    if (authProvider.hasPinSetup || authProvider.isBiometricEnabled) {
+      Navigator.of(
+        context,
+      ).push(MaterialPageRoute(builder: (_) => const PinUnlockScreen()));
+    } else {
+      Navigator.of(
+        context,
+      ).push(MaterialPageRoute(builder: (_) => const AdminLoginScreen()));
+    }
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      resizeToAvoidBottomInset: false,
+      resizeToAvoidBottomInset: true,
       backgroundColor: AppColors.background,
       body: SafeArea(
         child: Center(
@@ -357,6 +390,8 @@ class _PhoneAuthScreenState extends State<PhoneAuthScreen> {
           icon: Icons.phone_iphone_rounded,
           focusNode: _phoneFocus,
           keyboardType: TextInputType.phone,
+          prefixText: '+91 ',
+          maxLength: 10,
         ),
         const SizedBox(height: 30),
         _buildPrimaryButton(
@@ -463,6 +498,7 @@ class _PhoneAuthScreenState extends State<PhoneAuthScreen> {
     FocusNode? focusNode,
     TextInputType? keyboardType,
     int? maxLength,
+    String? prefixText,
     TextCapitalization textCapitalization = TextCapitalization.none,
   }) {
     return Column(
@@ -492,6 +528,12 @@ class _PhoneAuthScreenState extends State<PhoneAuthScreen> {
             filled: true,
             fillColor: AppColors.surface,
             prefixIcon: Icon(icon, color: AppColors.gold),
+            prefixText: prefixText,
+            prefixStyle: const TextStyle(
+              color: AppColors.gold,
+              fontWeight: FontWeight.bold,
+              fontSize: 16,
+            ),
             counterText: '',
             border: OutlineInputBorder(
               borderRadius: BorderRadius.circular(16),

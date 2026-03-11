@@ -25,7 +25,7 @@ class MarketSettings {
       goldRate24K: (json['gold_rate_24k'] ?? 0.0).toDouble(),
       goldRate22K: (json['gold_rate_22k'] ?? 0.0).toDouble(),
       goldRate18K: (json['gold_rate_18k'] ?? 0.0).toDouble(),
-      updatedAt: parseDate(json['updated_at']),
+      updatedAt: parseDate(json['updatedAt'] ?? json['updated_at']),
     );
   }
 
@@ -34,7 +34,7 @@ class MarketSettings {
       'gold_rate_24k': goldRate24K,
       'gold_rate_22k': goldRate22K,
       'gold_rate_18k': goldRate18K,
-      'updated_at': FieldValue.serverTimestamp(),
+      'updatedAt': FieldValue.serverTimestamp(),
     };
   }
 

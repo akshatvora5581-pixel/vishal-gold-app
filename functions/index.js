@@ -165,8 +165,8 @@ exports.sendManualNotification = onDocumentCreated(
         const topic =
             target === "wholesalers"
                 ? "wholesalers"
-                : target === "admin"
-                    ? "admin"
+                : target === "admin" || target === "admins" || target === "admin_orders"
+                    ? "admins"
                     : "all_users";
 
         const message = {

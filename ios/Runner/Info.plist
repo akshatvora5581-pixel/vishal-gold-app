@@ -45,5 +45,11 @@
 	<true/>
 	<key>UIApplicationSupportsIndirectInputEvents</key>
 	<true/>
+	<key>NSPhotoLibraryUsageDescription</key>
+	<string>This app needs access to your photo library to let you upload jewelry designs.</string>
+	<key>NSCameraUsageDescription</key>
+	<string>This app needs camera access to let you take photos of jewelry designs to upload.</string>
+	<key>NSMicrophoneUsageDescription</key>
+	<string>This app needs microphone access for video recording if required.</string>
 </dict>
 </plist>

@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:cached_network_image/cached_network_image.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'dart:io';
 import 'package:image_picker/image_picker.dart';
@@ -111,14 +112,16 @@ class _CategoryManagementScreenState extends State<CategoryManagementScreen> {
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
       child: ListTile(
         contentPadding: const EdgeInsets.all(12),
-        leading: Container(
-          width: 50,
-          height: 50,
-          decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(8),
-            image: DecorationImage(
-              image: _getImageProvider(category.imageUrl),
-              fit: BoxFit.cover,
+        leading: RepaintBoundary(
+          child: Container(
+            width: 50,
+            height: 50,
+            decoration: BoxDecoration(
+              borderRadius: BorderRadius.circular(8),
+              image: DecorationImage(
+                image: CachedNetworkImageProvider(category.imageUrl),
+                fit: BoxFit.cover,
+              ),
             ),
           ),
         ),
@@ -155,6 +158,10 @@ class _CategoryManagementScreenState extends State<CategoryManagementScreen> {
               ),
               onPressed: () => _toggleCategoryStatus(category),
             ),
+            IconButton(
+              icon: const Icon(Icons.delete_forever, color: Colors.red),
+              onPressed: () => _confirmDeleteCategory(context, category),
+            ),
           ],
         ),
         onTap: () {
@@ -170,7 +177,6 @@ class _CategoryManagementScreenState extends State<CategoryManagementScreen> {
   }
 
   void _openAddEditCategory(BuildContext context, {Category? category}) {
-    // TODO: Implement Add/Edit Category Modal or Screen
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
@@ -205,13 +211,86 @@ class _CategoryManagementScreenState extends State<CategoryManagementScreen> {
     }
   }
 
-  ImageProvider _getImageProvider(String url) {
-    if (url.startsWith('assets/')) {
-      return AssetImage(url);
+  Future<void> _confirmDeleteCategory(
+    BuildContext context,
+    Category category,
+  ) async {
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        backgroundColor: AppColors.surface,
+        title: Text(
+          'Delete Category?',
+          style: GoogleFonts.playfairDisplay(
+            color: Colors.red,
+            fontWeight: FontWeight.bold,
+          ),
+        ),
+        content: Text(
+          'Are you sure you want to delete "${category.name}"?\n\nAll products under it might become inaccessible.',
+          style: GoogleFonts.outfit(color: AppColors.textPrimary),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx, false),
+            child: Text(
+              'Cancel',
+              style: GoogleFonts.outfit(color: AppColors.textSecondary),
+            ),
+          ),
+          ElevatedButton(
+            style: ElevatedButton.styleFrom(backgroundColor: Colors.red),
+            onPressed: () => Navigator.pop(ctx, true),
+            child: Text(
+              'Delete',
+              style: GoogleFonts.outfit(
+                color: Colors.white,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+
+    if (confirmed == true) {
+      await _deleteCategory(category);
     }
-    return NetworkImage(url);
+  }
+
+  Future<void> _deleteCategory(Category category) async {
+    try {
+      await FirebaseFirestore.instance
+          .collection('categories')
+          .doc(category.id)
+          .delete();
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('"${category.name}" deleted successfully.'),
+            backgroundColor: Colors.red.shade700,
+          ),
+        );
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Delete failed: ${e.toString()}')),
+        );
+      }
+    }
+  }
+
+  ImageProvider _getImageProvider(String url) {
+    return CachedNetworkImageProvider(url);
   }
 }
+
+// ---------------------------------------------------------------------------
+// Optimized Add/Edit Category Sheet
+// Uses ValueNotifier + ValueListenableBuilder for targeted rebuilds.
+// Text fields are NEVER rebuilt by image/purity/loading state changes.
+// ---------------------------------------------------------------------------
 
 class _AddEditCategorySheet extends StatefulWidget {
   final Category? category;
@@ -224,34 +303,29 @@ class _AddEditCategorySheet extends StatefulWidget {
 
 class _AddEditCategorySheetState extends State<_AddEditCategorySheet> {
   final _formKey = GlobalKey<FormState>();
-  late TextEditingController _nameController;
-  late TextEditingController _imageUrlController;
   final FirebaseService _firebaseService = FirebaseService();
-  bool _loading = false;
-  File? _imageFile;
   final _picker = ImagePicker();
 
-  Future<void> _pickImage() async {
-    final pickedFile = await _picker.pickImage(source: ImageSource.gallery);
-    if (pickedFile != null) {
-      setState(() {
-        _imageFile = File(pickedFile.path);
-        // Clear controller if file is picked
-        _imageUrlController.clear();
-      });
-    }
-  }
+  // --- TextEditingControllers (no setState needed, they manage their own state) ---
+  late final TextEditingController _nameController;
+  late final TextEditingController _imageUrlController;
+  late final TextEditingController _purityController;
+  late final TextEditingController _makingChargeGramController;
+  late final TextEditingController _makingChargeFlatController;
+
+  // --- ValueNotifiers (targeted rebuilds, no full-widget setState) ---
+  late final ValueNotifier<bool> _loadingNotifier;
+  late final ValueNotifier<File?> _imageFileNotifier;
+  late final ValueNotifier<List<String>> _puritiesNotifier;
 
   @override
   void initState() {
     super.initState();
+
     _nameController = TextEditingController(text: widget.category?.name ?? '');
     _imageUrlController = TextEditingController(
       text: widget.category?.imageUrl ?? '',
     );
-    _purities = widget.category?.purityOptions != null
-        ? List.from(widget.category!.purityOptions)
-        : ['18K', '20K', '22K'];
     _purityController = TextEditingController();
     _makingChargeGramController = TextEditingController(
       text: widget.category?.makingChargePerGram.toString() ?? '0.0',
@@ -259,12 +333,15 @@ class _AddEditCategorySheetState extends State<_AddEditCategorySheet> {
     _makingChargeFlatController = TextEditingController(
       text: widget.category?.makingChargeFlat.toString() ?? '0.0',
     );
-  }
 
-  List<String> _purities = [];
-  late TextEditingController _purityController;
-  late TextEditingController _makingChargeGramController;
-  late TextEditingController _makingChargeFlatController;
+    _loadingNotifier = ValueNotifier<bool>(false);
+    _imageFileNotifier = ValueNotifier<File?>(null);
+    _puritiesNotifier = ValueNotifier<List<String>>(
+      widget.category?.purityOptions != null
+          ? List<String>.from(widget.category!.purityOptions)
+          : ['18K', '20K', '22K'],
+    );
+  }
 
   @override
   void dispose() {
@@ -273,7 +350,21 @@ class _AddEditCategorySheetState extends State<_AddEditCategorySheet> {
     _purityController.dispose();
     _makingChargeGramController.dispose();
     _makingChargeFlatController.dispose();
+    _loadingNotifier.dispose();
+    _imageFileNotifier.dispose();
+    _puritiesNotifier.dispose();
     super.dispose();
+  }
+
+  Future<void> _pickImage() async {
+    final pickedFile = await _picker.pickImage(
+      source: ImageSource.gallery,
+      imageQuality: 30,
+    );
+    if (pickedFile != null) {
+      _imageFileNotifier.value = File(pickedFile.path);
+      _imageUrlController.clear();
+    }
   }
 
   Future<void> _save() async {
@@ -282,15 +373,14 @@ class _AddEditCategorySheetState extends State<_AddEditCategorySheet> {
     final performerId =
         context.read<AuthProvider>().currentUser?.uid ?? 'unknown';
 
-    setState(() => _loading = true);
+    _loadingNotifier.value = true;
 
     try {
       String imageUrl = _imageUrlController.text.trim();
 
-      // Upload image if file picked
-      if (_imageFile != null) {
+      if (_imageFileNotifier.value != null) {
         imageUrl = await _firebaseService.uploadImage(
-          imageFile: _imageFile!,
+          imageFile: _imageFileNotifier.value!,
           folder: 'categories',
         );
       }
@@ -302,7 +392,7 @@ class _AddEditCategorySheetState extends State<_AddEditCategorySheet> {
       final data = {
         'name': _nameController.text.trim(),
         'image_url': imageUrl,
-        'purity_options': _purities,
+        'purity_options': _puritiesNotifier.value,
         'making_charge_per_gram':
             double.tryParse(_makingChargeGramController.text) ?? 0.0,
         'making_charge_flat':
@@ -330,7 +420,7 @@ class _AddEditCategorySheetState extends State<_AddEditCategorySheet> {
         ).showSnackBar(SnackBar(content: Text('Error: ${e.toString()}')));
       }
     } finally {
-      if (mounted) setState(() => _loading = false);
+      if (mounted) _loadingNotifier.value = false;
     }
   }
 
@@ -340,198 +430,266 @@ class _AddEditCategorySheetState extends State<_AddEditCategorySheet> {
       padding: const EdgeInsets.all(24),
       child: Form(
         key: _formKey,
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            Text(
-              widget.category == null ? 'Add Category' : 'Edit Category',
-              style: GoogleFonts.playfairDisplay(
-                fontSize: 20,
-                fontWeight: FontWeight.bold,
-                color: AppColors.gold,
-              ),
-            ),
-            const SizedBox(height: 24),
-            TextFormField(
-              controller: _nameController,
-              decoration: InputDecoration(
-                labelText: 'Category Name',
-                labelStyle: const TextStyle(color: AppColors.gold),
-                enabledBorder: UnderlineInputBorder(
-                  borderSide: BorderSide(
-                    color: AppColors.white.withValues(alpha: 0.3),
-                  ),
+        child: SingleChildScrollView(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              // --- Title (static, never rebuilds) ---
+              Text(
+                widget.category == null ? 'Add Category' : 'Edit Category',
+                style: GoogleFonts.playfairDisplay(
+                  fontSize: 20,
+                  fontWeight: FontWeight.bold,
+                  color: AppColors.gold,
                 ),
               ),
-              style: const TextStyle(color: AppColors.textPrimary),
-              validator: (v) => v!.isEmpty ? 'Enter name' : null,
-            ),
-            const SizedBox(height: 16),
-            Row(
-              children: [
-                Expanded(
-                  child: TextFormField(
-                    controller: _imageUrlController,
-                    decoration: InputDecoration(
-                      labelText: 'Image URL',
-                      labelStyle: const TextStyle(color: AppColors.gold),
-                      enabledBorder: UnderlineInputBorder(
-                        borderSide: BorderSide(
-                          color: AppColors.white.withValues(alpha: 0.3),
-                        ),
-                      ),
+              const SizedBox(height: 24),
+
+              // --- Category Name (isolated, no rebuild from other state) ---
+              TextFormField(
+                controller: _nameController,
+                decoration: InputDecoration(
+                  labelText: 'Category Name',
+                  labelStyle: const TextStyle(color: AppColors.gold),
+                  enabledBorder: UnderlineInputBorder(
+                    borderSide: BorderSide(
+                      color: AppColors.white.withValues(alpha: 0.3),
                     ),
-                    style: const TextStyle(color: AppColors.textPrimary),
-                    enabled: _imageFile == null,
                   ),
                 ),
-                const SizedBox(width: 8),
-                TextButton.icon(
-                  onPressed: _pickImage,
-                  icon: const Icon(Icons.image, color: AppColors.gold),
-                  label: const Text(
-                    'Pick',
-                    style: TextStyle(color: AppColors.gold),
-                  ),
+                style: const TextStyle(color: AppColors.textPrimary),
+                validator: (v) => v!.isEmpty ? 'Enter name' : null,
+              ),
+              const SizedBox(height: 16),
+
+              // --- Image Section (wrapped in RepaintBoundary + ValueListenableBuilder) ---
+              RepaintBoundary(
+                child: ValueListenableBuilder<File?>(
+                  valueListenable: _imageFileNotifier,
+                  builder: (context, imageFile, _) {
+                    return Column(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Row(
+                          children: [
+                            Expanded(
+                              child: TextFormField(
+                                controller: _imageUrlController,
+                                decoration: InputDecoration(
+                                  labelText: 'Image URL',
+                                  labelStyle: const TextStyle(
+                                    color: AppColors.gold,
+                                  ),
+                                  enabledBorder: UnderlineInputBorder(
+                                    borderSide: BorderSide(
+                                      color: AppColors.white.withValues(
+                                        alpha: 0.3,
+                                      ),
+                                    ),
+                                  ),
+                                ),
+                                style: const TextStyle(
+                                  color: AppColors.textPrimary,
+                                ),
+                                enabled: imageFile == null,
+                              ),
+                            ),
+                            const SizedBox(width: 8),
+                            TextButton.icon(
+                              onPressed: _pickImage,
+                              icon: const Icon(
+                                Icons.image,
+                                color: AppColors.gold,
+                              ),
+                              label: const Text(
+                                'Pick',
+                                style: TextStyle(color: AppColors.gold),
+                              ),
+                            ),
+                          ],
+                        ),
+                        if (imageFile != null) ...[
+                          const SizedBox(height: 8),
+                          Row(
+                            children: [
+                              const Icon(
+                                Icons.check_circle,
+                                color: Colors.green,
+                                size: 16,
+                              ),
+                              const SizedBox(width: 4),
+                              Flexible(
+                                child: Text(
+                                  'Image selected: ${imageFile.path.split(Platform.pathSeparator).last}',
+                                  style: const TextStyle(
+                                    color: Colors.green,
+                                    fontSize: 12,
+                                  ),
+                                  overflow: TextOverflow.ellipsis,
+                                ),
+                              ),
+                              IconButton(
+                                icon: const Icon(
+                                  Icons.close,
+                                  color: Colors.red,
+                                  size: 16,
+                                ),
+                                onPressed: () =>
+                                    _imageFileNotifier.value = null,
+                              ),
+                            ],
+                          ),
+                        ],
+                      ],
+                    );
+                  },
                 ),
-              ],
-            ),
-            if (_imageFile != null) ...[
-              const SizedBox(height: 8),
+              ),
+
+              const SizedBox(height: 24),
+
+              // --- Purity Options (only this section rebuilds on chip changes) ---
+              Text(
+                'Purity Options',
+                style: GoogleFonts.outfit(
+                  color: AppColors.gold,
+                  fontSize: 14,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+              const SizedBox(height: 12),
+              ValueListenableBuilder<List<String>>(
+                valueListenable: _puritiesNotifier,
+                builder: (context, purities, _) {
+                  return Wrap(
+                    spacing: 8,
+                    children: purities.map((p) {
+                      return Chip(
+                        label: Text(p, style: const TextStyle(fontSize: 12)),
+                        backgroundColor: AppColors.gold.withValues(alpha: 0.1),
+                        labelStyle: const TextStyle(color: AppColors.gold),
+                        deleteIcon: const Icon(
+                          Icons.close,
+                          size: 14,
+                          color: Colors.red,
+                        ),
+                        onDeleted: () {
+                          _puritiesNotifier.value = List<String>.from(purities)
+                            ..remove(p);
+                        },
+                      );
+                    }).toList(),
+                  );
+                },
+              ),
+              const SizedBox(height: 12),
               Row(
                 children: [
-                  const Icon(Icons.check_circle, color: Colors.green, size: 16),
-                  const SizedBox(width: 4),
-                  Text(
-                    'Image selected: ${_imageFile!.path.split('/').last}',
-                    style: const TextStyle(color: Colors.green, fontSize: 12),
+                  Expanded(
+                    child: TextFormField(
+                      controller: _purityController,
+                      decoration: InputDecoration(
+                        labelText: 'Add Purity (e.g., 22K or 92)',
+                        labelStyle: const TextStyle(color: AppColors.gold),
+                        enabledBorder: UnderlineInputBorder(
+                          borderSide: BorderSide(
+                            color: AppColors.white.withValues(alpha: 0.3),
+                          ),
+                        ),
+                      ),
+                      style: const TextStyle(color: AppColors.textPrimary),
+                    ),
                   ),
-                  const Spacer(),
                   IconButton(
-                    icon: const Icon(Icons.close, color: Colors.red, size: 16),
-                    onPressed: () => setState(() => _imageFile = null),
+                    icon: const Icon(Icons.add_circle, color: AppColors.gold),
+                    onPressed: () {
+                      final val = _purityController.text.trim();
+                      if (val.isNotEmpty &&
+                          !_puritiesNotifier.value.contains(val)) {
+                        _puritiesNotifier.value = [
+                          ..._puritiesNotifier.value,
+                          val,
+                        ];
+                        _purityController.clear();
+                      }
+                    },
                   ),
                 ],
               ),
+
+              const SizedBox(height: 24),
+
+              // --- Making Charges (isolated, no rebuild from other state) ---
+              Row(
+                children: [
+                  Expanded(
+                    child: TextFormField(
+                      controller: _makingChargeGramController,
+                      decoration: InputDecoration(
+                        labelText: 'Making Charge (/g)',
+                        labelStyle: const TextStyle(color: AppColors.gold),
+                        enabledBorder: UnderlineInputBorder(
+                          borderSide: BorderSide(
+                            color: AppColors.white.withValues(alpha: 0.3),
+                          ),
+                        ),
+                      ),
+                      style: const TextStyle(color: AppColors.textPrimary),
+                      keyboardType: TextInputType.number,
+                    ),
+                  ),
+                  const SizedBox(width: 16),
+                  Expanded(
+                    child: TextFormField(
+                      controller: _makingChargeFlatController,
+                      decoration: InputDecoration(
+                        labelText: 'Making Charge (Flat)',
+                        labelStyle: const TextStyle(color: AppColors.gold),
+                        enabledBorder: UnderlineInputBorder(
+                          borderSide: BorderSide(
+                            color: AppColors.white.withValues(alpha: 0.3),
+                          ),
+                        ),
+                      ),
+                      style: const TextStyle(color: AppColors.textPrimary),
+                      keyboardType: TextInputType.number,
+                    ),
+                  ),
+                ],
+              ),
+
+              const SizedBox(height: 32),
+
+              // --- Save Button (only rebuilds on loading state change) ---
+              ValueListenableBuilder<bool>(
+                valueListenable: _loadingNotifier,
+                builder: (context, loading, _) {
+                  return ElevatedButton(
+                    onPressed: loading ? null : _save,
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: AppColors.gold,
+                      padding: const EdgeInsets.symmetric(vertical: 16),
+                    ),
+                    child: loading
+                        ? const CircularProgressIndicator(
+                            color: AppColors.black,
+                          )
+                        : Text(
+                            widget.category == null
+                                ? 'Create Category'
+                                : 'Save Changes',
+                            style: const TextStyle(
+                              color: AppColors.black,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                  );
+                },
+              ),
+              const SizedBox(height: 16),
             ],
-            const SizedBox(height: 24),
-            Text(
-              'Purity Options',
-              style: GoogleFonts.outfit(
-                color: AppColors.gold,
-                fontSize: 14,
-                fontWeight: FontWeight.bold,
-              ),
-            ),
-            const SizedBox(height: 12),
-            Wrap(
-              spacing: 8,
-              children: _purities.map((p) {
-                return Chip(
-                  label: Text(p, style: const TextStyle(fontSize: 12)),
-                  backgroundColor: AppColors.gold.withValues(alpha: 0.1),
-                  labelStyle: const TextStyle(color: AppColors.gold),
-                  deleteIcon: const Icon(
-                    Icons.close,
-                    size: 14,
-                    color: Colors.red,
-                  ),
-                  onDeleted: () => setState(() => _purities.remove(p)),
-                );
-              }).toList(),
-            ),
-            const SizedBox(height: 12),
-            Row(
-              children: [
-                Expanded(
-                  child: TextFormField(
-                    controller: _purityController,
-                    decoration: InputDecoration(
-                      labelText: 'Add Purity (e.g., 22K or 92)',
-                      labelStyle: const TextStyle(color: AppColors.gold),
-                      enabledBorder: UnderlineInputBorder(
-                        borderSide: BorderSide(
-                          color: AppColors.white.withValues(alpha: 0.3),
-                        ),
-                      ),
-                    ),
-                    style: const TextStyle(color: AppColors.textPrimary),
-                  ),
-                ),
-                IconButton(
-                  icon: const Icon(Icons.add_circle, color: AppColors.gold),
-                  onPressed: () {
-                    final val = _purityController.text.trim();
-                    if (val.isNotEmpty && !_purities.contains(val)) {
-                      setState(() {
-                        _purities.add(val);
-                        _purityController.clear();
-                      });
-                    }
-                  },
-                ),
-              ],
-            ),
-            const SizedBox(height: 24),
-            Row(
-              children: [
-                Expanded(
-                  child: TextFormField(
-                    controller: _makingChargeGramController,
-                    decoration: InputDecoration(
-                      labelText: 'Making Charge (/g)',
-                      labelStyle: const TextStyle(color: AppColors.gold),
-                      enabledBorder: UnderlineInputBorder(
-                        borderSide: BorderSide(
-                          color: AppColors.white.withValues(alpha: 0.3),
-                        ),
-                      ),
-                    ),
-                    style: const TextStyle(color: AppColors.textPrimary),
-                    keyboardType: TextInputType.number,
-                  ),
-                ),
-                const SizedBox(width: 16),
-                Expanded(
-                  child: TextFormField(
-                    controller: _makingChargeFlatController,
-                    decoration: InputDecoration(
-                      labelText: 'Making Charge (Flat)',
-                      labelStyle: const TextStyle(color: AppColors.gold),
-                      enabledBorder: UnderlineInputBorder(
-                        borderSide: BorderSide(
-                          color: AppColors.white.withValues(alpha: 0.3),
-                        ),
-                      ),
-                    ),
-                    style: const TextStyle(color: AppColors.textPrimary),
-                    keyboardType: TextInputType.number,
-                  ),
-                ),
-              ],
-            ),
-            const SizedBox(height: 32),
-            ElevatedButton(
-              onPressed: _loading ? null : _save,
-              style: ElevatedButton.styleFrom(
-                backgroundColor: AppColors.gold,
-                padding: const EdgeInsets.symmetric(vertical: 16),
-              ),
-              child: _loading
-                  ? const CircularProgressIndicator(color: AppColors.black)
-                  : Text(
-                      widget.category == null
-                          ? 'Create Category'
-                          : 'Save Changes',
-                      style: const TextStyle(
-                        color: AppColors.black,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-            ),
-            const SizedBox(height: 16),
-          ],
+          ),
         ),
       ),
     );

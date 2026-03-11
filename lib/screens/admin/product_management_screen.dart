@@ -1,15 +1,15 @@
-import 'dart:io';
+import 'dart:async';
 import 'package:flutter/material.dart';
-import 'package:image_picker/image_picker.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:provider/provider.dart';
+import 'package:cached_network_image/cached_network_image.dart';
 import 'package:vishal_gold/constants/app_colors.dart';
 import 'package:vishal_gold/models/product.dart';
-import 'package:vishal_gold/models/category.dart' as app_category;
-import 'package:vishal_gold/models/subcategory.dart';
 import 'package:vishal_gold/providers/auth_provider.dart';
 import 'package:vishal_gold/services/firebase_service.dart';
+import 'package:vishal_gold/widgets/admin/add_edit_product_sheet.dart';
+import 'package:vishal_gold/utils/debouncer.dart';
 
 class ProductManagementScreen extends StatefulWidget {
   const ProductManagementScreen({super.key});
@@ -21,16 +21,118 @@ class ProductManagementScreen extends StatefulWidget {
 
 class _ProductManagementScreenState extends State<ProductManagementScreen> {
   final FirebaseService _firebaseService = FirebaseService();
-  String _searchQuery = '';
-  String? _selectedCategory;
-  String? _selectedStatus;
+  final _searchController = TextEditingController();
+  final _searchDebouncer = Debouncer(milliseconds: 500);
+
+  // Use ValueNotifier for basic filters to avoid full rebuilds on every keystroke/tap
+  final ValueNotifier<String> _searchQueryNotifier = ValueNotifier('');
+  final ValueNotifier<String?> _selectedStatusNotifier = ValueNotifier(null);
+  final ValueNotifier<String?> _selectedCategoryNotifier = ValueNotifier(null);
 
   // Multi-selection state
   bool _isSelectionMode = false;
   final Set<String> _selectedProductIds = {};
 
-  int _lastFetchedCount = 0;
-  List<Product> _currentVisibleProducts = [];
+  // Pagination state
+  final List<Product> _products = [];
+  DocumentSnapshot? _lastDocument;
+  bool _isLoading = false;
+  bool _hasMore = true;
+  String? _errorMessage;
+  final int _pageSize = 20;
+
+  final ScrollController _scrollController = ScrollController();
+
+  @override
+  void initState() {
+    super.initState();
+    _scrollController.addListener(_onScroll);
+    _fetchProducts();
+
+    // Listen to filter changes to reset and refetch
+    _searchQueryNotifier.addListener(_onFilterChanged);
+    _selectedStatusNotifier.addListener(_onFilterChanged);
+    _selectedCategoryNotifier.addListener(_onFilterChanged);
+  }
+
+  void _onScroll() {
+    if (_scrollController.position.pixels >=
+            _scrollController.position.maxScrollExtent - 200 &&
+        !_isLoading &&
+        _hasMore) {
+      _fetchProducts();
+    }
+  }
+
+  void _onFilterChanged() {
+    _resetPagination();
+    _fetchProducts();
+  }
+
+  void _resetPagination() {
+    setState(() {
+      _products.clear();
+      _lastDocument = null;
+      _hasMore = true;
+      _errorMessage = null; // Clear error on reset
+      _selectedProductIds.clear();
+      _isSelectionMode = false;
+    });
+  }
+
+  Future<void> _fetchProducts() async {
+    if (_isLoading) return;
+
+    setState(() {
+      _isLoading = true;
+      _errorMessage = null;
+    });
+
+    try {
+      final result = await _firebaseService.getProductsPaginated(
+        category: _selectedCategoryNotifier.value,
+        limit: _pageSize,
+        startAfter: _lastDocument,
+        status: _selectedStatusNotifier.value ?? 'published',
+      );
+
+      final List<Product> newProducts =
+          (result['products'] as List).cast<Product>();
+      _lastDocument = result['lastDocument'];
+
+      if (mounted) {
+        setState(() {
+          _products.addAll(newProducts);
+          _hasMore = newProducts.length == _pageSize;
+          _isLoading = false;
+        });
+      }
+    } catch (e) {
+      if (mounted) {
+        setState(() {
+          _isLoading = false;
+          _errorMessage = e.toString();
+        });
+        // Also show a snackbar for immediate feedback if background load fails
+        if (_products.isNotEmpty) {
+          ScaffoldMessenger.of(
+            context,
+          ).showSnackBar(SnackBar(content: Text('Error: ${e.toString()}')));
+        }
+      }
+    }
+  }
+
+  @override
+  void dispose() {
+    _scrollController.dispose();
+    _searchController.dispose();
+    _searchDebouncer.dispose();
+    _searchQueryNotifier.dispose();
+    _selectedStatusNotifier.dispose();
+    _selectedCategoryNotifier.dispose();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -61,7 +163,7 @@ class _ProductManagementScreenState extends State<ProductManagementScreen> {
           if (_isSelectionMode)
             IconButton(
               icon: Icon(
-                _selectedProductIds.length == _lastFetchedCount
+                _selectedProductIds.length == _products.length
                     ? Icons.deselect_outlined
                     : Icons.select_all_outlined,
                 color: AppColors.gold,
@@ -96,7 +198,12 @@ class _ProductManagementScreenState extends State<ProductManagementScreen> {
       child: Column(
         children: [
           TextField(
-            onChanged: (v) => setState(() => _searchQuery = v),
+            controller: _searchController,
+            onChanged: (v) {
+              _searchDebouncer.run(() {
+                _searchQueryNotifier.value = v;
+              });
+            },
             decoration: InputDecoration(
               hintText: 'Search by Tag # or Name',
               hintStyle: const TextStyle(color: AppColors.textSecondary),
@@ -111,20 +218,71 @@ class _ProductManagementScreenState extends State<ProductManagementScreen> {
             style: const TextStyle(color: AppColors.textPrimary),
           ),
           const SizedBox(height: 12),
-          // Scrollable filter chips
           SingleChildScrollView(
             scrollDirection: Axis.horizontal,
             child: Row(
               children: [
-                _buildFilterChip('All Status', null, _selectedStatus),
-                _buildFilterChip('Published', 'published', _selectedStatus),
-                _buildFilterChip('Draft', 'draft', _selectedStatus),
+                ValueListenableBuilder<String?>(
+                  valueListenable: _selectedStatusNotifier,
+                  builder: (context, status, _) {
+                    return Row(
+                      children: [
+                        _buildFilterChip(
+                          'All Status',
+                          null,
+                          status,
+                          (val) => _selectedStatusNotifier.value = val,
+                        ),
+                        _buildFilterChip(
+                          'Published',
+                          'published',
+                          status,
+                          (val) => _selectedStatusNotifier.value = val,
+                        ),
+                        _buildFilterChip(
+                          'Draft',
+                          'draft',
+                          status,
+                          (val) => _selectedStatusNotifier.value = val,
+                        ),
+                      ],
+                    );
+                  },
+                ),
                 const SizedBox(width: 12),
-                const VerticalDivider(color: AppColors.textSecondary),
+                Container(
+                  height: 24,
+                  width: 1,
+                  color: AppColors.white.withOpacity(0.1),
+                ),
                 const SizedBox(width: 12),
-                _buildFilterChip('All Categories', null, _selectedCategory),
-                _buildFilterChip('84 Melting', '84_melting', _selectedCategory),
-                _buildFilterChip('92 Melting', '92_melting', _selectedCategory),
+                ValueListenableBuilder<String?>(
+                  valueListenable: _selectedCategoryNotifier,
+                  builder: (context, category, _) {
+                    return Row(
+                      children: [
+                        _buildFilterChip(
+                          'All Categories',
+                          null,
+                          category,
+                          (val) => _selectedCategoryNotifier.value = val,
+                        ),
+                        _buildFilterChip(
+                          '84 Melting',
+                          '84_melting',
+                          category,
+                          (val) => _selectedCategoryNotifier.value = val,
+                        ),
+                        _buildFilterChip(
+                          '92 Melting',
+                          '92_melting',
+                          category,
+                          (val) => _selectedCategoryNotifier.value = val,
+                        ),
+                      ],
+                    );
+                  },
+                ),
               ],
             ),
           ),
@@ -135,10 +293,10 @@ class _ProductManagementScreenState extends State<ProductManagementScreen> {
 
   void _toggleAllSelection() {
     setState(() {
-      if (_selectedProductIds.length == _currentVisibleProducts.length) {
+      if (_selectedProductIds.length == _products.length) {
         _selectedProductIds.clear();
       } else {
-        _selectedProductIds.addAll(_currentVisibleProducts.map((p) => p.id));
+        _selectedProductIds.addAll(_products.map((p) => p.id));
       }
     });
   }
@@ -215,7 +373,7 @@ class _ProductManagementScreenState extends State<ProductManagementScreen> {
       });
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Successfully updated products')),
+          const SnackBar(content: Text('Successfully updated products')),
         );
       }
     } catch (e) {
@@ -277,24 +435,21 @@ class _ProductManagementScreenState extends State<ProductManagementScreen> {
     }
   }
 
-  Widget _buildFilterChip(String label, String? value, String? groupValue) {
+  Widget _buildFilterChip(
+    String label,
+    String? value,
+    String? groupValue,
+    ValueChanged<String?> onSelected,
+  ) {
     final isSelected = value == groupValue;
     return Padding(
       padding: const EdgeInsets.only(right: 8),
       child: FilterChip(
         label: Text(label),
         selected: isSelected,
-        onSelected: (selected) {
-          setState(() {
-            if (label.contains('Status')) {
-              _selectedStatus = value;
-            } else {
-              _selectedCategory = value;
-            }
-          });
-        },
+        onSelected: (selected) => onSelected(selected ? value : null),
         backgroundColor: AppColors.background,
-        selectedColor: AppColors.gold.withValues(alpha: 0.2),
+        selectedColor: AppColors.gold.withOpacity(0.2),
         labelStyle: TextStyle(
           color: isSelected ? AppColors.gold : AppColors.textPrimary,
           fontSize: 12,
@@ -311,76 +466,106 @@ class _ProductManagementScreenState extends State<ProductManagementScreen> {
   }
 
   Widget _buildProductList() {
-    // Note: Simple filter for now. Real world would use composite queries or client-side filtering.
-    // Firestore limited in multiple 'where' inequality/ordering.
-    return StreamBuilder<QuerySnapshot>(
-      stream: FirebaseFirestore.instance.collection('products').snapshots(),
-      builder: (context, snapshot) {
-        if (snapshot.hasError) {
-          return Center(child: Text('Error: ${snapshot.error}'));
-        }
-        if (snapshot.connectionState == ConnectionState.waiting) {
-          return const Center(
-            child: CircularProgressIndicator(color: AppColors.gold),
-          );
-        }
+    // 1. Initial Loading State
+    if (_isLoading && _products.isEmpty) {
+      return const Center(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            CircularProgressIndicator(color: AppColors.gold),
+            SizedBox(height: 16),
+            Text('Loading products...', style: TextStyle(color: AppColors.gold)),
+          ],
+        ),
+      );
+    }
 
-        var docs = snapshot.data?.docs ?? [];
+    // 2. Error State (When no products yet)
+    if (_errorMessage != null && _products.isEmpty) {
+      return Center(
+        child: Padding(
+          padding: const EdgeInsets.all(24.0),
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              const Icon(Icons.error_outline, color: Colors.red, size: 48),
+              const SizedBox(height: 16),
+              Text(
+                _errorMessage!,
+                textAlign: TextAlign.center,
+                style: const TextStyle(color: Colors.red),
+              ),
+              const SizedBox(height: 24),
+              ElevatedButton(
+                onPressed: _onFilterChanged,
+                style: ElevatedButton.styleFrom(backgroundColor: AppColors.gold),
+                child: const Text(
+                  'RETRY',
+                  style: TextStyle(color: Colors.black),
+                ),
+              ),
+            ],
+          ),
+        ),
+      );
+    }
 
-        // Client-side filtering
-        _currentVisibleProducts = docs
-            .map((doc) {
-              return Product.fromJson({
-                'id': doc.id,
-                ...doc.data() as Map<String, dynamic>,
-              });
-            })
-            .where((p) {
-              bool statusMatch =
-                  _selectedStatus == null || p.status == _selectedStatus;
-              bool categoryMatch =
-                  _selectedCategory == null || p.category == _selectedCategory;
-              bool searchMatch =
-                  _searchQuery.isEmpty ||
-                  p.tagNumber.toLowerCase().contains(
-                    _searchQuery.toLowerCase(),
-                  ) ||
-                  (p.name?.toLowerCase().contains(_searchQuery.toLowerCase()) ??
-                      false);
-              return statusMatch && categoryMatch && searchMatch;
-            })
-            .toList();
-
-        _lastFetchedCount = _currentVisibleProducts.length;
-
-        if (_currentVisibleProducts.isEmpty) {
-          return Center(
-            child: Text(
-              'No products found',
-              style: GoogleFonts.outfit(color: AppColors.textSecondary),
+    // 3. Empty State
+    if (_products.isEmpty) {
+      return RefreshIndicator(
+        onRefresh: () async => _onFilterChanged(),
+        child: ListView(
+          physics: const AlwaysScrollableScrollPhysics(),
+          children: [
+            SizedBox(height: MediaQuery.of(context).size.height * 0.2),
+            const Center(
+              child: Icon(
+                Icons.inventory_2_outlined,
+                size: 64,
+                color: AppColors.textSecondary,
+              ),
             ),
-          );
-        }
+            const SizedBox(height: 16),
+            Center(
+              child: Text(
+                'No products found matching filters',
+                style: GoogleFonts.outfit(color: AppColors.textSecondary),
+              ),
+            ),
+          ],
+        ),
+      );
+    }
 
-        return ListView.builder(
-          padding: const EdgeInsets.all(16),
-          itemCount: _currentVisibleProducts.length,
-          itemBuilder: (context, index) {
-            final product = _currentVisibleProducts[index];
-            return _buildProductTile(product);
-          },
-        );
-      },
+    // 4. Content List
+    return RefreshIndicator(
+      onRefresh: () async => _onFilterChanged(),
+      child: ListView.builder(
+        controller: _scrollController,
+        padding: const EdgeInsets.fromLTRB(16, 16, 16, 100),
+        itemCount: _products.length + (_hasMore ? 1 : 0),
+        physics: const AlwaysScrollableScrollPhysics(),
+        itemBuilder: (context, index) {
+          if (index == _products.length) {
+            return const Center(
+              child: Padding(
+                padding: EdgeInsets.symmetric(vertical: 24),
+                child: CircularProgressIndicator(color: AppColors.gold),
+              ),
+            );
+          }
+          return _buildProductTile(_products[index]);
+        },
+      ),
     );
   }
 
   Widget _buildProductTile(Product product) {
+    // Only setState when selection changes
     final isSelected = _selectedProductIds.contains(product.id);
 
     return Card(
-      color: isSelected
-          ? AppColors.gold.withValues(alpha: 0.1)
-          : AppColors.surface,
+      color: isSelected ? AppColors.gold.withOpacity(0.1) : AppColors.surface,
       margin: const EdgeInsets.only(bottom: 12),
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(12),
@@ -411,161 +596,134 @@ class _ProductManagementScreenState extends State<ProductManagementScreen> {
             });
           }
         },
-        borderRadius: BorderRadius.circular(12),
-        child: Column(
-          children: [
-            ListTile(
-              contentPadding: const EdgeInsets.all(12),
-              leading: Row(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  if (_isSelectionMode)
-                    Padding(
-                      padding: const EdgeInsets.only(right: 8.0),
-                      child: Icon(
-                        isSelected
-                            ? Icons.check_circle
-                            : Icons.radio_button_unchecked,
-                        color: AppColors.gold,
+        child: RepaintBoundary(
+          child: Column(
+            children: [
+              ListTile(
+                contentPadding: const EdgeInsets.all(12),
+                leading: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    if (_isSelectionMode)
+                      Padding(
+                        padding: const EdgeInsets.only(right: 8.0),
+                        child: Icon(
+                          isSelected
+                              ? Icons.check_circle
+                              : Icons.radio_button_unchecked,
+                          color: AppColors.gold,
+                        ),
                       ),
-                    ),
-                  product.imageUrls.isNotEmpty
-                      ? Container(
-                          width: 60,
-                          height: 60,
-                          decoration: BoxDecoration(
+                    product.imageUrls.isNotEmpty
+                        ? ClipRRect(
                             borderRadius: BorderRadius.circular(8),
-                            image: DecorationImage(
-                              image: _getImageProvider(product.imageUrls.first),
+                            child: CachedNetworkImage(
+                              imageUrl: product.imageUrls.first,
+                              width: 60,
+                              height: 60,
                               fit: BoxFit.cover,
+                              memCacheHeight:
+                                  180, // Optimization: cache smaller version
+                              memCacheWidth: 180,
+                              placeholder: (context, url) =>
+                                  Container(color: AppColors.background),
+                              errorWidget: (context, url, error) =>
+                                  const Icon(Icons.error),
+                            ),
+                          )
+                        : Container(
+                            width: 60,
+                            height: 60,
+                            decoration: BoxDecoration(
+                              color: AppColors.background,
+                              borderRadius: BorderRadius.circular(8),
+                            ),
+                            child: const Icon(
+                              Icons.image_not_supported,
+                              color: AppColors.textSecondary,
                             ),
                           ),
-                        )
-                      : Container(
-                          width: 60,
-                          height: 60,
-                          decoration: BoxDecoration(
-                            color: AppColors.background,
-                            borderRadius: BorderRadius.circular(8),
-                          ),
-                          child: const Icon(
-                            Icons.image_not_supported,
-                            color: AppColors.textSecondary,
-                          ),
-                        ),
-                ],
-              ),
-              title: Text(
-                product.tagNumber,
-                style: GoogleFonts.outfit(
-                  fontWeight: FontWeight.bold,
-                  color: AppColors.gold,
+                  ],
                 ),
-              ),
-              subtitle: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  if (product.name != null && product.name!.isNotEmpty)
+                title: Text(
+                  product.tagNumber,
+                  style: GoogleFonts.outfit(
+                    fontWeight: FontWeight.bold,
+                    color: AppColors.gold,
+                  ),
+                ),
+                subtitle: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    if (product.name != null && product.name!.isNotEmpty)
+                      Text(
+                        product.name!,
+                        style: const TextStyle(color: AppColors.textPrimary),
+                      ),
                     Text(
-                      product.name!,
-                      style: const TextStyle(color: AppColors.textPrimary),
+                      '${product.categoryDisplay} > ${product.subcategory}',
+                      style: const TextStyle(
+                        color: AppColors.textSecondary,
+                        fontSize: 12,
+                      ),
                     ),
-                  Text(
-                    '${product.categoryDisplay} > ${product.subcategory}',
-                    style: const TextStyle(
-                      color: AppColors.textSecondary,
-                      fontSize: 12,
+                    Text(
+                      'GW: ${product.grossWeight}g | Purity: ${product.purity}K',
+                      style: const TextStyle(
+                        color: AppColors.textSecondary,
+                        fontSize: 12,
+                      ),
                     ),
+                  ],
+                ),
+                trailing: Container(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 8,
+                    vertical: 4,
                   ),
-                  Text(
-                    'GW: ${product.grossWeight}g | Purity: ${product.purity}%',
-                    style: const TextStyle(
-                      color: AppColors.textSecondary,
-                      fontSize: 12,
-                    ),
+                  decoration: BoxDecoration(
+                    color: product.status == 'published'
+                        ? Colors.green.withOpacity(0.1)
+                        : Colors.orange.withOpacity(0.1),
+                    borderRadius: BorderRadius.circular(4),
                   ),
-                  Text(
-                    'Inventory: ${product.inventoryStatusDisplay}',
+                  child: Text(
+                    product.status.toUpperCase(),
                     style: TextStyle(
-                      color: product.inventoryStatus == 'in_stock'
+                      color: product.status == 'published'
                           ? Colors.green
-                          : product.inventoryStatus == 'sold_out'
-                          ? Colors.red
                           : Colors.orange,
-                      fontSize: 12,
+                      fontSize: 10,
                       fontWeight: FontWeight.bold,
                     ),
                   ),
-                ],
+                ),
               ),
-              trailing: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Container(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 8,
-                      vertical: 4,
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.end,
+                  children: [
+                    TextButton.icon(
+                      onPressed: () =>
+                          _openAddEditProduct(context, product: product),
+                      icon: const Icon(Icons.edit_outlined, size: 18),
+                      label: const Text('Edit'),
+                      style: TextButton.styleFrom(foregroundColor: Colors.blue),
                     ),
-                    decoration: BoxDecoration(
-                      color: product.status == 'published'
-                          ? Colors.green.withValues(alpha: 0.1)
-                          : Colors.orange.withValues(alpha: 0.1),
-                      borderRadius: BorderRadius.circular(4),
-                    ),
-                    child: Text(
-                      product.status.toUpperCase(),
-                      style: TextStyle(
-                        color: product.status == 'published'
-                            ? Colors.green
-                            : Colors.orange,
-                        fontSize: 10,
-                        fontWeight: FontWeight.bold,
+                    IconButton(
+                      icon: const Icon(
+                        Icons.delete_outline,
+                        size: 18,
+                        color: Colors.red,
                       ),
+                      onPressed: () => _deleteProduct(product),
                     ),
-                  ),
-                ],
+                  ],
+                ),
               ),
-            ),
-            Divider(color: AppColors.white.withValues(alpha: 0.05), height: 1),
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.end,
-                children: [
-                  TextButton.icon(
-                    onPressed: () =>
-                        _openAddEditProduct(context, product: product),
-                    icon: const Icon(Icons.edit_outlined, size: 18),
-                    label: const Text('Edit'),
-                    style: TextButton.styleFrom(foregroundColor: Colors.blue),
-                  ),
-                  TextButton.icon(
-                    onPressed: () => _togglePublishStatus(product),
-                    icon: Icon(
-                      product.status == 'published'
-                          ? Icons.unarchive_outlined
-                          : Icons.publish_outlined,
-                      size: 18,
-                    ),
-                    label: Text(
-                      product.status == 'published' ? 'Draft' : 'Publish',
-                    ),
-                    style: TextButton.styleFrom(
-                      foregroundColor: AppColors.gold,
-                    ),
-                  ),
-                  IconButton(
-                    icon: const Icon(
-                      Icons.delete_outline,
-                      size: 18,
-                      color: Colors.red,
-                    ),
-                    onPressed: () => _deleteProduct(product),
-                  ),
-                ],
-              ),
-            ),
-          ],
+            ],
+          ),
         ),
       ),
     );
@@ -577,49 +735,15 @@ class _ProductManagementScreenState extends State<ProductManagementScreen> {
       isScrollControlled: true,
       backgroundColor: AppColors.surface,
       shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
       ),
-      builder: (_) => Padding(
+      builder: (context) => Padding(
         padding: EdgeInsets.only(
           bottom: MediaQuery.of(context).viewInsets.bottom,
         ),
-        child: _AddEditProductSheet(product: product),
+        child: AddEditProductSheet(product: product),
       ),
     );
-  }
-
-  Future<void> _togglePublishStatus(Product product) async {
-    try {
-      final performerId =
-          context.read<AuthProvider>().currentUser?.uid ?? 'unknown';
-
-      // Stage the status change
-      await _firebaseService.stageChange(
-        adminId: performerId,
-        collectionName: 'products',
-        docId: product.id,
-        data: {
-          ...product.toJson(), // Get all current data
-          'status': product.status == 'published' ? 'draft' : 'published',
-        },
-        changeType: 'update',
-      );
-
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Status change staged for preview!'),
-            backgroundColor: AppColors.gold,
-          ),
-        );
-      }
-    } catch (e) {
-      if (mounted) {
-        ScaffoldMessenger.of(
-          context,
-        ).showSnackBar(SnackBar(content: Text('Error: ${e.toString()}')));
-      }
-    }
   }
 
   Future<void> _deleteProduct(Product product) async {
@@ -652,19 +776,21 @@ class _ProductManagementScreenState extends State<ProductManagementScreen> {
     if (confirmed == true) {
       try {
         final performerId = auth.currentUser?.uid ?? 'unknown';
-
-        await _firebaseService.stageChange(
+        await FirebaseFirestore.instance
+            .collection('products')
+            .doc(product.id)
+            .delete();
+        await _firebaseService.logAdminAction(
           adminId: performerId,
-          collectionName: 'products',
-          docId: product.id,
-          data: null, // No data for delete
-          changeType: 'delete',
+          action: 'DELETE_PRODUCT',
+          targetId: product.id,
+          targetType: 'product',
+          details: 'Deleted product: ${product.tagNumber}',
         );
-
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(
-              content: Text('Delete action staged for preview!'),
+              content: Text('Product deleted successfully!'),
               backgroundColor: Colors.redAccent,
             ),
           );
@@ -677,628 +803,5 @@ class _ProductManagementScreenState extends State<ProductManagementScreen> {
         }
       }
     }
-  }
-
-  ImageProvider _getImageProvider(String url) {
-    if (url.startsWith('assets/')) {
-      return AssetImage(url);
-    }
-    return NetworkImage(url);
-  }
-}
-
-class _AddEditProductSheet extends StatefulWidget {
-  final Product? product;
-
-  const _AddEditProductSheet({this.product});
-
-  @override
-  State<_AddEditProductSheet> createState() => _AddEditProductSheetState();
-}
-
-class _AddEditProductSheetState extends State<_AddEditProductSheet> {
-  final _formKey = GlobalKey<FormState>();
-  final FirebaseService _firebaseService = FirebaseService();
-  final ImagePicker _picker = ImagePicker();
-
-  late TextEditingController _tagController;
-  late TextEditingController _nameController;
-  late TextEditingController _descriptionController;
-  late TextEditingController _grossWeightController;
-  late TextEditingController _netWeightController;
-
-  String? _selectedCategory;
-  app_category.Category? _categoryObj;
-  String? _selectedSubcategory;
-  int _selectedPurity = 84;
-  final List<File> _newImageFiles = [];
-  List<String> _existingImageUrls = [];
-  String _inventoryStatus = 'in_stock';
-  bool _isLoading = false;
-
-  @override
-  void initState() {
-    super.initState();
-    _tagController = TextEditingController(
-      text: widget.product?.tagNumber ?? '',
-    );
-    _nameController = TextEditingController(text: widget.product?.name ?? '');
-    _descriptionController = TextEditingController(
-      text: widget.product?.description ?? '',
-    );
-    _grossWeightController = TextEditingController(
-      text: widget.product?.grossWeight.toString() ?? '',
-    );
-    _netWeightController = TextEditingController(
-      text: widget.product?.netWeight.toString() ?? '',
-    );
-    _selectedCategory = widget.product?.category;
-    _selectedSubcategory = widget.product?.subcategory;
-    _selectedPurity = widget.product?.purity ?? 84;
-    _existingImageUrls = widget.product?.imageUrls != null
-        ? List.from(widget.product!.imageUrls)
-        : [];
-    _inventoryStatus = widget.product?.inventoryStatus ?? 'in_stock';
-  }
-
-  @override
-  void dispose() {
-    _tagController.dispose();
-    _nameController.dispose();
-    _descriptionController.dispose();
-    _grossWeightController.dispose();
-    _netWeightController.dispose();
-    super.dispose();
-  }
-
-  Future<void> _pickImages() async {
-    final List<XFile> images = await _picker.pickMultiImage();
-    if (images.isNotEmpty) {
-      setState(() {
-        _newImageFiles.addAll(images.map((x) => File(x.path)));
-      });
-    }
-  }
-
-  Future<void> _save() async {
-    if (!_formKey.currentState!.validate()) return;
-    if (_selectedCategory == null || _selectedSubcategory == null) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Please select category and subcategory')),
-      );
-      return;
-    }
-    if (_newImageFiles.isEmpty && _existingImageUrls.isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Please add at least one image')),
-      );
-      return;
-    }
-
-    final performerId =
-        context.read<AuthProvider>().currentUser?.uid ?? 'unknown';
-
-    setState(() => _isLoading = true);
-
-    try {
-      List<String> uploadedUrls = [];
-
-      // Upload new images
-      for (var file in _newImageFiles) {
-        String url = await _firebaseService.uploadImage(
-          imageFile: file,
-          folder: 'products',
-        );
-        uploadedUrls.add(url);
-      }
-
-      final allUrls = [..._existingImageUrls, ...uploadedUrls];
-
-      final productData = {
-        'tag_number': _tagController.text,
-        'category': _selectedCategory,
-        'subcategory': _selectedSubcategory,
-        'name': _nameController.text.trim().isEmpty
-            ? null
-            : _nameController.text.trim(),
-        'description': _descriptionController.text.trim().isEmpty
-            ? null
-            : _descriptionController.text.trim(),
-        'image_urls': allUrls,
-        'gross_weight': double.parse(_grossWeightController.text),
-        'net_weight': double.parse(_netWeightController.text),
-        'purity': _selectedPurity,
-        'inventory_status': _inventoryStatus,
-        'is_active': true,
-      };
-
-      await _firebaseService.stageChange(
-        adminId: performerId,
-        collectionName: 'products',
-        docId:
-            widget.product?.id ??
-            FirebaseFirestore.instance.collection('products').doc().id,
-        data: productData,
-        changeType: widget.product == null ? 'create' : 'update',
-      );
-
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Changes staged for preview!'),
-            backgroundColor: AppColors.gold,
-          ),
-        );
-        Navigator.pop(context);
-      }
-    } catch (e) {
-      if (mounted) {
-        ScaffoldMessenger.of(
-          context,
-        ).showSnackBar(SnackBar(content: Text('Error: ${e.toString()}')));
-      }
-    } finally {
-      if (mounted) setState(() => _isLoading = false);
-    }
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      constraints: BoxConstraints(
-        maxHeight: MediaQuery.of(context).size.height * 0.85,
-      ),
-      padding: const EdgeInsets.all(24),
-      child: Form(
-        key: _formKey,
-        child: SingleChildScrollView(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  Text(
-                    widget.product == null ? 'Add Product' : 'Edit Product',
-                    style: GoogleFonts.outfit(
-                      fontSize: 24,
-                      fontWeight: FontWeight.bold,
-                      color: AppColors.gold,
-                    ),
-                  ),
-                  IconButton(
-                    onPressed: () => Navigator.pop(context),
-                    icon: const Icon(
-                      Icons.close,
-                      color: AppColors.textSecondary,
-                    ),
-                  ),
-                ],
-              ),
-              const SizedBox(height: 24),
-              _buildImagePicker(),
-              const SizedBox(height: 24),
-              _buildTextField(
-                _tagController,
-                'Tag Number (Required)',
-                Icons.tag,
-              ),
-              const SizedBox(height: 16),
-              _buildTextField(
-                _nameController,
-                'Product Name (Optional)',
-                Icons.shopping_bag_outlined,
-              ),
-              const SizedBox(height: 16),
-              _buildTextField(
-                _descriptionController,
-                'Description (Optional)',
-                Icons.description_outlined,
-                maxLines: 3,
-              ),
-              const SizedBox(height: 16),
-              _buildCategoryDropdowns(),
-              const SizedBox(height: 16),
-              Row(
-                children: [
-                  Expanded(
-                    child: _buildTextField(
-                      _grossWeightController,
-                      'Gross Weight',
-                      Icons.scale,
-                      keyboardType: TextInputType.number,
-                    ),
-                  ),
-                  const SizedBox(width: 16),
-                  Expanded(
-                    child: _buildTextField(
-                      _netWeightController,
-                      'Net Weight',
-                      Icons.scale_outlined,
-                      keyboardType: TextInputType.number,
-                    ),
-                  ),
-                ],
-              ),
-              const SizedBox(height: 16),
-              _buildPuritySelector(),
-              const SizedBox(height: 16),
-              _buildInventoryStatusSelector(),
-              const SizedBox(height: 32),
-              SizedBox(
-                width: double.infinity,
-                height: 50,
-                child: ElevatedButton(
-                  onPressed: _isLoading ? null : _save,
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: AppColors.gold,
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                  ),
-                  child: _isLoading
-                      ? const CircularProgressIndicator(color: AppColors.black)
-                      : Text(
-                          widget.product == null
-                              ? 'Create Product'
-                              : 'Save Changes',
-                          style: const TextStyle(
-                            color: AppColors.black,
-                            fontWeight: FontWeight.bold,
-                            fontSize: 16,
-                          ),
-                        ),
-                ),
-              ),
-              const SizedBox(height: 16),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-
-  Widget _buildTextField(
-    TextEditingController controller,
-    String label,
-    IconData icon, {
-    TextInputType keyboardType = TextInputType.text,
-    int maxLines = 1,
-  }) {
-    return TextFormField(
-      controller: controller,
-      keyboardType: keyboardType,
-      maxLines: maxLines,
-      style: const TextStyle(color: AppColors.textPrimary),
-      decoration: InputDecoration(
-        labelText: label,
-        labelStyle: const TextStyle(color: AppColors.textSecondary),
-        prefixIcon: Icon(icon, color: AppColors.gold),
-        filled: true,
-        fillColor: AppColors.background,
-        border: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(12),
-          borderSide: BorderSide(color: AppColors.white.withValues(alpha: 0.1)),
-        ),
-        enabledBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(12),
-          borderSide: BorderSide(color: AppColors.white.withValues(alpha: 0.1)),
-        ),
-        focusedBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(12),
-          borderSide: const BorderSide(color: AppColors.gold),
-        ),
-      ),
-      validator: (value) {
-        if (label.contains('Required') || label.contains('Weight')) {
-          if (value == null || value.isEmpty) {
-            return 'Required field';
-          }
-        }
-        return null;
-      },
-    );
-  }
-
-  Widget _buildImagePicker() {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.stretch,
-      children: [
-        const Text(
-          'Product Images',
-          style: TextStyle(color: AppColors.textSecondary, fontSize: 14),
-        ),
-        const SizedBox(height: 12),
-        SingleChildScrollView(
-          scrollDirection: Axis.horizontal,
-          child: Row(
-            children: [
-              GestureDetector(
-                onTap: _pickImages,
-                child: Container(
-                  width: 80,
-                  height: 80,
-                  decoration: BoxDecoration(
-                    color: AppColors.background,
-                    borderRadius: BorderRadius.circular(12),
-                    border: Border.all(
-                      color: AppColors.gold.withValues(alpha: 0.3),
-                      style: BorderStyle.solid,
-                    ),
-                  ),
-                  child: const Icon(
-                    Icons.add_photo_alternate_outlined,
-                    color: AppColors.gold,
-                  ),
-                ),
-              ),
-              const SizedBox(width: 12),
-              ...List.generate(_existingImageUrls.length, (index) {
-                return _buildImageThumbnail(
-                  _existingImageUrls[index],
-                  isExisting: true,
-                  onRemove: () =>
-                      setState(() => _existingImageUrls.removeAt(index)),
-                );
-              }),
-              ...List.generate(_newImageFiles.length, (index) {
-                return _buildImageThumbnail(
-                  _newImageFiles[index],
-                  isExisting: false,
-                  onRemove: () =>
-                      setState(() => _newImageFiles.removeAt(index)),
-                );
-              }),
-            ],
-          ),
-        ),
-      ],
-    );
-  }
-
-  Widget _buildImageThumbnail(
-    dynamic image, {
-    required bool isExisting,
-    required VoidCallback onRemove,
-  }) {
-    return Padding(
-      padding: const EdgeInsets.only(right: 12),
-      child: Stack(
-        children: [
-          Container(
-            width: 80,
-            height: 80,
-            decoration: BoxDecoration(
-              borderRadius: BorderRadius.circular(12),
-              image: DecorationImage(
-                image: isExisting
-                    ? _getImageProvider(image as String)
-                    : FileImage(image as File) as ImageProvider,
-                fit: BoxFit.cover,
-              ),
-            ),
-          ),
-          Positioned(
-            right: -4,
-            top: -4,
-            child: GestureDetector(
-              onTap: onRemove,
-              child: Container(
-                padding: const EdgeInsets.all(2),
-                decoration: const BoxDecoration(
-                  color: Colors.red,
-                  shape: BoxShape.circle,
-                ),
-                child: const Icon(Icons.close, size: 14, color: Colors.white),
-              ),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildInventoryStatusSelector() {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.stretch,
-      children: [
-        const Text(
-          'Inventory Status',
-          style: TextStyle(color: AppColors.textSecondary, fontSize: 14),
-        ),
-        const SizedBox(height: 12),
-        Row(
-          children: [
-            _buildStatusChip('In Stock', 'in_stock', Colors.green),
-            const SizedBox(width: 8),
-            _buildStatusChip('Sold Out', 'sold_out', Colors.red),
-            const SizedBox(width: 8),
-            _buildStatusChip('On Order', 'on_order', Colors.orange),
-          ],
-        ),
-      ],
-    );
-  }
-
-  Widget _buildStatusChip(String label, String value, Color color) {
-    final isSelected = _inventoryStatus == value;
-    return ChoiceChip(
-      label: Text(label),
-      selected: isSelected,
-      onSelected: (selected) {
-        if (selected) setState(() => _inventoryStatus = value);
-      },
-      backgroundColor: AppColors.background,
-      selectedColor: color.withValues(alpha: 0.2),
-      labelStyle: TextStyle(
-        color: isSelected ? color : AppColors.textPrimary,
-        fontSize: 12,
-        fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
-      ),
-    );
-  }
-
-  Widget _buildCategoryDropdowns() {
-    return Column(
-      children: [
-        StreamBuilder<QuerySnapshot>(
-          stream: _firebaseService.getCategories(),
-          builder: (context, snapshot) {
-            final categories =
-                snapshot.data?.docs
-                    .map(
-                      (doc) => app_category.Category.fromJson(
-                        doc.data() as Map<String, dynamic>,
-                        doc.id,
-                      ),
-                    )
-                    .toList() ??
-                [];
-            return _buildDropdown<String>(
-              value: _selectedCategory,
-              hint: 'Select Category',
-              icon: Icons.category_outlined,
-              items: categories
-                  .map(
-                    (c) => DropdownMenuItem(value: c.id, child: Text(c.name)),
-                  )
-                  .toList(),
-              onChanged: (v) {
-                setState(() {
-                  _selectedCategory = v;
-                  _categoryObj = categories.firstWhere((c) => c.id == v);
-                  _selectedSubcategory =
-                      null; // Reset subcategory when category changes
-                });
-              },
-            );
-          },
-        ),
-        if (_selectedCategory != null) ...[
-          const SizedBox(height: 16),
-          StreamBuilder<QuerySnapshot>(
-            stream: _firebaseService.getSubcategories(_selectedCategory!),
-            builder: (context, snapshot) {
-              final subcategories =
-                  snapshot.data?.docs
-                      .map(
-                        (doc) => Subcategory.fromJson(
-                          doc.data() as Map<String, dynamic>,
-                          doc.id,
-                        ),
-                      )
-                      .toList() ??
-                  [];
-              return _buildDropdown<String>(
-                value: _selectedSubcategory,
-                hint: 'Select Subcategory',
-                icon: Icons.account_tree_outlined,
-                items: subcategories
-                    .map(
-                      (s) =>
-                          DropdownMenuItem(value: s.name, child: Text(s.name)),
-                    )
-                    .toList(),
-                onChanged: (v) => setState(() => _selectedSubcategory = v),
-              );
-            },
-          ),
-        ],
-      ],
-    );
-  }
-
-  Widget _buildDropdown<T>({
-    required T? value,
-    required String hint,
-    required IconData icon,
-    required List<DropdownMenuItem<T>> items,
-    required ValueChanged<T?> onChanged,
-  }) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 12),
-      decoration: BoxDecoration(
-        color: AppColors.background,
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: AppColors.white.withValues(alpha: 0.1)),
-      ),
-      child: DropdownButtonFormField<T>(
-        initialValue: value,
-        hint: Text(
-          hint,
-          style: const TextStyle(color: AppColors.textSecondary),
-        ),
-        items: items,
-        onChanged: onChanged,
-        dropdownColor: AppColors.surface,
-        icon: const Icon(Icons.arrow_drop_down, color: AppColors.gold),
-        decoration: InputDecoration(
-          border: InputBorder.none,
-          prefixIcon: Icon(icon, color: AppColors.gold),
-        ),
-        style: const TextStyle(color: AppColors.textPrimary),
-      ),
-    );
-  }
-
-  Widget _buildPuritySelector() {
-    final options = _categoryObj?.purityOptions ?? ['18K', '20K', '22K'];
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.stretch,
-      children: [
-        const Text(
-          'Purity',
-          style: TextStyle(color: AppColors.textSecondary, fontSize: 14),
-        ),
-        const SizedBox(height: 8),
-        Wrap(
-          spacing: 12,
-          runSpacing: 8,
-          children: options.map((opt) {
-            // Try to parse int if possible for model compatibility,
-            // but the model expects int currently.
-            // If it's "22K", we might need to handle it.
-            // For now, let's stick to int values or mapped values.
-            int val = int.tryParse(opt.replaceAll(RegExp(r'[^0-9]'), '')) ?? 0;
-            return _buildPurityChip(val, opt);
-          }).toList(),
-        ),
-      ],
-    );
-  }
-
-  Widget _buildPurityChip(int value, String label) {
-    bool isSelected = _selectedPurity == value;
-    return GestureDetector(
-      onTap: () => setState(() => _selectedPurity = value),
-      child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-        decoration: BoxDecoration(
-          color: isSelected
-              ? AppColors.gold.withValues(alpha: 0.2)
-              : AppColors.background,
-          borderRadius: BorderRadius.circular(20),
-          border: Border.all(
-            color: isSelected
-                ? AppColors.gold
-                : AppColors.white.withValues(alpha: 0.1),
-          ),
-        ),
-        child: Text(
-          label,
-          style: TextStyle(
-            color: isSelected ? AppColors.gold : AppColors.textPrimary,
-            fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
-          ),
-        ),
-      ),
-    );
-  }
-
-  ImageProvider _getImageProvider(String url) {
-    if (url.startsWith('assets/')) {
-      return AssetImage(url);
-    }
-    return NetworkImage(url);
   }
 }

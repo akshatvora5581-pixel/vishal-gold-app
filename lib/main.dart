@@ -1,11 +1,11 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/foundation.dart';
 import 'package:provider/provider.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_app_check/firebase_app_check.dart';
 import 'package:firebase_analytics/firebase_analytics.dart';
 import 'firebase_options.dart';
-import 'package:vishal_gold/services/firebase_service.dart';
 import 'package:vishal_gold/services/local_storage_service.dart';
 import 'package:vishal_gold/constants/app_colors.dart';
 import 'package:vishal_gold/constants/app_strings.dart';
@@ -18,9 +18,9 @@ import 'package:vishal_gold/providers/preview_provider.dart';
 import 'package:vishal_gold/providers/notification_provider.dart';
 import 'package:vishal_gold/providers/language_provider.dart';
 import 'package:vishal_gold/providers/notification_settings_provider.dart';
-import 'package:vishal_gold/screens/splash_screen.dart';
+import 'package:vishal_gold/widgets/auth/auth_wrapper.dart';
+import 'package:vishal_gold/widgets/shared/presence_wrapper.dart';
 import 'package:vishal_gold/services/fcm_service.dart';
-import 'package:vishal_gold/services/analytics_service.dart';
 
 /// Global navigator key — used by FCMService for deep-link navigation
 /// when a push notification is tapped from background/terminated state.
@@ -37,7 +37,9 @@ void main() async {
     );
 
     await FirebaseAppCheck.instance.activate(
-      providerAndroid: const AndroidPlayIntegrityProvider(),
+      providerAndroid: kDebugMode
+          ? AndroidDebugProvider()
+          : const AndroidPlayIntegrityProvider(),
       providerApple: const AppleDeviceCheckProvider(),
     );
 
@@ -49,10 +51,8 @@ void main() async {
     // Initialize Analytics
     FirebaseAnalytics.instance.setAnalyticsCollectionEnabled(true);
 
-    // Seed initial data in background (don't block the UI)
-    FirebaseService().seedInitialData().catchError((e) {
-      debugPrint('Error seeding data: $e');
-    });
+    // Initialize Analytics
+    FirebaseAnalytics.instance.setAnalyticsCollectionEnabled(true);
   } catch (e) {
     debugPrint('Initialization error: $e');
   }
@@ -172,42 +172,8 @@ class MyApp extends StatelessWidget {
             hintStyle: const TextStyle(color: AppColors.textTertiary),
           ),
         ),
-        home: const PresenceWrapper(child: SplashScreen()),
+        home: const PresenceWrapper(child: AuthWrapper()),
       ),
     );
   }
-}
-
-class PresenceWrapper extends StatefulWidget {
-  final Widget child;
-  const PresenceWrapper({super.key, required this.child});
-
-  @override
-  State<PresenceWrapper> createState() => _PresenceWrapperState();
-}
-
-class _PresenceWrapperState extends State<PresenceWrapper> {
-  @override
-  void initState() {
-    super.initState();
-    _setupPresence();
-  }
-
-  void _setupPresence() {
-    // Listen to auth changes and update presence
-    final authProvider = context.read<AuthProvider>();
-    final analyticsService = AnalyticsService();
-    authProvider.addListener(() {
-      final user = authProvider.currentUser;
-      if (user != null) {
-        analyticsService.updatePresence(
-          user.uid,
-          authProvider.userRole ?? 'retailer',
-        );
-      }
-    });
-  }
-
-  @override
-  Widget build(BuildContext context) => widget.child;
 }

@@ -2,15 +2,17 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:vishal_gold/providers/auth_provider.dart';
 import 'package:vishal_gold/constants/app_colors.dart';
+import 'package:vishal_gold/models/admin.dart';
+import 'package:vishal_gold/screens/admin/admin_dashboard_screen.dart';
 
 class SetupPinScreen extends StatefulWidget {
   final String password;
-  final VoidCallback onSetupComplete;
+  final Admin admin;
 
   const SetupPinScreen({
     super.key,
     required this.password,
-    required this.onSetupComplete,
+    required this.admin,
   });
 
   @override
@@ -71,10 +73,20 @@ class _SetupPinScreenState extends State<SetupPinScreen> {
     setState(() => _isLoading = false);
 
     if (success && mounted) {
+      await authProvider.markSetupComplete();
+      if (!mounted) return;
+
       ScaffoldMessenger.of(
         context,
       ).showSnackBar(const SnackBar(content: Text('PIN setup successfully!')));
-      widget.onSetupComplete();
+
+      Navigator.pushAndRemoveUntil(
+        context,
+        MaterialPageRoute(
+          builder: (_) => AdminDashboardScreen(admin: widget.admin),
+        ),
+        (route) => false,
+      );
     } else if (mounted) {
       setState(() {
         _errorMessage = 'Failed to save PIN. Try again later.';
@@ -189,39 +201,70 @@ class _SetupPinScreenState extends State<SetupPinScreen> {
         iconTheme: const IconThemeData(color: AppColors.softGold),
       ),
       body: SafeArea(
-        child: Column(
-          children: [
-            const SizedBox(height: 50),
-            Text(
-              _isConfirming
-                  ? 'Confirm your 4-digit PIN'
-                  : 'Enter a 4-digit PIN',
-              style: const TextStyle(
-                color: AppColors.textPrimary,
-                fontSize: 22,
-                fontWeight: FontWeight.w500,
+        child: Center(
+          child: Container(
+            constraints: const BoxConstraints(maxWidth: 500),
+            child: SingleChildScrollView(
+              child: Column(
+                children: [
+                  const SizedBox(height: 40),
+                  Text(
+                    _isConfirming
+                        ? 'Confirm your 4-digit PIN'
+                        : 'Enter a 4-digit PIN',
+                    style: const TextStyle(
+                      color: AppColors.textPrimary,
+                      fontSize: 22,
+                      fontWeight: FontWeight.w500,
+                    ),
+                  ),
+                  const SizedBox(height: 24),
+                  _buildPinDots(_isConfirming ? _confirmPin : _pin),
+                  const SizedBox(height: 16),
+                  if (_errorMessage.isNotEmpty)
+                    Text(
+                      _errorMessage,
+                      style: const TextStyle(color: AppColors.errorRed),
+                    )
+                  else
+                    const SizedBox(height: 20),
+                  const SizedBox(height: 24),
+                  if (_isLoading)
+                    const Padding(
+                      padding: EdgeInsets.symmetric(vertical: 40),
+                      child: CircularProgressIndicator(
+                        color: AppColors.softGold,
+                      ),
+                    )
+                  else ...[
+                    _buildNumPad(),
+                    Padding(
+                      padding: const EdgeInsets.only(bottom: 20),
+                      child: TextButton(
+                        onPressed: () {
+                          Navigator.pushAndRemoveUntil(
+                            context,
+                            MaterialPageRoute(
+                              builder: (context) =>
+                                  AdminDashboardScreen(admin: widget.admin),
+                            ),
+                            (route) => false,
+                          );
+                        },
+                        child: const Text(
+                          'Skip for now',
+                          style: TextStyle(
+                            color: AppColors.textSecondary,
+                            fontSize: 16,
+                          ),
+                        ),
+                      ),
+                    ),
+                  ],
+                ],
               ),
             ),
-            const SizedBox(height: 30),
-            _buildPinDots(_isConfirming ? _confirmPin : _pin),
-            const SizedBox(height: 20),
-            if (_errorMessage.isNotEmpty)
-              Text(
-                _errorMessage,
-                style: const TextStyle(color: AppColors.errorRed),
-              )
-            else
-              const SizedBox(height: 20), // Placeholder for error text height
-            const SizedBox(height: 40),
-            if (_isLoading)
-              const Expanded(
-                child: Center(
-                  child: CircularProgressIndicator(color: AppColors.softGold),
-                ),
-              )
-            else
-              Expanded(child: _buildNumPad()),
-          ],
+          ),
         ),
       ),
     );

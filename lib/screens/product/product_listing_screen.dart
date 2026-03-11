@@ -4,19 +4,21 @@ import 'package:flutter_staggered_animations/flutter_staggered_animations.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:vishal_gold/constants/app_colors.dart';
 import 'package:vishal_gold/providers/product_provider.dart';
-import 'package:vishal_gold/providers/auth_provider.dart';
 import 'package:vishal_gold/utils/app_layout.dart';
 import 'package:vishal_gold/widgets/product/product_card.dart';
 import 'package:vishal_gold/widgets/product/product_skeleton.dart';
 
-// Brand accent for the Sort sheet
-const _kBrandPurple = Color(0xFF2D0B2B);
-
 class ProductListingScreen extends StatefulWidget {
   final String? category;
-  final String? subcategory;
+  final String? subcategory; // This will now receive the ID
+  final String? subcategoryName; // This will receive the Display Name
 
-  const ProductListingScreen({super.key, this.category, this.subcategory});
+  const ProductListingScreen({
+    super.key,
+    this.category,
+    this.subcategory,
+    this.subcategoryName,
+  });
 
   @override
   State<ProductListingScreen> createState() => _ProductListingScreenState();
@@ -26,36 +28,42 @@ class _ProductListingScreenState extends State<ProductListingScreen> {
   bool _isSearching = false;
   final TextEditingController _searchController = TextEditingController();
   final FocusNode _searchFocusNode = FocusNode();
+  final String _currentSort = 'Newest First';
+  final ScrollController _scrollController = ScrollController();
 
   @override
   void initState() {
     super.initState();
+    _scrollController.addListener(_onScroll);
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      final productProvider = context.read<ProductProvider>();
-      if (widget.category != null) {
-        productProvider.loadProductsByCategory(
-          widget.category!,
-          subcategory: widget.subcategory,
-        );
-      } else {
-        productProvider.loadProducts();
-      }
+      context.read<ProductProvider>().loadProductsByCategory(
+            widget.category ?? 'all',
+            subcategory: widget.subcategory,
+          );
     });
+  }
+
+  void _onScroll() {
+    if (_scrollController.position.pixels >=
+        _scrollController.position.maxScrollExtent - 200) {
+      context.read<ProductProvider>().fetchMoreProducts();
+    }
   }
 
   @override
   void dispose() {
     _searchController.dispose();
     _searchFocusNode.dispose();
+    _scrollController.dispose();
     super.dispose();
   }
 
-  void _openSortSheet() {
-    showModalBottomSheet(
+  void _openSortSheet() async {
+    await showModalBottomSheet(
       context: context,
       backgroundColor: Colors.transparent,
       isScrollControlled: true,
-      builder: (_) => const _SortBottomSheet(),
+      builder: (_) => const _SortFilterBottomSheet(),
     );
   }
 
@@ -82,6 +90,7 @@ class _ProductListingScreenState extends State<ProductListingScreen> {
   @override
   Widget build(BuildContext context) {
     final title =
+        widget.subcategoryName ??
         widget.subcategory ??
         widget.category?.replaceAll('_', ' ').toUpperCase() ??
         'ALL DESIGNS';
@@ -95,6 +104,7 @@ class _ProductListingScreenState extends State<ProductListingScreen> {
       child: Scaffold(
         backgroundColor: AppColors.background,
         body: CustomScrollView(
+          controller: _scrollController,
           physics: const BouncingScrollPhysics(),
           slivers: [
             SliverAppBar(
@@ -171,14 +181,48 @@ class _ProductListingScreenState extends State<ProductListingScreen> {
                   )
                 else ...[
                   // ── Sort / Filter button ───────────────────────────────────
-                  IconButton(
-                    tooltip: 'Sort',
-                    icon: const Icon(
-                      Icons.tune_rounded,
-                      color: AppColors.gold,
-                      size: 22,
+                  Padding(
+                    padding: const EdgeInsets.only(right: 4),
+                    child: GestureDetector(
+                      onTap: _openSortSheet,
+                      child: Stack(
+                        alignment: Alignment.center,
+                        children: [
+                          Container(
+                            width: 36,
+                            height: 36,
+                            decoration: const BoxDecoration(
+                              color: AppColors.black,
+                              shape: BoxShape.circle,
+                            ),
+                            child: const Icon(
+                              Icons.tune_rounded,
+                              color: AppColors.gold,
+                              size: 20,
+                            ),
+                          ),
+                          Consumer<ProductProvider>(
+                            builder: (context, provider, _) {
+                              if (!provider.hasActiveFilters) {
+                                return const SizedBox.shrink();
+                              }
+                              return Positioned(
+                                right: 0,
+                                top: 0,
+                                child: Container(
+                                  width: 8,
+                                  height: 8,
+                                  decoration: const BoxDecoration(
+                                    color: Colors.red,
+                                    shape: BoxShape.circle,
+                                  ),
+                                ),
+                              );
+                            },
+                          ),
+                        ],
+                      ),
                     ),
-                    onPressed: _openSortSheet,
                   ),
                   // ── Search button ──────────────────────────────────────────
                   IconButton(
@@ -191,9 +235,10 @@ class _ProductListingScreenState extends State<ProductListingScreen> {
             SliverPadding(
               padding: const EdgeInsets.all(16),
               sliver: Consumer<ProductProvider>(
-                builder: (context, productProvider, child) {
+                builder: (context, provider, _) {
                   final layout = AppLayout.of(context);
-                  if (productProvider.isLoading) {
+
+                  if (provider.isLoading && provider.products.isEmpty) {
                     return SliverGrid(
                       gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
                         crossAxisCount: layout.productGridColumns,
@@ -208,7 +253,36 @@ class _ProductListingScreenState extends State<ProductListingScreen> {
                     );
                   }
 
-                  final products = productProvider.products;
+                  if (provider.error != null) {
+                    return SliverFillRemaining(
+                      child: Center(
+                        child: Padding(
+                          padding: const EdgeInsets.all(24.0),
+                          child: Column(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              const Icon(Icons.info_outline, color: AppColors.gold, size: 48),
+                              const SizedBox(height: 16),
+                              Text(
+                                provider.error!,
+                                textAlign: TextAlign.center,
+                                style: GoogleFonts.outfit(
+                                  color: AppColors.gold,
+                                  fontSize: 16,
+                                ),
+                              ),
+                              TextButton(
+                                onPressed: () => provider.fetchInitialProducts(),
+                                child: const Text('Try Again', style: TextStyle(color: AppColors.gold)),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
+                    );
+                  }
+
+                  final products = provider.products;
 
                   if (products.isEmpty) {
                     return SliverFillRemaining(
@@ -225,24 +299,12 @@ class _ProductListingScreenState extends State<ProductListingScreen> {
                             Text(
                               _isSearching
                                   ? 'No results found'
-                                  : 'No designs found',
+                                  : 'No products found matching your filters',
                               style: GoogleFonts.outfit(
                                 color: AppColors.textSecondary,
                                 fontSize: 16,
                               ),
                             ),
-                            if (_isSearching) ...[
-                              const SizedBox(height: 8),
-                              Text(
-                                'Try a different keyword',
-                                style: GoogleFonts.outfit(
-                                  color: AppColors.textSecondary.withValues(
-                                    alpha: 0.6,
-                                  ),
-                                  fontSize: 13,
-                                ),
-                              ),
-                            ],
                           ],
                         ),
                       ),
@@ -250,6 +312,9 @@ class _ProductListingScreenState extends State<ProductListingScreen> {
                   }
 
                   return AnimationLimiter(
+                    key: ValueKey(
+                      '${widget.subcategory ?? widget.category}_${products.length}_${provider.currentSort}',
+                    ),
                     child: SliverGrid(
                       gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
                         crossAxisCount: layout.productGridColumns,
@@ -257,25 +322,48 @@ class _ProductListingScreenState extends State<ProductListingScreen> {
                         crossAxisSpacing: 16,
                         mainAxisSpacing: 16,
                       ),
-                      delegate: SliverChildBuilderDelegate((
-                        BuildContext context,
-                        int index,
-                      ) {
-                        return AnimationConfiguration.staggeredGrid(
-                          position: index,
-                          duration: const Duration(milliseconds: 500),
-                          columnCount: layout.productGridColumns,
-                          child: ScaleAnimation(
-                            child: FadeInAnimation(
-                              child: ProductCard(product: products[index]),
+                      delegate: SliverChildBuilderDelegate(
+                        (BuildContext context, int index) {
+                          return AnimationConfiguration.staggeredGrid(
+                            position: index,
+                            duration: const Duration(milliseconds: 500),
+                            columnCount: layout.productGridColumns,
+                            child: ScaleAnimation(
+                              child: FadeInAnimation(
+                                child: RepaintBoundary(
+                                  child: ProductCard(product: products[index]),
+                                ),
+                              ),
                             ),
-                          ),
-                        );
-                      }, childCount: products.length),
+                          );
+                        },
+                        childCount: products.length,
+                      ),
                     ),
                   );
                 },
               ),
+            ),
+            Consumer<ProductProvider>(
+              builder: (context, provider, child) {
+                if (provider.isFetchingMore) {
+                  return const SliverToBoxAdapter(
+                    child: Padding(
+                      padding: EdgeInsets.symmetric(vertical: 24),
+                      child: Center(
+                        child: CircularProgressIndicator(
+                          valueColor: AlwaysStoppedAnimation<Color>(
+                            AppColors.gold,
+                          ),
+                        ),
+                      ),
+                    ),
+                  );
+                }
+                return const SliverToBoxAdapter(
+                  child: SizedBox(height: 100),
+                ); // bottom padding
+              },
             ),
           ],
         ),
@@ -285,36 +373,41 @@ class _ProductListingScreenState extends State<ProductListingScreen> {
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-// Sort Bottom Sheet
+// Sort & Filter Bottom Sheet
 // ─────────────────────────────────────────────────────────────────────────────
 
-class _SortBottomSheet extends StatefulWidget {
-  const _SortBottomSheet();
+class _SortFilterBottomSheet extends StatefulWidget {
+  const _SortFilterBottomSheet();
 
   @override
-  State<_SortBottomSheet> createState() => _SortBottomSheetState();
+  State<_SortFilterBottomSheet> createState() => _SortFilterBottomSheetState();
 }
 
-class _SortBottomSheetState extends State<_SortBottomSheet> {
-  late ProductSortOrder _selected;
-
-  static const List<_SortOption> _options = [
-    _SortOption(ProductSortOrder.newestFirst, 'Newest First'),
-    _SortOption(ProductSortOrder.tagAsc, 'TagNo (A - Z)'),
-    _SortOption(ProductSortOrder.tagDesc, 'TagNo (Z - A)'),
-    _SortOption(ProductSortOrder.weightAsc, 'Weight (Low - High)'),
-    _SortOption(ProductSortOrder.weightDesc, 'Weight (High - Low)'),
-  ];
+class _SortFilterBottomSheetState extends State<_SortFilterBottomSheet> {
+  late ProductSortOrder _selectedSort;
+  late InventoryStatusFilter _selectedInventory;
+  RangeValues _weightRange = const RangeValues(0, 5000);
 
   @override
   void initState() {
     super.initState();
-    _selected = context.read<ProductProvider>().currentSort;
+    final provider = context.read<ProductProvider>();
+    _selectedSort = provider.currentSort;
+    _selectedInventory = provider.inventoryStatusFilter;
+    _weightRange = RangeValues(
+      provider.minWeightFilter ?? 0,
+      provider.maxWeightFilter ?? 5000,
+    );
   }
 
-  void _select(ProductSortOrder order) {
-    setState(() => _selected = order);
-    context.read<ProductProvider>().sortProducts(order);
+  void _apply() {
+    final provider = context.read<ProductProvider>();
+    provider.sortProducts(_selectedSort);
+    provider.setInventoryStatusFilter(_selectedInventory);
+    provider.setWeightRange(
+      _weightRange.start == 0 ? null : _weightRange.start,
+      _weightRange.end == 5000 ? null : _weightRange.end,
+    );
     Navigator.pop(context);
   }
 
@@ -322,7 +415,7 @@ class _SortBottomSheetState extends State<_SortBottomSheet> {
   Widget build(BuildContext context) {
     return Container(
       decoration: const BoxDecoration(
-        color: Colors.white,
+        color: AppColors.background,
         borderRadius: BorderRadius.only(
           topLeft: Radius.circular(28),
           topRight: Radius.circular(28),
@@ -330,117 +423,184 @@ class _SortBottomSheetState extends State<_SortBottomSheet> {
       ),
       child: SafeArea(
         top: false,
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            // Drag handle
-            const SizedBox(height: 14),
-            Container(
-              width: 40,
-              height: 4,
-              decoration: BoxDecoration(
-                color: Colors.grey.shade300,
-                borderRadius: BorderRadius.circular(2),
+        child: SingleChildScrollView(
+          padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 20),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              // Drag handle
+              Center(
+                child: Container(
+                  width: 40,
+                  height: 4,
+                  decoration: BoxDecoration(
+                    color: AppColors.gold.withValues(alpha: 0.4),
+                    borderRadius: BorderRadius.circular(2),
+                  ),
+                ),
               ),
-            ),
-            const SizedBox(height: 18),
+              const SizedBox(height: 20),
 
-            // Header
-            Text(
-              'Sort By',
-              style: GoogleFonts.playfairDisplay(
-                fontSize: 20,
-                fontWeight: FontWeight.bold,
-                color: _kBrandPurple,
-                letterSpacing: 0.5,
-              ),
-            ),
-            const SizedBox(height: 14),
-
-            const Divider(height: 1, thickness: 1, indent: 24, endIndent: 24),
-            const SizedBox(height: 8),
-
-            // Admin: Show Drafts Toggle
-            Consumer2<AuthProvider, ProductProvider>(
-              builder: (context, auth, product, child) {
-                // Roles that can see drafts
-                final role = auth.userProfile?['role'];
-                final canPreview = role == 'super' || role == 'manager';
-                if (!canPreview) return const SizedBox.shrink();
-
-                return Column(
-                  children: [
-                    SwitchListTile(
-                      value: product.viewDrafts,
-                      onChanged: (val) {
-                        product.setViewDrafts(val);
-                      },
-                      title: Text(
-                        'Show Draft Designs',
-                        style: GoogleFonts.outfit(
-                          fontSize: 15,
-                          fontWeight: FontWeight.w600,
-                          color: AppColors.gold,
-                        ),
-                      ),
-                      secondary: const Icon(
-                        Icons.preview_rounded,
-                        color: AppColors.gold,
-                      ),
-                      activeThumbColor: AppColors.gold,
-                      dense: true,
-                    ),
-                    const Divider(
-                      height: 1,
-                      thickness: 1,
-                      indent: 24,
-                      endIndent: 24,
-                    ),
-                    const SizedBox(height: 4),
-                  ],
-                );
-              },
-            ),
-
-            // Radio options
-            RadioGroup<ProductSortOrder>(
-              groupValue: _selected,
-              onChanged: (v) => _select(v!),
-              child: Column(
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  for (final opt in _options)
-                    RadioListTile<ProductSortOrder>(
-                      value: opt.order,
-                      activeColor: _kBrandPurple,
-                      title: Text(
-                        opt.label,
-                        style: GoogleFonts.outfit(
-                          fontSize: 15,
-                          fontWeight: _selected == opt.order
-                              ? FontWeight.w600
-                              : FontWeight.normal,
-                          color: _selected == opt.order
-                              ? _kBrandPurple
-                              : Colors.black87,
-                        ),
-                      ),
-                      dense: true,
-                      controlAffinity: ListTileControlAffinity.leading,
+                  Text(
+                    'Sort & Filter',
+                    style: GoogleFonts.playfairDisplay(
+                      fontSize: 22,
+                      fontWeight: FontWeight.bold,
+                      color: AppColors.gold,
                     ),
+                  ),
+                  TextButton(
+                    onPressed: () {
+                      context.read<ProductProvider>().clearAllFilters();
+                      Navigator.pop(context);
+                    },
+                    child: Text(
+                      'Reset All',
+                      style: GoogleFonts.outfit(color: AppColors.errorRed),
+                    ),
+                  ),
                 ],
               ),
-            ),
+              const SizedBox(height: 20),
 
-            const SizedBox(height: 12),
-          ],
+              // Sort Section
+              _buildSectionTitle('Sort By'),
+              const SizedBox(height: 12),
+              Wrap(
+                spacing: 8,
+                runSpacing: 8,
+                children: [
+                  _sortChip('Newest', ProductSortOrder.newestFirst),
+                  _sortChip('Tag (A-Z)', ProductSortOrder.tagAsc),
+                  _sortChip('Tag (Z-A)', ProductSortOrder.tagDesc),
+                  _sortChip('Weight (L-H)', ProductSortOrder.weightAsc),
+                  _sortChip('Weight (H-L)', ProductSortOrder.weightDesc),
+                ],
+              ),
+              const SizedBox(height: 28),
+
+              // Inventory Section
+              _buildSectionTitle('Inventory Status'),
+              const SizedBox(height: 12),
+              Wrap(
+                spacing: 8,
+                runSpacing: 8,
+                children: [
+                  _inventoryChip('All', InventoryStatusFilter.all),
+                  _inventoryChip('In Stock', InventoryStatusFilter.inStock),
+                  _inventoryChip('Sold Out', InventoryStatusFilter.soldOut),
+                  _inventoryChip('On Order', InventoryStatusFilter.onOrder),
+                ],
+              ),
+              const SizedBox(height: 28),
+
+              // Weight Section
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  _buildSectionTitle('Weight Range (g)'),
+                  Text(
+                    '${_weightRange.start.toInt()} - ${_weightRange.end.toInt()}${_weightRange.end >= 5000 ? '+' : ''}',
+                    style: GoogleFonts.outfit(color: AppColors.gold),
+                  ),
+                ],
+              ),
+              RangeSlider(
+                values: _weightRange,
+                min: 0,
+                max: 5000,
+                divisions: 50,
+                activeColor: AppColors.gold,
+                inactiveColor: AppColors.gold.withValues(alpha: 0.1),
+                onChanged: (v) => setState(() => _weightRange = v),
+              ),
+              const SizedBox(height: 32),
+
+              // Apply Button
+              SizedBox(
+                width: double.infinity,
+                height: 54,
+                child: ElevatedButton(
+                  onPressed: _apply,
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: AppColors.gold,
+                    foregroundColor: AppColors.black,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(16),
+                    ),
+                  ),
+                  child: Text(
+                    'APPLY FILTERS',
+                    style: GoogleFonts.outfit(
+                      fontWeight: FontWeight.bold,
+                      letterSpacing: 1.1,
+                    ),
+                  ),
+                ),
+              ),
+              const SizedBox(height: 10),
+            ],
+          ),
         ),
       ),
     );
   }
-}
 
-class _SortOption {
-  final ProductSortOrder order;
-  final String label;
-  const _SortOption(this.order, this.label);
+  Widget _buildSectionTitle(String title) {
+    return Text(
+      title.toUpperCase(),
+      style: GoogleFonts.outfit(
+        fontSize: 13,
+        fontWeight: FontWeight.bold,
+        color: AppColors.white.withValues(alpha: 0.6),
+        letterSpacing: 1.2,
+      ),
+    );
+  }
+
+  Widget _sortChip(String label, ProductSortOrder order) {
+    final selected = _selectedSort == order;
+    return ChoiceChip(
+      label: Text(label),
+      selected: selected,
+      onSelected: (v) => setState(() => _selectedSort = order),
+      backgroundColor: AppColors.surface,
+      selectedColor: AppColors.gold.withValues(alpha: 0.2),
+      labelStyle: GoogleFonts.outfit(
+        color: selected ? AppColors.gold : AppColors.white,
+        fontSize: 14,
+      ),
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(12),
+        side: BorderSide(
+          color: selected ? AppColors.gold : Colors.transparent,
+        ),
+      ),
+    );
+  }
+
+  Widget _inventoryChip(String label, InventoryStatusFilter filter) {
+    final selected = _selectedInventory == filter;
+    return ChoiceChip(
+      label: Text(label),
+      selected: selected,
+      onSelected: (v) => setState(() => _selectedInventory = filter),
+      backgroundColor: AppColors.surface,
+      selectedColor: AppColors.gold.withValues(alpha: 0.2),
+      labelStyle: GoogleFonts.outfit(
+        color: selected ? AppColors.gold : AppColors.white,
+        fontSize: 14,
+      ),
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(12),
+        side: BorderSide(
+          color: selected ? AppColors.gold : Colors.transparent,
+        ),
+      ),
+    );
+  }
 }

@@ -6,6 +6,7 @@ import 'package:url_launcher/url_launcher.dart';
 import 'package:vishal_gold/constants/app_colors.dart';
 import 'package:vishal_gold/models/notification.dart';
 import 'package:vishal_gold/services/firebase_service.dart';
+import 'package:vishal_gold/models/order.dart' as app_order;
 
 class AdminOrdersScreen extends StatefulWidget {
   const AdminOrdersScreen({super.key});
@@ -16,6 +17,16 @@ class AdminOrdersScreen extends StatefulWidget {
 
 class _AdminOrdersScreenState extends State<AdminOrdersScreen> {
   String _filterStatus = 'all';
+
+  // Pagination state
+  final List<app_order.Order> _orders = [];
+  DocumentSnapshot? _lastDocument;
+  bool _isLoading = false;
+  bool _hasMore = true;
+  final int _pageSize = 15;
+
+  final ScrollController _scrollController = ScrollController();
+  final FirebaseService _firebaseService = FirebaseService();
 
   static const List<String> _statuses = [
     'all',
@@ -173,11 +184,135 @@ class _AdminOrdersScreenState extends State<AdminOrdersScreen> {
     );
   }
 
+  Future<void> _deleteOrder(BuildContext context, String orderId) async {
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        backgroundColor: AppColors.surface,
+        title: Text(
+          'Delete Order',
+          style: GoogleFonts.playfairDisplay(
+            color: AppColors.gold,
+            fontWeight: FontWeight.bold,
+          ),
+        ),
+        content: Text(
+          'Are you sure you want to delete this order? This action cannot be undone.',
+          style: GoogleFonts.outfit(color: AppColors.white),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx, false),
+            child: Text(
+              'CANCEL',
+              style: GoogleFonts.outfit(color: AppColors.grey),
+            ),
+          ),
+          TextButton(
+            onPressed: () => Navigator.pop(ctx, true),
+            child: Text(
+              'DELETE',
+              style: GoogleFonts.outfit(
+                color: AppColors.errorRed,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+
+    if (confirmed == true) {
+      try {
+        await FirebaseFirestore.instance
+            .collection('orders')
+            .doc(orderId)
+            .delete();
+        if (context.mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('Order deleted successfully'),
+              backgroundColor: AppColors.errorRed,
+            ),
+          );
+        }
+      } catch (e) {
+        if (context.mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text('Failed to delete order: $e'),
+              backgroundColor: AppColors.errorRed,
+            ),
+          );
+        }
+      }
+    }
+  }
+
   Future<void> _launchWhatsApp(String phone) async {
     if (phone.isEmpty) return;
     final clean = phone.replaceAll(RegExp(r'\D'), '');
     final url = Uri.parse('https://wa.me/$clean');
     if (await canLaunchUrl(url)) await launchUrl(url);
+  }
+
+  @override
+  void initState() {
+    super.initState();
+    _scrollController.addListener(_onScroll);
+    _fetchOrders();
+  }
+
+  @override
+  void dispose() {
+    _scrollController.dispose();
+    super.dispose();
+  }
+
+  void _onScroll() {
+    if (_scrollController.position.pixels >=
+            _scrollController.position.maxScrollExtent - 200 &&
+        !_isLoading &&
+        _hasMore) {
+      _fetchOrders();
+    }
+  }
+
+  Future<void> _fetchOrders() async {
+    if (_isLoading) return;
+    setState(() => _isLoading = true);
+
+    try {
+      final result = await _firebaseService.getOrdersPaginated(
+        status: _filterStatus,
+        limit: _pageSize,
+        startAfter: _lastDocument,
+      );
+
+      final List<app_order.Order> newOrders = result['orders']
+          .cast<app_order.Order>();
+      _lastDocument = result['lastDocument'];
+
+      setState(() {
+        _orders.addAll(newOrders);
+        _hasMore = newOrders.length == _pageSize;
+      });
+    } catch (e) {
+      debugPrint('Error fetching orders: $e');
+    } finally {
+      if (mounted) setState(() => _isLoading = false);
+    }
+  }
+
+  void _onFilterChanged(String newStatus) {
+    if (_filterStatus == newStatus) return;
+    setState(() {
+      _filterStatus = newStatus;
+      _orders.clear();
+      _lastDocument = null;
+      _hasMore = true;
+    });
+    _fetchOrders();
   }
 
   @override
@@ -207,7 +342,7 @@ class _AdminOrdersScreenState extends State<AdminOrdersScreen> {
                 final s = _statuses[i];
                 final selected = _filterStatus == s;
                 return GestureDetector(
-                  onTap: () => setState(() => _filterStatus = s),
+                  onTap: () => _onFilterChanged(s),
                   child: Container(
                     padding: const EdgeInsets.symmetric(
                       horizontal: 16,
@@ -241,63 +376,60 @@ class _AdminOrdersScreenState extends State<AdminOrdersScreen> {
           ),
         ),
       ),
-      body: StreamBuilder<QuerySnapshot>(
-        stream: FirebaseFirestore.instance
-            .collection('orders')
-            .orderBy('createdAt', descending: true)
-            .snapshots(),
-        builder: (context, snapshot) {
-          if (snapshot.connectionState == ConnectionState.waiting) {
+      body: _buildBody(),
+    );
+  }
+
+  Widget _buildBody() {
+    if (_isLoading && _orders.isEmpty) {
+      return const Center(
+        child: CircularProgressIndicator(color: AppColors.gold),
+      );
+    }
+
+    if (_orders.isEmpty) {
+      return Center(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(Icons.inbox_outlined, color: AppColors.grey, size: 64),
+            const SizedBox(height: 16),
+            Text(
+              _filterStatus == 'all'
+                  ? 'No orders yet'
+                  : 'No $_filterStatus orders',
+              style: GoogleFonts.outfit(
+                color: AppColors.textSecondary,
+                fontSize: 18,
+              ),
+            ),
+          ],
+        ),
+      );
+    }
+
+    return RefreshIndicator(
+      onRefresh: () async {
+        _onFilterChanged(_filterStatus);
+      },
+      child: ListView.builder(
+        controller: _scrollController,
+        padding: const EdgeInsets.all(16),
+        itemCount: _orders.length + (_hasMore ? 1 : 0),
+        itemBuilder: (context, index) {
+          if (index == _orders.length) {
             return const Center(
-              child: CircularProgressIndicator(color: AppColors.gold),
-            );
-          }
-          if (snapshot.hasError) {
-            return Center(
-              child: Text(
-                'Error loading orders',
-                style: GoogleFonts.outfit(color: AppColors.errorRed),
+              child: Padding(
+                padding: EdgeInsets.all(8.0),
+                child: CircularProgressIndicator(color: AppColors.gold),
               ),
             );
           }
-
-          var docs = snapshot.data?.docs ?? [];
-          if (_filterStatus != 'all') {
-            docs = docs.where((d) {
-              final data = d.data() as Map<String, dynamic>;
-              return (data['status'] ?? 'pending') == _filterStatus;
-            }).toList();
-          }
-
-          if (docs.isEmpty) {
-            return Center(
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Icon(Icons.inbox_outlined, color: AppColors.grey, size: 64),
-                  const SizedBox(height: 16),
-                  Text(
-                    _filterStatus == 'all'
-                        ? 'No orders yet'
-                        : 'No $_filterStatus orders',
-                    style: GoogleFonts.outfit(
-                      color: AppColors.textSecondary,
-                      fontSize: 18,
-                    ),
-                  ),
-                ],
-              ),
-            );
-          }
-
-          return ListView.builder(
-            padding: const EdgeInsets.all(16),
-            itemCount: docs.length,
-            itemBuilder: (context, index) {
-              final data = docs[index].data() as Map<String, dynamic>;
-              return _buildOrderCard(context, docs[index].id, data);
-            },
-          );
+          final order = _orders[index];
+          // Convert Order model back to Map for compatibility with existing _buildOrderCard
+          // Internal fields like id need to be passed separately or mapped
+          final data = order.toJson();
+          return _buildOrderCard(context, order.id, data);
         },
       ),
     );
@@ -396,6 +528,18 @@ class _AdminOrdersScreenState extends State<AdminOrdersScreen> {
                   ],
                 ),
               ),
+            ),
+            const SizedBox(width: 8),
+            IconButton(
+              onPressed: () => _deleteOrder(context, orderId),
+              icon: const Icon(
+                Icons.delete_outline,
+                color: AppColors.errorRed,
+                size: 22,
+              ),
+              padding: EdgeInsets.zero,
+              constraints: const BoxConstraints(),
+              tooltip: 'Delete Order',
             ),
           ],
         ),

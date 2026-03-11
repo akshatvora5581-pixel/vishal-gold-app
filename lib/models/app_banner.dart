@@ -35,29 +35,29 @@ class AppBanner {
 
     return AppBanner(
       id: id,
-      imageUrl: json['image_url'] as String? ?? '',
+      imageUrl: (json['imageUrl'] ?? json['image_url']) as String? ?? '',
       title: json['title'] as String?,
       subtitle: json['subtitle'] as String?,
-      actionType: json['action_type'] as String? ?? 'category',
-      actionValue: json['action_value'] as String?,
-      templateType: json['template_type'] as String? ?? 'theme1',
-      isActive: json['is_active'] as bool? ?? true,
+      actionType: (json['actionType'] ?? json['action_type']) as String? ?? 'category',
+      actionValue: (json['actionValue'] ?? json['action_value']) as String?,
+      templateType: (json['templateType'] ?? json['template_type']) as String? ?? 'theme1',
+      isActive: (json['isActive'] ?? json['is_active']) as bool? ?? true,
       order: (json['order'] ?? 0) as int,
-      createdAt: parseDate(json['created_at']),
+      createdAt: parseDate(json['createdAt'] ?? json['created_at']),
     );
   }
 
   Map<String, dynamic> toJson() {
     return {
-      'image_url': imageUrl,
+      'imageUrl': imageUrl,
       'title': title,
       'subtitle': subtitle,
-      'action_type': actionType,
-      'action_value': actionValue,
-      'template_type': templateType,
-      'is_active': isActive,
+      'actionType': actionType,
+      'actionValue': actionValue,
+      'templateType': templateType,
+      'isActive': isActive,
       'order': order,
-      'created_at': Timestamp.fromDate(createdAt),
+      'createdAt': Timestamp.fromDate(createdAt),
     };
   }
 

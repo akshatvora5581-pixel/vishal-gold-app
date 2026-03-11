@@ -5,6 +5,7 @@ import 'package:vishal_gold/constants/app_colors.dart';
 import 'package:vishal_gold/screens/admin/admin_dashboard_screen.dart';
 import 'package:vishal_gold/screens/auth/admin_login_screen.dart';
 import 'package:vishal_gold/services/firebase_service.dart';
+import 'package:vishal_gold/services/fcm_service.dart';
 import 'package:vishal_gold/models/admin.dart';
 
 class PinUnlockScreen extends StatefulWidget {
@@ -72,6 +73,11 @@ class _PinUnlockScreenState extends State<PinUnlockScreen> {
         final adminId =
             adminData['id'] as String? ?? authProvider.currentUser!.uid;
         final admin = Admin.fromJson(adminData, adminId);
+
+        // Strict Subscription: Only for active admins after successful authentication
+        await FCMService().subscribeToTopic('admin_orders');
+        print('Current Topic Subscription: Admin_Orders');
+
         Navigator.pushAndRemoveUntil(
           context,
           MaterialPageRoute(builder: (_) => AdminDashboardScreen(admin: admin)),
@@ -123,10 +129,19 @@ class _PinUnlockScreenState extends State<PinUnlockScreen> {
     if (success) {
       _onUnlockSuccess();
     } else {
-      setState(() {
-        _errorMessage = 'Incorrect PIN. Please try again.';
-        _pin = '';
-      });
+      if (mounted) {
+        setState(() {
+          _pin = '';
+          _errorMessage = 'Incorrect PIN, try again.';
+        });
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Incorrect PIN, try again.'),
+            backgroundColor: AppColors.errorRed,
+            duration: Duration(seconds: 2),
+          ),
+        );
+      }
     }
   }
 

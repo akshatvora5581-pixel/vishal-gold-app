@@ -44,31 +44,31 @@ class Admin {
 
     return Admin(
       id: id,
-      fullName: json['full_name'] as String? ?? 'Unnamed Admin',
+      fullName: (json['fullName'] ?? json['full_name']) as String? ?? 'Unnamed Admin',
       email: json['email'] as String? ?? '',
-      whatsappNumber: json['whatsapp_number'] as String?,
-      secondaryEmail: json['secondary_email'] as String?,
+      whatsappNumber: (json['whatsappNumber'] ?? json['whatsapp_number']) as String?,
+      secondaryEmail: (json['secondaryEmail'] ?? json['secondary_email']) as String?,
       role: json['role'] as String? ?? 'admin',
-      contactDetails: json['contact_details'] as Map<String, dynamic>?,
+      contactDetails: (json['contactDetails'] ?? json['contact_details']) as Map<String, dynamic>?,
       permissions: parsedPermissions,
-      isActive: json['is_active'] as bool? ?? true,
-      createdAt: parseDate(json['created_at']),
-      updatedAt: parseDate(json['updated_at']),
+      isActive: json['isActive'] as bool? ?? json['is_active'] as bool? ?? true,
+      createdAt: parseDate(json['createdAt'] ?? json['created_at']),
+      updatedAt: parseDate(json['updatedAt'] ?? json['updated_at']),
     );
   }
 
   Map<String, dynamic> toJson() {
     return {
-      'full_name': fullName,
+      'fullName': fullName,
       'email': email,
-      'whatsapp_number': whatsappNumber,
-      'secondary_email': secondaryEmail,
+      'whatsappNumber': whatsappNumber,
+      'secondaryEmail': secondaryEmail,
       'role': role,
-      'contact_details': contactDetails,
+      'contactDetails': contactDetails,
       'permissions': permissions,
-      'is_active': isActive,
-      'created_at': createdAt.toIso8601String(),
-      'updated_at': updatedAt.toIso8601String(),
+      'isActive': isActive,
+      'createdAt': createdAt.toIso8601String(),
+      'updatedAt': updatedAt.toIso8601String(),
     };
   }
 

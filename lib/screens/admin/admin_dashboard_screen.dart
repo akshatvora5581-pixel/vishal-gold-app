@@ -1,4 +1,3 @@
-import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:google_fonts/google_fonts.dart';
@@ -9,6 +8,7 @@ import 'package:vishal_gold/constants/app_colors.dart';
 import 'package:vishal_gold/models/admin.dart';
 import 'package:vishal_gold/screens/profile/quick_login_settings_screen.dart';
 import 'package:vishal_gold/providers/auth_provider.dart';
+import 'package:vishal_gold/widgets/admin/admin_dashboard_widgets.dart';
 import 'package:vishal_gold/screens/admin/category_management_screen.dart';
 import 'package:vishal_gold/screens/admin/product_management_screen.dart';
 import 'package:vishal_gold/screens/admin/sub_admin_management_screen.dart';
@@ -24,7 +24,9 @@ import 'package:vishal_gold/screens/admin/flash_sale_creator_screen.dart';
 import 'package:vishal_gold/screens/admin/design_to_social_screen.dart';
 import 'package:vishal_gold/screens/admin/audit_trail_screen.dart';
 import 'package:vishal_gold/screens/admin/contact_management_screen.dart';
+import 'package:vishal_gold/screens/dev/database_cleanup_screen.dart';
 import 'package:vishal_gold/services/firebase_service.dart';
+import 'package:vishal_gold/services/fcm_service.dart';
 import 'package:vishal_gold/utils/app_layout.dart';
 
 // ── Design tokens ──────────────────────────────────────────────────────────
@@ -45,30 +47,113 @@ class AdminDashboardScreen extends StatefulWidget {
 
 class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
   late Admin _currentAdmin;
+  late Future<int> _productsCountFuture;
+  late Future<int> _categoriesCountFuture;
   final FirebaseService _firebaseService = FirebaseService();
-  Map<String, int> _stats = {
-    'products': 0,
-    'categories': 0,
-    'subcategories': 0,
-    'admins': 0,
-  };
-  bool _loadingStats = true;
 
   @override
   void initState() {
     super.initState();
     _currentAdmin = widget.admin;
-    _refreshStats();
+    _refreshCounts();
+
+    // Ensure Super Admin is subscribed to order notifications
+    if (_currentAdmin.isSuperAdmin) {
+      FCMService().subscribeToTopic('admin_orders');
+    }
   }
 
-  Future<void> _refreshStats() async {
-    setState(() => _loadingStats = true);
-    final stats = await _firebaseService.getDashboardStats();
-    if (mounted) {
-      setState(() {
-        _stats = stats;
-        _loadingStats = false;
-      });
+  void _refreshCounts() {
+    setState(() {
+      _productsCountFuture = _firebaseService.getProductsCount();
+      _categoriesCountFuture = _firebaseService.getCategoriesCount();
+    });
+  }
+
+  /// Safe admin exit: clears admin-specific local flags ONLY.
+  /// Firebase Auth session is deliberately preserved so the normal user
+  /// profile screen continues to work without any "Authentication Required" error.
+  Future<void> _handleLogout(BuildContext context) async {
+    final confirm = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        backgroundColor: const Color(0xFF1A1A1A),
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(20),
+          side: const BorderSide(color: _kGoldBorder),
+        ),
+        title: Text(
+          'Exit Admin Panel',
+          style: GoogleFonts.playfairDisplay(color: AppColors.gold),
+        ),
+        content: Text(
+          'Exit the Admin Panel and return to the user app?\n\nYour user session will remain active.',
+          style: GoogleFonts.outfit(color: Colors.white70),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx, false),
+            child: Text(
+              'Cancel',
+              style: GoogleFonts.outfit(color: Colors.white54),
+            ),
+          ),
+          TextButton(
+            onPressed: () => Navigator.pop(ctx, true),
+            child: Text(
+              'Exit',
+              style: GoogleFonts.outfit(color: Colors.redAccent),
+            ),
+          ),
+        ],
+      ),
+    );
+
+    if (confirm != true || !mounted) return;
+
+    // Show loading overlay while clearing admin session
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (_) =>
+          const Center(child: CircularProgressIndicator(color: AppColors.gold)),
+    );
+
+    try {
+      // Safe exit: clears admin PIN/biometric storage WITHOUT signing out of Firebase.
+      // The normal user's Firebase session stays intact.
+      await context.read<AuthProvider>().signOutAdminSession();
+
+      if (!mounted) return;
+
+      // Route back to the normal user home screen, removing the entire
+      // admin navigation stack so Back doesn't re-open the Admin Panel.
+      Navigator.of(context).pushAndRemoveUntil(
+        MaterialPageRoute(builder: (_) => const HomeScreen()),
+        (route) => false,
+      );
+    } catch (e) {
+      // Dismiss the loading overlay
+      if (mounted) Navigator.of(context).pop();
+
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(
+              'Exit failed: ${e.toString()}',
+              style: GoogleFonts.outfit(color: Colors.white),
+            ),
+            backgroundColor: Colors.redAccent,
+            behavior: SnackBarBehavior.floating,
+            duration: const Duration(seconds: 4),
+            action: SnackBarAction(
+              label: 'RETRY',
+              textColor: AppColors.gold,
+              onPressed: () => _handleLogout(context),
+            ),
+          ),
+        );
+      }
     }
   }
 
@@ -78,7 +163,14 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
 
     return Scaffold(
       backgroundColor: _kBg,
-      body: CustomScrollView(
+      body: RefreshIndicator(
+        onRefresh: () async {
+          _refreshCounts();
+          await Future.wait([_productsCountFuture, _categoriesCountFuture]);
+        },
+        color: AppColors.gold,
+        backgroundColor: _kCard,
+        child: CustomScrollView(
         slivers: [
           _buildSliverAppBar(),
           SliverToBoxAdapter(
@@ -98,7 +190,7 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
                   const SizedBox(height: 32),
 
                   // Stats strip
-                  _buildStatsStrip(),
+                  RepaintBoundary(child: _buildStatsStrip()),
                   const SizedBox(height: 32),
 
                   // Catalog Management
@@ -108,54 +200,56 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
                       Icons.inventory_2_outlined,
                     ),
                     const SizedBox(height: 14),
-                    _buildModuleGrid([
-                      _MenuAction(
-                        title: 'Products',
-                        icon: Icons.inventory_2_outlined,
-                        color: const Color(0xFFFFB347),
-                        onTap: () => Navigator.push(
-                          context,
-                          MaterialPageRoute(
-                            builder: (_) => const ProductManagementScreen(),
-                          ),
+                    RepaintBoundary(
+                      child: _buildModuleGrid([
+                        DashboardMenuAction(
+                          title: 'Products',
+                          icon: Icons.inventory_2_outlined,
+                          color: const Color(0xFFFFB347),
+                          onTap: () => Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (_) => const ProductManagementScreen(),
+                            ),
+                          ).then((_) => _refreshCounts()),
                         ),
-                      ),
-                      _MenuAction(
-                        title: 'Categories',
-                        icon: Icons.category_outlined,
-                        color: const Color(0xFF42A5F5),
-                        onTap: () => Navigator.push(
-                          context,
-                          MaterialPageRoute(
-                            builder: (_) => const CategoryManagementScreen(),
-                          ),
+                        DashboardMenuAction(
+                          title: 'Categories',
+                          icon: Icons.category_outlined,
+                          color: const Color(0xFF42A5F5),
+                          onTap: () => Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (_) => const CategoryManagementScreen(),
+                            ),
+                          ).then((_) => _refreshCounts()),
                         ),
-                      ),
-                      _MenuAction(
-                        title: 'Subcategories',
-                        icon: Icons.account_tree_outlined,
-                        color: const Color(0xFF66BB6A),
-                        onTap: () => Navigator.push(
-                          context,
-                          MaterialPageRoute(
-                            builder: (_) => const SubcategoryManagementScreen(
-                              category: null,
+                        DashboardMenuAction(
+                          title: 'Subcategories',
+                          icon: Icons.account_tree_outlined,
+                          color: const Color(0xFF66BB6A),
+                          onTap: () => Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (_) => const SubcategoryManagementScreen(
+                                category: null,
+                              ),
                             ),
                           ),
                         ),
-                      ),
-                      _MenuAction(
-                        title: 'Banners',
-                        icon: Icons.photo_library_outlined,
-                        color: const Color(0xFFEF5350),
-                        onTap: () => Navigator.push(
-                          context,
-                          MaterialPageRoute(
-                            builder: (_) => const BannerManagementScreen(),
+                        DashboardMenuAction(
+                          title: 'Banners',
+                          icon: Icons.photo_library_outlined,
+                          color: const Color(0xFFEF5350),
+                          onTap: () => Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (_) => const BannerManagementScreen(),
+                            ),
                           ),
                         ),
-                      ),
-                    ]),
+                      ]),
+                    ),
 
                     const SizedBox(height: 32),
                   ],
@@ -169,51 +263,54 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
                       Icons.shopping_bag_outlined,
                     ),
                     const SizedBox(height: 14),
-                    _buildModuleGrid([
-                      if (_currentAdmin.hasPermission('manage_orders'))
-                        _MenuAction(
-                          title: 'Orders',
-                          icon: Icons.shopping_bag_outlined,
-                          color: const Color(0xFF64B5F6),
-                          onTap: () => Navigator.push(
-                            context,
-                            MaterialPageRoute(
-                              builder: (_) => const AdminOrdersScreen(),
+                    RepaintBoundary(
+                      child: _buildModuleGrid([
+                        if (_currentAdmin.hasPermission('manage_orders'))
+                          DashboardMenuAction(
+                            title: 'Orders',
+                            icon: Icons.shopping_bag_outlined,
+                            color: const Color(0xFF64B5F6),
+                            onTap: () => Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (_) => const AdminOrdersScreen(),
+                              ),
                             ),
                           ),
-                        ),
-                      if (_currentAdmin.hasPermission('manage_products'))
-                        _MenuAction(
-                          title: 'Inventory',
-                          icon: Icons.inventory_outlined,
-                          color: const Color(0xFF26A69A),
-                          onTap: () => _openWeightAnalytics(context),
-                        ),
-                      if (_currentAdmin.hasPermission('view_analytics'))
-                        _MenuAction(
-                          title: 'Analytics',
-                          icon: Icons.insights_rounded,
-                          color: const Color(0xFFD4AF37),
-                          onTap: () => Navigator.push(
-                            context,
-                            MaterialPageRoute(
-                              builder: (_) => const AnalyticsDashboardScreen(),
+                        if (_currentAdmin.hasPermission('manage_products'))
+                          DashboardMenuAction(
+                            title: 'Inventory',
+                            icon: Icons.inventory_outlined,
+                            color: const Color(0xFF26A69A),
+                            onTap: () => _openWeightAnalytics(context),
+                          ),
+                        if (_currentAdmin.hasPermission('view_analytics'))
+                          DashboardMenuAction(
+                            title: 'Analytics',
+                            icon: Icons.insights_rounded,
+                            color: const Color(0xFFD4AF37),
+                            onTap: () => Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (_) =>
+                                    const AnalyticsDashboardScreen(),
+                              ),
                             ),
                           ),
-                        ),
-                      if (_currentAdmin.hasPermission('manage_products'))
-                        _MenuAction(
-                          title: 'Flash Sale',
-                          icon: Icons.flash_on_rounded,
-                          color: const Color(0xFFFF7043),
-                          onTap: () => Navigator.push(
-                            context,
-                            MaterialPageRoute(
-                              builder: (_) => const FlashSaleCreatorScreen(),
+                        if (_currentAdmin.hasPermission('manage_products'))
+                          DashboardMenuAction(
+                            title: 'Flash Sale',
+                            icon: Icons.flash_on_rounded,
+                            color: const Color(0xFFFF7043),
+                            onTap: () => Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (_) => const FlashSaleCreatorScreen(),
+                              ),
                             ),
                           ),
-                        ),
-                    ]),
+                      ]),
+                    ),
 
                     const SizedBox(height: 32),
                   ],
@@ -227,45 +324,47 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
                       Icons.campaign_rounded,
                     ),
                     const SizedBox(height: 14),
-                    _buildModuleGrid([
-                      if (_currentAdmin.hasPermission('manage_users'))
-                        _MenuAction(
-                          title: 'CRM Hub',
-                          icon: Icons.people_alt_rounded,
-                          color: const Color(0xFF42A5F5),
-                          onTap: () => Navigator.push(
-                            context,
-                            MaterialPageRoute(
-                              builder: (_) => const CRMHubScreen(),
+                    RepaintBoundary(
+                      child: _buildModuleGrid([
+                        if (_currentAdmin.hasPermission('manage_users'))
+                          DashboardMenuAction(
+                            title: 'CRM Hub',
+                            icon: Icons.people_alt_rounded,
+                            color: const Color(0xFF42A5F5),
+                            onTap: () => Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (_) => const CRMHubScreen(),
+                              ),
                             ),
                           ),
-                        ),
-                      if (_currentAdmin.hasPermission('manage_products'))
-                        _MenuAction(
-                          title: 'Promotions',
-                          icon: Icons.auto_awesome_rounded,
-                          color: const Color(0xFFEC407A),
-                          onTap: () => Navigator.push(
-                            context,
-                            MaterialPageRoute(
-                              builder: (_) => const DesignToSocialScreen(),
+                        if (_currentAdmin.hasPermission('manage_products'))
+                          DashboardMenuAction(
+                            title: 'Promotions',
+                            icon: Icons.auto_awesome_rounded,
+                            color: const Color(0xFFEC407A),
+                            onTap: () => Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (_) => const DesignToSocialScreen(),
+                              ),
                             ),
                           ),
-                        ),
-                      if (_currentAdmin.hasPermission('manage_settings'))
-                        _MenuAction(
-                          title: 'Alerts',
-                          icon: Icons.campaign_outlined,
-                          color: const Color(0xFFD4AF37),
-                          onTap: () => Navigator.push(
-                            context,
-                            MaterialPageRoute(
-                              builder: (_) =>
-                                  AdminFCMConsoleScreen(admin: _currentAdmin),
+                        if (_currentAdmin.hasPermission('manage_settings'))
+                          DashboardMenuAction(
+                            title: 'Alerts',
+                            icon: Icons.campaign_outlined,
+                            color: const Color(0xFFD4AF37),
+                            onTap: () => Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (_) =>
+                                    AdminFCMConsoleScreen(admin: _currentAdmin),
+                              ),
                             ),
                           ),
-                        ),
-                    ]),
+                      ]),
+                    ),
 
                     const SizedBox(height: 32),
                   ],
@@ -276,59 +375,74 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
                     Icons.shield_outlined,
                   ),
                   const SizedBox(height: 14),
-                  _buildModuleGrid([
-                    if (_currentAdmin.hasPermission('view_analytics'))
-                      _MenuAction(
-                        title: 'Audit Trail',
-                        icon: Icons.history_edu_rounded,
-                        color: const Color(0xFF90A4AE),
+                  RepaintBoundary(
+                    child: _buildModuleGrid([
+                      if (_currentAdmin.hasPermission('view_analytics'))
+                        DashboardMenuAction(
+                          title: 'Audit Trail',
+                          icon: Icons.history_edu_rounded,
+                          color: const Color(0xFF90A4AE),
+                          onTap: () => Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (_) => const AuditTrailScreen(),
+                            ),
+                          ),
+                        ),
+                      if (_currentAdmin.hasPermission('manage_settings'))
+                        DashboardMenuAction(
+                          title: 'Contact Info',
+                          icon: Icons.contact_mail_outlined,
+                          color: const Color(0xFFAB47BC),
+                          onTap: () {
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (_) => const ContactManagementScreen(),
+                              ),
+                            );
+                          },
+                        ),
+                      if (_currentAdmin.isSuperAdmin)
+                        DashboardMenuAction(
+                          title: 'Admins',
+                          icon: Icons.admin_panel_settings_outlined,
+                          color: const Color(0xFF66BB6A),
+                          onTap: () {
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (_) =>
+                                    const SubAdminManagementScreen(),
+                              ),
+                            );
+                          },
+                        ),
+                      if (_currentAdmin.isSuperAdmin)
+                        DashboardMenuAction(
+                          title: 'Nuke Database',
+                          icon: Icons.auto_delete_outlined,
+                          color: Colors.redAccent,
+                          onTap: () => Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (_) => const DatabaseCleanupScreen(),
+                            ),
+                          ),
+                        ),
+                      DashboardMenuAction(
+                        title: 'Quick Login',
+                        icon: Icons.fingerprint_rounded,
+                        color: const Color(0xFF4FC3F7),
                         onTap: () => Navigator.push(
                           context,
                           MaterialPageRoute(
-                            builder: (_) => const AuditTrailScreen(),
+                            builder: (_) => QuickLoginSettingsScreen(),
                           ),
                         ),
                       ),
-                    if (_currentAdmin.hasPermission('manage_settings'))
-                      _MenuAction(
-                        title: 'Contact Info',
-                        icon: Icons.contact_mail_outlined,
-                        color: const Color(0xFFAB47BC),
-                        onTap: () {
-                          Navigator.push(
-                            context,
-                            MaterialPageRoute(
-                              builder: (_) => const ContactManagementScreen(),
-                            ),
-                          );
-                        },
-                      ),
-                    if (_currentAdmin.isSuperAdmin)
-                      _MenuAction(
-                        title: 'Admins',
-                        icon: Icons.admin_panel_settings_outlined,
-                        color: const Color(0xFF66BB6A),
-                        onTap: () {
-                          Navigator.push(
-                            context,
-                            MaterialPageRoute(
-                              builder: (_) => const SubAdminManagementScreen(),
-                            ),
-                          );
-                        },
-                      ),
-                    _MenuAction(
-                      title: 'Quick Login',
-                      icon: Icons.fingerprint_rounded,
-                      color: const Color(0xFF4FC3F7),
-                      onTap: () => Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                          builder: (_) => QuickLoginSettingsScreen(),
-                        ),
-                      ),
-                    ),
-                  ]),
+                    ]),
+                  ),
 
                   const SizedBox(height: 16),
                 ],
@@ -337,6 +451,7 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
           ),
         ],
       ),
+    ),
       bottomNavigationBar: preview.pendingChangesCount > 0
           ? ConstrainedBox(
               constraints: const BoxConstraints(minHeight: 80),
@@ -523,58 +638,13 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
           },
           tooltip: 'Preview App',
         ),
-        IconButton(
-          icon: const Icon(Icons.refresh_rounded, color: AppColors.gold),
-          onPressed: _refreshStats,
-          tooltip: 'Refresh',
-        ),
+
         IconButton(
           icon: const Icon(
             Icons.power_settings_new_rounded,
             color: AppColors.gold,
           ),
-          onPressed: () async {
-            final confirm = await showDialog<bool>(
-              context: context,
-              builder: (ctx) => AlertDialog(
-                backgroundColor: const Color(0xFF1A1A1A),
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(20),
-                  side: const BorderSide(color: _kGoldBorder),
-                ),
-                title: Text(
-                  'Log Out',
-                  style: GoogleFonts.playfairDisplay(color: AppColors.gold),
-                ),
-                content: Text(
-                  'Are you sure you want to exit?',
-                  style: GoogleFonts.outfit(color: Colors.white70),
-                ),
-                actions: [
-                  TextButton(
-                    onPressed: () => Navigator.pop(ctx, false),
-                    child: Text(
-                      'Cancel',
-                      style: GoogleFonts.outfit(color: Colors.white54),
-                    ),
-                  ),
-                  TextButton(
-                    onPressed: () => Navigator.pop(ctx, true),
-                    child: Text(
-                      'Logout',
-                      style: GoogleFonts.outfit(color: Colors.redAccent),
-                    ),
-                  ),
-                ],
-              ),
-            );
-            if (confirm == true && mounted) {
-              await context.read<AuthProvider>().signOut();
-              if (mounted) {
-                Navigator.of(context).popUntil((route) => route.isFirst);
-              }
-            }
-          },
+          onPressed: () => _handleLogout(context),
           tooltip: 'Logout',
         ),
       ],
@@ -680,103 +750,33 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
     );
   }
 
-  // ── Stats Strip ──────────────────────────────────────────────────────────
+  // ── Live Stats Strip (Using FirebaseService) ─────────────────────────────────────
 
   Widget _buildStatsStrip() {
-    return SizedBox(
-      height: 95,
-      child: _loadingStats
-          ? const Center(
-              child: CircularProgressIndicator(color: AppColors.gold),
-            )
-          : ListView(
-              scrollDirection: Axis.horizontal,
-              children: [
-                _buildStatTile(
-                  context,
-                  'Products',
-                  '${_stats['products']}',
-                  Icons.inventory_2_outlined,
-                  const Color(0xFFFFB347),
-                ),
-                _buildStatTile(
-                  context,
-                  'Categories',
-                  '${_stats['categories']}',
-                  Icons.category_outlined,
-                  const Color(0xFF42A5F5),
-                ),
-                _buildStatTile(
-                  context,
-                  'Sub-cats',
-                  '${_stats['subcategories']}',
-                  Icons.account_tree_outlined,
-                  const Color(0xFF66BB6A),
-                ),
-                _buildStatTile(
-                  context,
-                  'Admins',
-                  '${_stats['admins']}',
-                  Icons.admin_panel_settings_outlined,
-                  AppColors.gold,
-                ),
-              ],
-            ),
+    return Row(
+      children: [
+        Expanded(
+          child: StatTile(
+            future: _productsCountFuture,
+            label: 'Total Products',
+            icon: Icons.diamond_outlined,
+            accent: const Color(0xFFFFB347),
+          ),
+        ),
+        const SizedBox(width: 16),
+        Expanded(
+          child: StatTile(
+            future: _categoriesCountFuture,
+            label: 'Total Categories',
+            icon: Icons.category_outlined,
+            accent: const Color(0xFF42A5F5),
+          ),
+        ),
+      ],
     );
   }
 
-  Widget _buildStatTile(
-    BuildContext context,
-    String label,
-    String value,
-    IconData icon,
-    Color accent,
-  ) {
-    final layout = AppLayout.of(context);
-    return Container(
-      width: layout.statTileWidth,
-      margin: const EdgeInsets.only(right: 12),
-      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
-      decoration: BoxDecoration(
-        color: _kCard,
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: accent.withValues(alpha: 0.2)),
-        boxShadow: [
-          BoxShadow(
-            color: accent.withValues(alpha: 0.06),
-            blurRadius: 12,
-            offset: const Offset(0, 4),
-          ),
-        ],
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        mainAxisAlignment: MainAxisAlignment.center,
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Icon(icon, color: accent, size: 15),
-          const SizedBox(height: 4),
-          Text(
-            value,
-            style: GoogleFonts.outfit(
-              color: Colors.white,
-              fontSize: 19,
-              fontWeight: FontWeight.bold,
-              height: 1.1,
-            ),
-          ),
-          Text(
-            label,
-            style: GoogleFonts.outfit(
-              color: Colors.white38,
-              fontSize: 10,
-              height: 1.2,
-            ),
-          ),
-        ],
-      ),
-    );
-  }
+  // _buildLiveStatTile and _MenuAction removed (migrated to external components)
 
   // ── Section Header ───────────────────────────────────────────────────────
 
@@ -808,99 +808,15 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
 
   // ── Module Grid (Glassmorphism Cards) ────────────────────────────────────
 
-  Widget _buildModuleGrid(List<_MenuAction> actions) {
-    return LayoutBuilder(
-      builder: (context, constraints) {
-        final layout = AppLayout.of(context);
-        return GridView.builder(
-          shrinkWrap: true,
-          physics: const NeverScrollableScrollPhysics(),
-          gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-            crossAxisCount: layout.adminModuleColumns,
-            mainAxisSpacing: 12,
-            crossAxisSpacing: 12,
-            childAspectRatio: layout.adminModuleAspectRatio,
-          ),
-          itemCount: actions.length,
-          itemBuilder: (context, index) {
-            final action = actions[index];
-            return _buildGlassCard(action);
-          },
-        );
-      },
-    );
-  }
-
-  Widget _buildGlassCard(_MenuAction action) {
-    return InkWell(
-      onTap: action.onTap,
-      borderRadius: BorderRadius.circular(18),
-      splashColor: action.color.withValues(alpha: 0.1),
-      highlightColor: action.color.withValues(alpha: 0.05),
-      child: ClipRRect(
-        borderRadius: BorderRadius.circular(18),
-        child: BackdropFilter(
-          filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
-          child: Container(
-            decoration: BoxDecoration(
-              color: _kCard.withValues(alpha: 0.9),
-              borderRadius: BorderRadius.circular(18),
-              border: Border.all(color: action.color.withValues(alpha: 0.18)),
-              boxShadow: [
-                BoxShadow(
-                  color: action.color.withValues(alpha: 0.06),
-                  blurRadius: 16,
-                  offset: const Offset(0, 6),
-                ),
-              ],
-            ),
-            child: Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
-              child: Row(
-                crossAxisAlignment: CrossAxisAlignment.center,
-                children: [
-                  // Icon container with gradient
-                  Container(
-                    width: 42,
-                    height: 42,
-                    decoration: BoxDecoration(
-                      gradient: LinearGradient(
-                        colors: [
-                          action.color.withValues(alpha: 0.25),
-                          action.color.withValues(alpha: 0.08),
-                        ],
-                        begin: Alignment.topLeft,
-                        end: Alignment.bottomRight,
-                      ),
-                      borderRadius: BorderRadius.circular(12),
-                      border: Border.all(
-                        color: action.color.withValues(alpha: 0.2),
-                      ),
-                    ),
-                    child: Icon(action.icon, color: action.color, size: 22),
-                  ),
-                  const SizedBox(width: 12),
-                  Expanded(
-                    child: Text(
-                      action.title,
-                      style: GoogleFonts.outfit(
-                        color: Colors.white.withValues(alpha: 0.85),
-                        fontSize: 14,
-                        fontWeight: FontWeight.w600,
-                      ),
-                    ),
-                  ),
-                  Icon(
-                    Icons.chevron_right_rounded,
-                    color: action.color.withValues(alpha: 0.4),
-                    size: 18,
-                  ),
-                ],
-              ),
-            ),
-          ),
-        ),
-      ),
+  Widget _buildModuleGrid(List<Widget> actions) {
+    return GridView.count(
+      shrinkWrap: true,
+      physics: const NeverScrollableScrollPhysics(),
+      crossAxisCount: 2,
+      childAspectRatio: 1.45,
+      mainAxisSpacing: 16,
+      crossAxisSpacing: 16,
+      children: actions,
     );
   }
 
@@ -1140,20 +1056,6 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
   }
 }
 
-class _MenuAction {
-  final String title;
-  final IconData icon;
-  final Color color;
-  final VoidCallback onTap;
-
-  _MenuAction({
-    required this.title,
-    required this.icon,
-    required this.color,
-    required this.onTap,
-  });
-}
-
 class _EditAdminProfileSheet extends StatefulWidget {
   final Admin admin;
   final Function(Admin) onUpdate;
@@ -1176,9 +1078,14 @@ class _EditAdminProfileSheetState extends State<_EditAdminProfileSheet> {
   void initState() {
     super.initState();
     _nameController = TextEditingController(text: widget.admin.fullName);
-    _whatsappController = TextEditingController(
-      text: widget.admin.whatsappNumber ?? '',
-    );
+    
+    String whatsapp = widget.admin.whatsappNumber ?? '';
+    // Strip +91 if it exists so user only editing 10 digits
+    if (whatsapp.startsWith('+91')) {
+      whatsapp = whatsapp.substring(3);
+    }
+    _whatsappController = TextEditingController(text: whatsapp);
+    
     _secondaryEmailController = TextEditingController(
       text: widget.admin.secondaryEmail ?? '',
     );
@@ -1199,7 +1106,7 @@ class _EditAdminProfileSheetState extends State<_EditAdminProfileSheet> {
     try {
       final updates = {
         'full_name': _nameController.text.trim(),
-        'whatsapp_number': _whatsappController.text.trim(),
+        'whatsapp_number': '+91${_whatsappController.text.trim()}',
         'secondary_email': _secondaryEmailController.text.trim(),
       };
 
@@ -1258,6 +1165,8 @@ class _EditAdminProfileSheetState extends State<_EditAdminProfileSheet> {
               'WhatsApp Number',
               Icons.phone_outlined,
               keyboardType: TextInputType.phone,
+              prefixText: '+91 ',
+              maxLength: 10,
             ),
             const SizedBox(height: 16),
             _buildTextField(
@@ -1296,6 +1205,8 @@ class _EditAdminProfileSheetState extends State<_EditAdminProfileSheet> {
     String label,
     IconData icon, {
     TextInputType? keyboardType,
+    String? prefixText,
+    int? maxLength,
   }) {
     return TextFormField(
       controller: controller,
@@ -1305,6 +1216,9 @@ class _EditAdminProfileSheetState extends State<_EditAdminProfileSheet> {
         labelText: label,
         labelStyle: const TextStyle(color: Colors.white38),
         prefixIcon: Icon(icon, color: AppColors.gold),
+        prefixText: prefixText,
+        prefixStyle: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
+        counterText: '', // Hide default counter
         enabledBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(12),
           borderSide: const BorderSide(color: Colors.white10),
@@ -1316,6 +1230,7 @@ class _EditAdminProfileSheetState extends State<_EditAdminProfileSheet> {
         filled: true,
         fillColor: Colors.white.withValues(alpha: 0.03),
       ),
+      maxLength: maxLength,
       validator: (v) => v!.isEmpty ? 'Required' : null,
     );
   }

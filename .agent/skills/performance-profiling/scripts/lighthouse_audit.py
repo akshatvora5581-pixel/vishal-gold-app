@@ -7,11 +7,17 @@ Usage: python lighthouse_audit.py https://example.com
 Output: JSON with performance scores
 Note: Requires lighthouse CLI (npm install -g lighthouse)
 """
-import subprocess
-import json
 import sys
 import os
 import tempfile
+
+# Fix Windows console encoding
+for stream in [sys.stdout, sys.stderr]:
+    if stream and hasattr(stream, 'reconfigure'):
+        try:
+            stream.reconfigure(encoding='utf-8', errors='replace')
+        except Exception:
+            pass
 
 def run_lighthouse(url: str) -> dict:
     """Run Lighthouse audit on URL."""

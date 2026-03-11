@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:provider/provider.dart';
+import 'package:google_fonts/google_fonts.dart';
 import 'package:vishal_gold/constants/app_colors.dart';
 import 'package:vishal_gold/models/product.dart';
 import 'package:vishal_gold/providers/preview_provider.dart';
@@ -21,6 +22,9 @@ class _RecentDesignsScreenState extends State<RecentDesignsScreen> {
 
   @override
   Widget build(BuildContext context) {
+    // Calculate threshold for exactly 24 hours ago
+    final DateTime threshold = DateTime.now().subtract(const Duration(hours: 24));
+
     return Consumer<PreviewProvider>(
       builder: (context, previewProvider, _) {
         final status = previewProvider.isPreviewMode ? 'staged' : 'published';
@@ -32,6 +36,7 @@ class _RecentDesignsScreenState extends State<RecentDesignsScreen> {
             stream: _firebaseService.getRecentProducts(
               limit: 50,
               status: status,
+              threshold: threshold, // Pass the 24-hour threshold
             ),
             builder: (context, snapshot) {
               if (snapshot.connectionState == ConnectionState.waiting) {
@@ -51,15 +56,7 @@ class _RecentDesignsScreenState extends State<RecentDesignsScreen> {
 
               final docs = snapshot.data?.docs ?? [];
               if (docs.isEmpty) {
-                return const Center(
-                  child: Text(
-                    'No recent designs available right now.',
-                    style: TextStyle(
-                      color: AppColors.textSecondary,
-                      fontSize: 16,
-                    ),
-                  ),
-                );
+                return _buildEmptyState();
               }
 
               final layout = AppLayout.of(context);
@@ -86,6 +83,52 @@ class _RecentDesignsScreenState extends State<RecentDesignsScreen> {
           ),
         );
       },
+    );
+  }
+
+  Widget _buildEmptyState() {
+    return Center(
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Container(
+            padding: const EdgeInsets.all(24),
+            decoration: BoxDecoration(
+              color: AppColors.surface,
+              shape: BoxShape.circle,
+              border: Border.all(color: AppColors.gold.withOpacity(0.1)),
+            ),
+            child: const Icon(
+              Icons.auto_awesome_rounded,
+              color: AppColors.gold,
+              size: 48,
+            ),
+          ),
+          const SizedBox(height: 24),
+          Text(
+            'NO NEW DESIGNS',
+            style: GoogleFonts.playfairDisplay(
+              color: AppColors.white,
+              fontSize: 20,
+              fontWeight: FontWeight.bold,
+              letterSpacing: 1.2,
+            ),
+          ),
+          const SizedBox(height: 8),
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 48),
+            child: Text(
+              'No new designs in the last 24 hours. Check back soon for our latest collections!',
+              textAlign: TextAlign.center,
+              style: GoogleFonts.outfit(
+                color: AppColors.grey,
+                fontSize: 14,
+                height: 1.5,
+              ),
+            ),
+          ),
+        ],
+      ),
     );
   }
 }

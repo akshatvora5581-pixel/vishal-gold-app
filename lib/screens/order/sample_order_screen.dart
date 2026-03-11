@@ -62,7 +62,7 @@ class _SampleOrderScreenState extends State<SampleOrderScreen> {
 
   Future<void> _pickImage() async {
     final List<XFile> pickedFiles = await ImagePicker().pickMultiImage(
-      imageQuality: 85,
+      imageQuality: 30,
     );
 
     if (pickedFiles.isNotEmpty) {
@@ -94,20 +94,47 @@ class _SampleOrderScreenState extends State<SampleOrderScreen> {
   }
 
   Future<void> _submitOrder() async {
-    if (!_formKey.currentState!.validate()) return;
+    // 1. Explicit Validation
+    if (_imageFiles.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Please select a design image first'),
+          backgroundColor: Colors.red,
+        ),
+      );
+      return;
+    }
+
+    if (!_formKey.currentState!.validate()) {
+      return; // Form will show its own validation errors
+    }
+
     if (_selectedGroup == null) {
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(const SnackBar(content: Text('Please select a group')));
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Please select a category'),
+          backgroundColor: Colors.red,
+        ),
+      );
       return;
     }
 
     final authProvider = Provider.of<AuthProvider>(context, listen: false);
-    if (authProvider.currentUser == null) return;
+    if (authProvider.currentUser == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Authentication required. Please log in.'),
+          backgroundColor: Colors.red,
+        ),
+      );
+      return;
+    }
 
+    // 2. Visual Loading State
     setState(() => _isLoading = true);
 
     try {
+      // 3. Safe Upload Logic (Try-Catch)
       final sampleOrder = SampleOrder(
         userId: authProvider.currentUser!.uid,
         group: _selectedGroup!,
@@ -134,6 +161,7 @@ class _SampleOrderScreenState extends State<SampleOrderScreen> {
             .split(',')
             .where((url) => url.isNotEmpty)
             .toList();
+            
         await WhatsAppService.notifyAdmin(
           context: context,
           customerName: _userDetails['name'] ?? 'Customer',
@@ -154,22 +182,46 @@ class _SampleOrderScreenState extends State<SampleOrderScreen> {
       }
 
       if (mounted) {
+        // Success Handling
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
-            content: Text('✅ Designs uploaded! Order is Pending review.'),
+            content: Text('✅ Sample Order Submitted!'),
+            backgroundColor: Colors.green,
             duration: Duration(seconds: 3),
           ),
         );
-        Navigator.pop(context);
+        
+        // Clear Form
+        _formKey.currentState!.reset();
+        _itemNameController.clear();
+        _qtyController.clear();
+        _sizeController.clear();
+        _weightController.clear();
+        _totalController.clear();
+        _remarksController.clear();
+        
+        setState(() {
+          _imageFiles.clear();
+          _selectedGroup = null;
+          _rodium = false;
+          _huid = false;
+          _isLoading = false;
+        });
+
+        // Optional: Close screen after success
+        // Navigator.pop(context);
       }
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(
-          context,
-        ).showSnackBar(SnackBar(content: Text('Error: $e')));
+        setState(() => _isLoading = false);
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Error: ${e.toString()}'),
+            backgroundColor: Colors.red,
+            duration: const Duration(seconds: 5),
+          ),
+        );
       }
-    } finally {
-      if (mounted) setState(() => _isLoading = false);
     }
   }
 
@@ -489,7 +541,9 @@ class _SampleOrderScreenState extends State<SampleOrderScreen> {
                                           width: 24,
                                           height: 24,
                                           decoration: BoxDecoration(
-                                            color: Colors.black.withValues(alpha: 0.7),
+                                            color: Colors.black.withValues(
+                                              alpha: 0.7,
+                                            ),
                                             shape: BoxShape.circle,
                                           ),
                                           child: const Icon(
