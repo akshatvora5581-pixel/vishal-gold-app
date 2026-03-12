@@ -180,15 +180,21 @@ class _GlobalSearchScreenState extends State<GlobalSearchScreen> {
 
     // 3. Products — match tag number, subcategory name, category display, purity display
     for (final p in _allProducts) {
+      // Find subcategory name for display
+      final subName = _allSubcategories
+          .where((s) => s.id == p.subcategory)
+          .map((s) => s.name)
+          .firstWhere((_) => true, orElse: () => p.subcategory);
+
       if (p.tagNumber.toLowerCase().contains(q) ||
-          p.subcategory.toLowerCase().contains(q) ||
+          subName.toLowerCase().contains(q) ||
           p.categoryDisplay.toLowerCase().contains(q) ||
           p.purityDisplay.toLowerCase().contains(q)) {
         matched.add(
           _SearchResult(
             type: _ResultType.product,
             title: p.tagNumber,
-            subtitle: '${p.subcategory} · ${p.categoryDisplay}',
+            subtitle: '$subName · ${p.categoryDisplay}',
             imageUrl: p.imageUrls.isNotEmpty ? p.imageUrls.first : null,
             product: p,
           ),
@@ -225,7 +231,8 @@ class _GlobalSearchScreenState extends State<GlobalSearchScreen> {
           MaterialPageRoute(
             builder: (_) => ProductListingScreen(
               category: result.category!.id,
-              subcategory: result.subcategory!.id,
+              subcategory: result.subcategory!.id, // Pass ID for querying
+              subcategoryName: result.subcategory!.name, // Pass Name for display
             ),
           ),
         );

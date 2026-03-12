@@ -104,16 +104,28 @@ class CartScreen extends StatelessWidget {
     if (!context.mounted) return;
 
     if (orderId != null) {
+      // 1. Capture notification info BEFORE clearing cart
+      final firstProduct = cartProvider.items.isNotEmpty
+          ? cartProvider.items.first.product
+          : null;
+      final productName =
+          firstProduct?.name ?? firstProduct?.tagNumber ?? 'Product';
+      final categoryName = firstProduct?.categoryDisplay ?? 'Category';
+      final notificationBody =
+          'New Order Received: $productName from category $categoryName';
+
+      // 2. Clear cart
       await cartProvider.clearCart();
 
-      // Send Push Notification via Firebase Cloud Functions
+      // 3. Send Push Notification via Firebase Cloud Functions
       try {
         final firebaseService = FirebaseService();
         await firebaseService.sendNotificationRequest(
           notificationData: {
-            'title': 'New Order Received! 🛍️',
-            'body': 'Order $orderId placed by $userName',
-            'target': 'admin',
+            'title': 'New Order Received!',
+            'body': notificationBody,
+            'target': 'admins',
+            'type': 'order_update',
           },
           performedBy: authProvider.currentUser?.uid ?? 'system',
         );
@@ -123,8 +135,8 @@ class CartScreen extends StatelessWidget {
           AppNotification(
             id: '', // Firestore will auto-generate document ID
             userId: 'admin',
-            title: 'New Order Received! 🛍️',
-            message: 'Order $orderId placed by $userName',
+            title: 'New Order Received!',
+            message: notificationBody,
             type: 'order_update',
             relatedId: orderId,
             createdAt: DateTime.now(),

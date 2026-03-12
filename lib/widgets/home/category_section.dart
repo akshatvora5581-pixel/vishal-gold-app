@@ -105,7 +105,8 @@ class CategorySection extends StatelessWidget {
                           MaterialPageRoute(
                             builder: (context) => ProductListingScreen(
                               category: category.id,
-                              subcategory: sub.id,
+                              subcategory: sub.id, // Pass ID for querying
+                              subcategoryName: sub.name, // Pass Name for display
                             ),
                           ),
                         );

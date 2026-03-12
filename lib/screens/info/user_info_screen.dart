@@ -72,6 +72,7 @@ class _UserInfoScreenState extends State<UserInfoScreen> {
       await LocalStorageService.saveUserState(_stateController.text.trim());
       await LocalStorageService.saveUserPhone(_phoneController.text.trim());
       await LocalStorageService.setUserInfoProvided();
+      await LocalStorageService.setHasSeenUserInfo();
 
       if (mounted) {
         Navigator.of(context).pushReplacement(

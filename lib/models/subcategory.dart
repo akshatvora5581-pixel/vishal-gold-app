@@ -29,23 +29,23 @@ class Subcategory {
 
     return Subcategory(
       id: id,
-      categoryId: json['category_id'] as String? ?? '',
-      name: json['name'] as String? ?? 'Unnamed Subcategory',
-      imageUrl: json['image_url'] as String? ?? '',
-      isActive: json['is_active'] as bool? ?? true,
-      createdAt: parseDate(json['created_at']),
-      updatedAt: parseDate(json['updated_at']),
+      categoryId: json['categoryId'] as String? ?? json['category_id'] as String? ?? '',
+      name: json['name'] as String? ?? '',
+      imageUrl: json['imageUrl'] as String? ?? json['image_url'] as String? ?? '',
+      isActive: json['isActive'] as bool? ?? json['is_active'] as bool? ?? true,
+      createdAt: parseDate(json['createdAt'] ?? json['created_at']),
+      updatedAt: parseDate(json['updatedAt'] ?? json['updated_at']),
     );
   }
 
   Map<String, dynamic> toJson() {
     return {
-      'category_id': categoryId,
+      'categoryId': categoryId,
       'name': name,
-      'image_url': imageUrl,
-      'is_active': isActive,
-      'created_at': Timestamp.fromDate(createdAt),
-      'updated_at': Timestamp.fromDate(updatedAt),
+      'imageUrl': imageUrl,
+      'isActive': isActive,
+      'createdAt': Timestamp.fromDate(createdAt),
+      'updatedAt': Timestamp.fromDate(updatedAt),
     };
   }
 

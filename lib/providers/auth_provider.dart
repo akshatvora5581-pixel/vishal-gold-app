@@ -19,14 +19,19 @@ class AuthProvider with ChangeNotifier {
 
   static const String _quickLoginOptOutKey = 'quick_login_opt_out';
   static const String _pinHashKey = 'user_pin_hash';
+  static const String _adminPinRawKey = 'admin_pin_raw';
+  static const String _isPinSetKey = 'is_pin_set_flag';
   static const String _biometricEnabledKey = 'biometric_enabled';
   static const String _adminEmailKey = 'admin_quick_login_email';
   static const String _adminPasswordKey = 'admin_quick_login_password';
+  static const String _isSetupCompleteKey = 'admin_setup_complete';
 
   bool _isBiometricEnabled = false;
+  bool _isPinSet = false;
   bool _hasPinSetup = false;
   bool _hasOptedOutQuickLogin = false;
   bool _canCheckBiometrics = false;
+  bool _isSetupComplete = false;
 
   User? _currentUser;
   String? _userRole;
@@ -46,8 +51,10 @@ class AuthProvider with ChangeNotifier {
   // Quick Login Getters
   bool get isBiometricEnabled => _isBiometricEnabled;
   bool get hasPinSetup => _hasPinSetup;
+  bool get isPinSet => _isPinSet;
   bool get hasOptedOutQuickLogin => _hasOptedOutQuickLogin;
   bool get canCheckBiometrics => _canCheckBiometrics;
+  bool get isSetupComplete => _isSetupComplete;
 
   AuthProvider() {
     _initializeAuth();
@@ -132,20 +139,15 @@ class AuthProvider with ChangeNotifier {
     }
   }
 
-  /// Sign out
+  /// Sign out (keeps Quick Login credentials for re-auth)
   Future<void> signOut() async {
     try {
       _isLoading = true;
       notifyListeners();
 
-      // Sign out from Firebase
       await _authService.signOut();
-
-      // Clear local storage - but KEEP Quick Login credentials if they exist
-      // because the user wants to be able to use PIN/Biometric to log back in.
       await LocalStorageService.clearUserRole();
 
-      // Clear state
       _currentUser = null;
       _userRole = null;
       _userProfile = null;
@@ -153,6 +155,94 @@ class AuthProvider with ChangeNotifier {
       notifyListeners();
     } catch (e) {
       if (kDebugMode) debugPrint('Sign out error: $e');
+      rethrow;
+    } finally {
+      _isLoading = false;
+      notifyListeners();
+    }
+  }
+
+  /// Full admin sign-out: clears ALL security data (PIN, biometrics, stored
+  /// credentials) and resets Firebase Auth. Use this for the Super Admin
+  /// logout button so nothing persists.
+  Future<void> signOutAdmin() async {
+    try {
+      _isLoading = true;
+      notifyListeners();
+
+      // 1. Firebase sign-out
+      await FirebaseAuth.instance.signOut();
+      await _authService.signOut();
+
+      // 2. Clear ALL security data from secure storage
+      await _secureStorage.deleteAll();
+
+      // 3. Clear SharedPreferences flags
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.remove(_quickLoginOptOutKey);
+      await prefs.remove(_isSetupCompleteKey);
+
+      // 4. Clear local user role
+      await LocalStorageService.clearUserRole();
+
+      // 5. Reset in-memory state
+      _currentUser = null;
+      _userRole = null;
+      _userProfile = null;
+      _hasPinSetup = false;
+      _isPinSet = false;
+      _isBiometricEnabled = false;
+      _hasOptedOutQuickLogin = false;
+      _isSetupComplete = false;
+
+      notifyListeners();
+    } catch (e) {
+      if (kDebugMode) debugPrint('Admin sign out error: $e');
+      rethrow;
+    } finally {
+      _isLoading = false;
+      notifyListeners();
+    }
+  }
+
+  /// Safe admin panel exit: clears ONLY admin-specific local flags (PIN,
+  /// biometrics, quick-login credentials) WITHOUT touching Firebase Auth.
+  ///
+  /// Use this when the admin is exiting back to the normal user home screen,
+  /// so the underlying Firebase user session remains perfectly active and the
+  /// User Profile / Home screen keeps working without any "Authentication
+  /// Required" errors.
+  Future<void> signOutAdminSession() async {
+    try {
+      _isLoading = true;
+      notifyListeners();
+
+      // Clear admin PIN & biometric flags from secure storage only.
+      // Do NOT call FirebaseAuth.signOut() — the normal user session must survive.
+      await _secureStorage.delete(key: _adminPinRawKey);
+      await _secureStorage.delete(key: _pinHashKey);
+      await _secureStorage.delete(key: _isPinSetKey);
+      await _secureStorage.delete(key: _biometricEnabledKey);
+      await _secureStorage.delete(key: _adminEmailKey);
+      await _secureStorage.delete(key: _adminPasswordKey);
+
+      // Clear setup flags from SharedPreferences.
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.remove(_quickLoginOptOutKey);
+      await prefs.remove(_isSetupCompleteKey);
+
+      // Reset only the admin-specific in-memory state.
+      // _currentUser, _userRole, and _userProfile are deliberately preserved
+      // so the normal Firebase user remains authenticated.
+      _hasPinSetup = false;
+      _isPinSet = false;
+      _isBiometricEnabled = false;
+      _hasOptedOutQuickLogin = false;
+      _isSetupComplete = false;
+
+      notifyListeners();
+    } catch (e) {
+      if (kDebugMode) debugPrint('Admin session exit error: $e');
       rethrow;
     } finally {
       _isLoading = false;
@@ -296,9 +386,13 @@ class AuthProvider with ChangeNotifier {
     try {
       final prefs = await SharedPreferences.getInstance();
       _hasOptedOutQuickLogin = prefs.getBool(_quickLoginOptOutKey) ?? false;
+      _isSetupComplete = prefs.getBool(_isSetupCompleteKey) ?? false;
 
       final String? pinHash = await _secureStorage.read(key: _pinHashKey);
       _hasPinSetup = pinHash != null && pinHash.isNotEmpty;
+
+      final String? isPinSetFlag = await _secureStorage.read(key: _isPinSetKey);
+      _isPinSet = isPinSetFlag == 'true';
 
       final String? biometricStr = await _secureStorage.read(
         key: _biometricEnabledKey,
@@ -318,6 +412,13 @@ class AuthProvider with ChangeNotifier {
     final prefs = await SharedPreferences.getInstance();
     await prefs.setBool(_quickLoginOptOutKey, true);
     _hasOptedOutQuickLogin = true;
+    notifyListeners();
+  }
+
+  Future<void> markSetupComplete() async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setBool(_isSetupCompleteKey, true);
+    _isSetupComplete = true;
     notifyListeners();
   }
 
@@ -395,10 +496,18 @@ class AuthProvider with ChangeNotifier {
 
   Future<bool> setupPin(String pin, String password) async {
     try {
-      if (pin.length < 4) return false;
+      if (pin.length != 4) return false;
+      
+      // Save raw PIN as requested
+      await _secureStorage.write(key: _adminPinRawKey, value: pin);
+      
+      // Also maintain legacy hash if needed, but primarily use flag
       final String hashedPin = _hashPin(pin);
       await _secureStorage.write(key: _pinHashKey, value: hashedPin);
+      await _secureStorage.write(key: _isPinSetKey, value: 'true');
+      
       _hasPinSetup = true;
+      _isPinSet = true;
 
       // Also save current credentials
       final user = _currentUser ?? FirebaseAuth.instance.currentUser;
@@ -415,13 +524,15 @@ class AuthProvider with ChangeNotifier {
   }
 
   Future<bool> authenticateWithPin(String pin) async {
-    if (!_hasPinSetup) return false;
     try {
-      final String? storedHash = await _secureStorage.read(key: _pinHashKey);
-      if (storedHash == null) return false;
-
-      final String inputHash = _hashPin(pin);
-      return storedHash == inputHash;
+      final String? storedPin = await _secureStorage.read(key: _adminPinRawKey);
+      if (storedPin == null) {
+        // Fallback to hash comparison for legacy support
+        final String? storedHash = await _secureStorage.read(key: _pinHashKey);
+        if (storedHash == null) return false;
+        return storedHash == _hashPin(pin);
+      }
+      return storedPin == pin;
     } catch (e) {
       if (kDebugMode) debugPrint('PIN auth error: $e');
       return false;
@@ -429,8 +540,11 @@ class AuthProvider with ChangeNotifier {
   }
 
   Future<void> clearPin() async {
+    await _secureStorage.delete(key: _adminPinRawKey);
     await _secureStorage.delete(key: _pinHashKey);
+    await _secureStorage.delete(key: _isPinSetKey);
     _hasPinSetup = false;
+    _isPinSet = false;
     notifyListeners();
   }
 

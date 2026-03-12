@@ -53,9 +53,13 @@ class FCMService {
     // 3. Register global background handler
     FirebaseMessaging.onBackgroundMessage(_firebaseMessagingBackgroundHandler);
 
-    // 4. Subscribe to global broadcast topic
-    await _fcm.subscribeToTopic('all_users');
-    debugPrint('[FCM] Subscribed to topic: all_users');
+    // 4. Hard Reset: Unsubscribe from sensitive topics for User App safety
+    await _fcm.unsubscribeFromTopic('admins');
+    await _fcm.unsubscribeFromTopic('admin_orders');
+    await _fcm.unsubscribeFromTopic('all');
+    debugPrint(
+      '[FCM] Hard Reset: Unsubscribed from admins, admin_orders and all topics.',
+    );
 
     // 5. Foreground messages → show local notification banner
     FirebaseMessaging.onMessage.listen(_handleForegroundMessage);
@@ -63,10 +67,12 @@ class FCMService {
     // 6. Tap when app is in background
     FirebaseMessaging.onMessageOpenedApp.listen(_handleMessageTap);
 
-    // 7. Tap when app was fully terminated
+    // 7. Tap when app was fully terminated (Cold Start)
     final initialMessage = await _fcm.getInitialMessage();
     if (initialMessage != null) {
-      await Future.delayed(const Duration(milliseconds: 600));
+      debugPrint('[FCM] Cold start detected with initial message.');
+      // Delay slightly longer to ensure splash/main setup completes
+      await Future.delayed(const Duration(milliseconds: 1500));
       _handleMessageTap(initialMessage);
     }
 
@@ -132,17 +138,18 @@ class FCMService {
           presentSound: true,
         ),
       ),
-      // Pass productId as payload so tap also deep-links
-      payload: message.data['productId'],
+      // Pass product_id as payload so tap also deep-links
+      payload: message.data['product_id'] ?? message.data['productId'],
     );
   }
 
   // ── Notification tap handler ──────────────────────────────────────────────
   void _handleMessageTap(RemoteMessage message) {
     debugPrint('[FCM Tap] data: ${message.data}');
-    final productId = message.data['productId'];
-    if (productId != null && productId.isNotEmpty) {
-      _navigateToProduct(productId as String);
+    // Support both snake_case and camelCase for better flexibility
+    final productId = message.data['product_id'] ?? message.data['productId'];
+    if (productId != null && productId.toString().isNotEmpty) {
+      _navigateToProduct(productId.toString());
     }
   }
 
@@ -192,10 +199,8 @@ class FCMService {
       await _firebaseService.updateFcmToken(uid, token, isAdmin: isAdmin);
     }
     if (isAdmin) {
-      // Admins subscribe to admin topic to receive order notifications
-      await _fcm.subscribeToTopic('admin');
-      // Optionally unsubscribe from all_users so they don't get customer alerts
-      // await _fcm.unsubscribeFromTopic('all_users');
+      // Admin topic subscription is now handled strictly in the Login function
+      debugPrint('[FCM] Admin token updated. Subscription handled at login.');
     } else {
       await _fcm.subscribeToTopic('all_users');
     }

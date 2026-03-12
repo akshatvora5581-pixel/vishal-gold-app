@@ -9,6 +9,8 @@ class LocalStorageService {
   // Non-PII SharedPreferences keys
   static const String _keyIsFirstLaunch = 'is_first_launch';
   static const String _keyIsUserInfoProvided = 'is_user_info_provided';
+  static const String _keyHasSeenInformationPage = 'has_seen_information_page';
+  static const String _keyHasSeenUserInfo = 'has_seen_user_info';
 
   // PII SecureStorage keys (stored encrypted)
   static const String _secureKeyUserRole = 'secure_user_role';
@@ -134,6 +136,30 @@ class LocalStorageService {
   static Future<bool> isUserInfoProvided() async {
     await init();
     return _prefs!.getBool(_keyIsUserInfoProvided) ?? false;
+  }
+
+  /// Mark information page as seen
+  static Future<bool> setHasSeenInformationPage() async {
+    await init();
+    return await _prefs!.setBool(_keyHasSeenInformationPage, true);
+  }
+
+  /// Check if information page has been seen
+  static Future<bool> hasSeenInformationPage() async {
+    await init();
+    return _prefs!.getBool(_keyHasSeenInformationPage) ?? false;
+  }
+
+  /// Mark custom user info screen as seen
+  static Future<bool> setHasSeenUserInfo() async {
+    await init();
+    return await _prefs!.setBool(_keyHasSeenUserInfo, true);
+  }
+
+  /// Check if custom user info screen has been seen
+  static Future<bool> hasSeenUserInfo() async {
+    await init();
+    return _prefs!.getBool(_keyHasSeenUserInfo) ?? false;
   }
 
   /// Check if this is first launch

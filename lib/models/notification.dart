@@ -31,26 +31,26 @@ class AppNotification {
 
     return AppNotification(
       id: json['id'] as String? ?? '',
-      userId: json['user_id'] as String?,
+      userId: (json['userId'] ?? json['user_id']) as String?,
       title: json['title'] as String? ?? '',
       message: json['message'] as String? ?? '',
       type: json['type'] as String? ?? 'general',
-      relatedId: json['related_id'] as String?,
-      isRead: json['is_read'] as bool? ?? false,
-      createdAt: parseDate(json['created_at']),
+      relatedId: (json['relatedId'] ?? json['related_id']) as String?,
+      isRead: (json['isRead'] ?? json['is_read']) as bool? ?? false,
+      createdAt: parseDate(json['createdAt'] ?? json['created_at']),
     );
   }
 
   Map<String, dynamic> toJson() {
     return {
       'id': id,
-      'user_id': userId,
+      'userId': userId,
       'title': title,
       'message': message,
       'type': type,
-      'related_id': relatedId,
-      'is_read': isRead,
-      'created_at': createdAt.toIso8601String(),
+      'relatedId': relatedId,
+      'isRead': isRead,
+      'createdAt': createdAt.toIso8601String(),
     };
   }
 

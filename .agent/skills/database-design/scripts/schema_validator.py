@@ -20,10 +20,12 @@ from pathlib import Path
 from datetime import datetime
 
 # Fix Windows console encoding
-try:
-    sys.stdout.reconfigure(encoding='utf-8', errors='replace')
-except:
-    pass
+for stream in [sys.stdout, sys.stderr]:
+    if stream and hasattr(stream, 'reconfigure'):
+        try:
+            stream.reconfigure(encoding='utf-8', errors='replace')
+        except Exception:
+            pass
 
 
 def find_schema_files(project_path: Path) -> list:

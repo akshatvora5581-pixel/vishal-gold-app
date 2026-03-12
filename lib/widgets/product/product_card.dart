@@ -76,7 +76,9 @@ class ProductCard extends StatelessWidget {
                           child: Container(
                             padding: const EdgeInsets.all(6),
                             decoration: BoxDecoration(
-                              color: AppColors.background.withValues(alpha: 0.6),
+                              color: AppColors.background.withValues(
+                                alpha: 0.6,
+                              ),
                               shape: BoxShape.circle,
                             ),
                             child: Icon(
@@ -171,6 +173,8 @@ class ProductCard extends StatelessWidget {
         imageUrl: imageUrl,
         fit: BoxFit.cover,
         width: double.infinity,
+        memCacheWidth: 400,
+        memCacheHeight: 400,
         placeholder: (context, url) =>
             ShimmerWidget.rectangular(height: double.infinity),
         errorWidget: (_, _, _) => Container(

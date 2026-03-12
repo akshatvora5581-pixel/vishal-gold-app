@@ -1,3 +1,5 @@
+import 'dart:core';
+
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_storage/firebase_storage.dart';
 import 'package:firebase_auth/firebase_auth.dart';
@@ -14,6 +16,27 @@ import 'package:vishal_gold/models/subcategory.dart';
 class FirebaseService {
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
   final FirebaseStorage _storage = FirebaseStorage.instance;
+
+  /// Sanitizes input data by trimming all string values recursively.
+  Map<String, dynamic> _sanitizeData(Map<String, dynamic> data) {
+    return data.map((key, value) {
+      if (value is String) {
+        return MapEntry(key, value.trim());
+      } else if (value is Map<String, dynamic>) {
+        return MapEntry(key, _sanitizeData(value));
+      } else if (value is List) {
+        return MapEntry(
+          key,
+          value.map((item) {
+            if (item is String) return item.trim();
+            if (item is Map<String, dynamic>) return _sanitizeData(item);
+            return item;
+          }).toList(),
+        );
+      }
+      return MapEntry(key, value);
+    });
+  }
 
   // Collections
   static const String usersCollection = 'users';
@@ -44,14 +67,18 @@ class FirebaseService {
     required String changeType, // 'create', 'update', 'delete'
   }) async {
     try {
-      await _firestore.collection(stagingCollection).add({
-        'timestamp': FieldValue.serverTimestamp(),
-        'admin_id': adminId,
-        'collection_name': collectionName,
-        'doc_id': docId,
-        'data': data,
-        'change_type': changeType,
-      });
+      await _firestore
+          .collection(stagingCollection)
+          .add(
+            _sanitizeData({
+              'timestamp': FieldValue.serverTimestamp(),
+              'admin_id': adminId,
+              'collection_name': collectionName,
+              'doc_id': docId,
+              'data': data,
+              'change_type': changeType,
+            }),
+          );
     } catch (e) {
       throw 'Failed to stage change: ${e.toString()}';
     }
@@ -180,7 +207,7 @@ class FirebaseService {
     return _firestore
         .collection(notificationsCollection)
         .where('user_id', isEqualTo: userId)
-        .orderBy('created_at', descending: true)
+        .orderBy('createdAt', descending: true)
         .snapshots()
         .map(
           (snapshot) => snapshot.docs
@@ -200,7 +227,7 @@ class FirebaseService {
           'user_id',
           isEqualTo: 'admin',
         ) // Using 'admin' as a generic user_id for admin broadcast
-        .orderBy('created_at', descending: true)
+        .orderBy('createdAt', descending: true)
         .snapshots()
         .map(
           (snapshot) => snapshot.docs
@@ -244,11 +271,17 @@ class FirebaseService {
     required Map<String, dynamic> userData,
   }) async {
     try {
-      await _firestore.collection(usersCollection).doc(userId).set({
-        ...userData,
-        'updatedAt': FieldValue.serverTimestamp(),
-        'createdAt': FieldValue.serverTimestamp(),
-      }, SetOptions(merge: true));
+      await _firestore
+          .collection(usersCollection)
+          .doc(userId)
+          .set(
+            _sanitizeData({
+              ...userData,
+              'updatedAt': FieldValue.serverTimestamp(),
+              'createdAt': FieldValue.serverTimestamp(),
+            }),
+            SetOptions(merge: true),
+          );
     } catch (e) {
       throw 'Failed to save user profile: ${e.toString()}';
     }
@@ -277,10 +310,15 @@ class FirebaseService {
     required Map<String, dynamic> updates,
   }) async {
     try {
-      await _firestore.collection(usersCollection).doc(userId).update({
-        ...updates,
-        'updatedAt': FieldValue.serverTimestamp(),
-      });
+      await _firestore
+          .collection(usersCollection)
+          .doc(userId)
+          .update(
+            _sanitizeData({
+              ...updates,
+              'updatedAt': FieldValue.serverTimestamp(),
+            }),
+          );
     } catch (e) {
       throw 'Failed to update user profile: ${e.toString()}';
     }
@@ -357,8 +395,8 @@ class FirebaseService {
     try {
       final docRef = await _firestore.collection(adminsCollection).add({
         ...adminData,
-        'created_at': DateTime.now().toIso8601String(),
-        'updated_at': DateTime.now().toIso8601String(),
+        'createdAt': DateTime.now().toIso8601String(),
+        'updatedAt': DateTime.now().toIso8601String(),
         'is_active': true,
       });
 
@@ -384,7 +422,7 @@ class FirebaseService {
     try {
       await _firestore.collection(adminsCollection).doc(adminId).update({
         ...updates,
-        'updated_at': DateTime.now().toIso8601String(),
+        'updatedAt': DateTime.now().toIso8601String(),
       });
 
       await logAdminAction(
@@ -404,7 +442,7 @@ class FirebaseService {
     try {
       await _firestore.collection(adminsCollection).doc(adminId).update({
         'is_active': false,
-        'updated_at': DateTime.now().toIso8601String(),
+        'updatedAt': DateTime.now().toIso8601String(),
       });
 
       await logAdminAction(
@@ -509,7 +547,17 @@ class FirebaseService {
       query = query.where('category', isEqualTo: category);
     }
 
-    return query.limit(limit).snapshots();
+    return query.limit(limit).snapshots().handleError((error) {
+      if (error is FirebaseException && error.code == 'failed-precondition') {
+        debugPrint('========== FIREBASE ERROR (failed-precondition) ==========');
+        debugPrint('Code: ${error.code}');
+        debugPrint('Message: ${error.message}');
+        debugPrint('Details: ${error.stackTrace}');
+        debugPrint('==========================================================');
+        throw 'Database configuration is updating. Please try again in 5 minutes.';
+      }
+      throw error;
+    });
   }
 
   /// Get product by ID
@@ -543,7 +591,7 @@ class FirebaseService {
           .collection(productsCollection)
           .where('is_active', isEqualTo: true)
           .where('status', isEqualTo: status)
-          .limit(100)
+          .limit(5000)
           .get();
 
       return snapshot.docs
@@ -585,6 +633,75 @@ class FirebaseService {
     }
   }
 
+  /// Get products paginated with limits and cursors
+  Future<Map<String, dynamic>> getProductsPaginated({
+    String? category,
+    String? subcategory,
+    int limit = 20,
+    DocumentSnapshot? startAfter,
+    String status = 'published',
+    String? orderByField,
+    bool descending = true,
+  }) async {
+    try {
+      Query query = _firestore
+          .collection(productsCollection)
+          .where('is_active', isEqualTo: true)
+          .where('status', isEqualTo: status);
+
+      if (category != null && category != 'all') {
+        query = query.where('category', isEqualTo: category);
+      }
+
+      if (subcategory != null && subcategory.isNotEmpty) {
+        query = query.where('subcategory', isEqualTo: subcategory);
+      }
+
+      if (orderByField != null && orderByField.isNotEmpty) {
+        // Use user-defined sort order
+        query = query.orderBy(orderByField, descending: descending);
+      } else {
+        // Default sort by createdAt newest first
+        query = query.orderBy('createdAt', descending: true);
+      }
+
+      // When sorting by a field, make sure to add secondary orderBy on document ID or another unique field
+      // if values aren't unique (required by Firestore startAfter with duplicate sort values, though often it works implicitly)
+
+      if (startAfter != null) {
+        query = query.startAfterDocument(startAfter);
+      }
+
+      final snapshot = await query.limit(limit).get();
+
+      final products = snapshot.docs
+          .map(
+            (doc) => Product.fromJson({
+              'id': doc.id,
+              ...doc.data() as Map<String, dynamic>,
+            }),
+          )
+          .toList();
+
+      return {
+        'products': products,
+        'lastDocument': snapshot.docs.isNotEmpty ? snapshot.docs.last : null,
+      };
+    } on FirebaseException catch (e) {
+      if (e.code == 'failed-precondition') {
+        debugPrint('========== FIREBASE ERROR (failed-precondition) ==========');
+        debugPrint('Code: ${e.code}');
+        debugPrint('Message: ${e.message}');
+        debugPrint('Details: ${e.stackTrace}');
+        debugPrint('==========================================================');
+        throw 'Database configuration is updating. Please try again in 5 minutes.';
+      }
+      throw 'Failed to get paginated products: ${e.message ?? e.toString()}';
+    } catch (e) {
+      throw 'Failed to get paginated products: ${e.toString()}';
+    }
+  }
+
   /// Get related items by subcategory, excluding the current product
   Future<List<Product>> getRelatedProducts(
     String subcategory,
@@ -608,18 +725,75 @@ class FirebaseService {
     }
   }
 
-  /// Get recent products ordered by creation date
   Stream<QuerySnapshot> getRecentProducts({
     int limit = 20,
     String status = 'published',
+    DateTime? threshold,
   }) {
-    return _firestore
-        .collection(productsCollection)
-        .where('is_active', isEqualTo: true)
-        .where('status', isEqualTo: status)
-        .orderBy('created_at', descending: true)
-        .limit(limit)
-        .snapshots();
+    try {
+      Query query = _firestore
+          .collection(productsCollection)
+          .where('is_active', isEqualTo: true)
+          .where('status', isEqualTo: status);
+
+      if (threshold != null) {
+        query = query.where('createdAt', isGreaterThanOrEqualTo: threshold);
+      }
+
+      return query
+          .orderBy('createdAt', descending: true)
+          .limit(limit)
+          .snapshots()
+          .handleError((error) {
+        if (error is FirebaseException && error.code == 'failed-precondition') {
+          debugPrint('========== FIREBASE ERROR (failed-precondition) ==========');
+          debugPrint('Code: ${error.code}');
+          debugPrint('Message: ${error.message}');
+          debugPrint('Details: ${error.stackTrace}');
+          debugPrint('==========================================================');
+          throw 'Database configuration is updating. Please try again in 5 minutes.';
+        }
+        throw error;
+      });
+    } catch (e) {
+      rethrow;
+    }
+  }
+
+  /// ========== DASHBOARD STATS ==========
+  Stream<QuerySnapshot> getProductsCountStream() {
+    return _firestore.collection(productsCollection).snapshots();
+  }
+
+  Stream<QuerySnapshot> getCategoriesCountStream() {
+    return _firestore.collection(categoriesCollection).snapshots();
+  }
+
+  /// Get total products count using high-performance aggregation
+  Future<int> getProductsCount() async {
+    try {
+      final aggregateQuery = _firestore
+          .collection(productsCollection)
+          .where('is_active', isEqualTo: true)
+          .count();
+      final res = await aggregateQuery.get();
+      return res.count ?? 0;
+    } catch (e) {
+      debugPrint('Error getting products count: $e');
+      return 0;
+    }
+  }
+
+  /// Get total categories count using high-performance aggregation
+  Future<int> getCategoriesCount() async {
+    try {
+      final aggregateQuery = _firestore.collection(categoriesCollection).count();
+      final res = await aggregateQuery.get();
+      return res.count ?? 0;
+    } catch (e) {
+      debugPrint('Error getting categories count: $e');
+      return 0;
+    }
   }
 
   /// ========== PRODUCT MANAGEMENT (ADMIN) ==========
@@ -634,31 +808,33 @@ class FirebaseService {
     required String uploadedBy,
     String? name,
     String? description,
-    String status = 'draft',
+    String status = 'published',
   }) async {
     try {
       DocumentReference productRef = await _firestore
           .collection(productsCollection)
-          .add({
-            'tag_number': tagNumber,
-            'category': category,
-            'subcategory': subcategory,
-            'name': name,
-            'description': description,
-            'image_urls': imageUrls,
-            'gross_weight': grossWeight,
-            'net_weight': netWeight,
-            'purity': purity,
-            'uploaded_by': uploadedBy,
-            'is_active': true,
-            'status': status,
-            'version': status == 'published' ? 1 : 0,
-            'last_published_at': status == 'published'
-                ? FieldValue.serverTimestamp()
-                : null,
-            'created_at': FieldValue.serverTimestamp(),
-            'updated_at': FieldValue.serverTimestamp(),
-          });
+          .add(
+            _sanitizeData({
+              'tag_number': tagNumber,
+              'category': category,
+              'subcategory': subcategory,
+              'name': name,
+              'description': description,
+              'image_urls': imageUrls,
+              'gross_weight': grossWeight,
+              'net_weight': netWeight,
+              'purity': purity,
+              'uploaded_by': uploadedBy,
+              'is_active': true,
+              'status': status,
+              'version': status == 'published' ? 1 : 0,
+              'lastPublishedAt': status == 'published'
+                  ? FieldValue.serverTimestamp()
+                  : null,
+              'createdAt': FieldValue.serverTimestamp(),
+              'updatedAt': FieldValue.serverTimestamp(),
+            }),
+          );
 
       await logAdminAction(
         adminId: uploadedBy,
@@ -683,7 +859,7 @@ class FirebaseService {
     try {
       await _firestore.collection(productsCollection).doc(productId).update({
         ...updates,
-        'updated_at': FieldValue.serverTimestamp(),
+        'updatedAt': FieldValue.serverTimestamp(),
       });
 
       // Note: We'd need adminId here for logging.
@@ -729,8 +905,8 @@ class FirebaseService {
       await _firestore.collection(productsCollection).doc(productId).update({
         'status': 'published',
         'version': currentVersion + 1,
-        'last_published_at': FieldValue.serverTimestamp(),
-        'updated_at': FieldValue.serverTimestamp(),
+        'lastPublishedAt': FieldValue.serverTimestamp(),
+        'updatedAt': FieldValue.serverTimestamp(),
       });
 
       // We'll update the caller (UI) to also call logAdminAction for publish
@@ -744,7 +920,7 @@ class FirebaseService {
     try {
       await _firestore.collection(productsCollection).doc(productId).update({
         'is_active': false,
-        'updated_at': DateTime.now().toIso8601String(),
+        'updatedAt': DateTime.now().toIso8601String(),
       });
 
       await logAdminAction(
@@ -811,11 +987,15 @@ class FirebaseService {
     String performedBy,
   ) async {
     try {
-      final docRef = await _firestore.collection(categoriesCollection).add({
-        ...data,
-        'created_at': FieldValue.serverTimestamp(),
-        'updated_at': FieldValue.serverTimestamp(),
-      });
+      final docRef = await _firestore
+          .collection(categoriesCollection)
+          .add(
+            _sanitizeData({
+              ...data,
+              'createdAt': FieldValue.serverTimestamp(),
+              'updatedAt': FieldValue.serverTimestamp(),
+            }),
+          );
 
       await logAdminAction(
         adminId: performedBy,
@@ -835,10 +1015,15 @@ class FirebaseService {
     required String performedBy,
   }) async {
     try {
-      await _firestore.collection(categoriesCollection).doc(id).update({
-        ...data,
-        'updated_at': FieldValue.serverTimestamp(),
-      });
+      await _firestore
+          .collection(categoriesCollection)
+          .doc(id)
+          .update(
+            _sanitizeData({
+              ...data,
+              'updatedAt': FieldValue.serverTimestamp(),
+            }),
+          );
 
       await logAdminAction(
         adminId: performedBy,
@@ -873,11 +1058,15 @@ class FirebaseService {
     String performedBy,
   ) async {
     try {
-      final docRef = await _firestore.collection(subcategoriesCollection).add({
-        ...data,
-        'created_at': FieldValue.serverTimestamp(),
-        'updated_at': FieldValue.serverTimestamp(),
-      });
+      final docRef = await _firestore
+          .collection(subcategoriesCollection)
+          .add(
+            _sanitizeData({
+              ...data,
+              'createdAt': FieldValue.serverTimestamp(),
+              'updatedAt': FieldValue.serverTimestamp(),
+            }),
+          );
 
       await logAdminAction(
         adminId: performedBy,
@@ -897,10 +1086,15 @@ class FirebaseService {
     required String performedBy,
   }) async {
     try {
-      await _firestore.collection(subcategoriesCollection).doc(id).update({
-        ...data,
-        'updated_at': FieldValue.serverTimestamp(),
-      });
+      await _firestore
+          .collection(subcategoriesCollection)
+          .doc(id)
+          .update(
+            _sanitizeData({
+              ...data,
+              'updatedAt': FieldValue.serverTimestamp(),
+            }),
+          );
 
       await logAdminAction(
         adminId: performedBy,
@@ -944,10 +1138,15 @@ class FirebaseService {
     required Map<String, dynamic> updates,
   }) async {
     try {
-      await _firestore.collection(adminsCollection).doc(adminId).update({
-        ...updates,
-        'updated_at': FieldValue.serverTimestamp(),
-      });
+      await _firestore
+          .collection(adminsCollection)
+          .doc(adminId)
+          .update(
+            _sanitizeData({
+              ...updates,
+              'updatedAt': FieldValue.serverTimestamp(),
+            }),
+          );
     } catch (e) {
       throw 'Failed to update admin profile: ${e.toString()}';
     }
@@ -1033,7 +1232,7 @@ class FirebaseService {
       await _firestore
           .collection('settings')
           .doc('contact_info')
-          .set(data, SetOptions(merge: true));
+          .set(_sanitizeData(data), SetOptions(merge: true));
       debugPrint('Global contact info updated successfully');
     } catch (e) {
       debugPrint('Error updating global contact info: $e');
@@ -1181,11 +1380,13 @@ class FirebaseService {
     try {
       DocumentReference orderRef = await _firestore
           .collection(ordersCollection)
-          .add({
-            ...orderData,
-            'createdAt': FieldValue.serverTimestamp(),
-            'updatedAt': FieldValue.serverTimestamp(),
-          });
+          .add(
+            _sanitizeData({
+              ...orderData,
+              'createdAt': FieldValue.serverTimestamp(),
+              'updatedAt': FieldValue.serverTimestamp(),
+            }),
+          );
 
       return orderRef.id;
     } catch (e) {
@@ -1223,15 +1424,61 @@ class FirebaseService {
     }
   }
 
-  /// Update order status
   Future<void> updateOrderStatus(String orderId, String status) async {
     try {
-      await _firestore.collection(ordersCollection).doc(orderId).update({
-        'status': status,
-        'updatedAt': FieldValue.serverTimestamp(),
-      });
+      await _firestore
+          .collection(ordersCollection)
+          .doc(orderId)
+          .update(
+            _sanitizeData({
+              'status': status,
+              'updatedAt': FieldValue.serverTimestamp(),
+            }),
+          );
     } catch (e) {
       throw 'Failed to update order status: ${e.toString()}';
+    }
+  }
+
+  /// Get orders paginated for administration
+  Future<Map<String, dynamic>> getOrdersPaginated({
+    String? status,
+    int limit = 20,
+    DocumentSnapshot? startAfter,
+    String? orderByField = 'createdAt',
+    bool descending = true,
+  }) async {
+    try {
+      Query query = _firestore.collection(ordersCollection);
+
+      if (status != null && status != 'all') {
+        query = query.where('status', isEqualTo: status);
+      }
+
+      if (orderByField != null) {
+        query = query.orderBy(orderByField, descending: descending);
+      }
+
+      if (startAfter != null) {
+        query = query.startAfterDocument(startAfter);
+      }
+
+      final snapshot = await query.limit(limit).get();
+      final orders = snapshot.docs
+          .map(
+            (doc) => app_order.Order.fromJson({
+              'id': doc.id,
+              ...doc.data() as Map<String, dynamic>,
+            }),
+          )
+          .toList();
+
+      return {
+        'orders': orders,
+        'lastDocument': snapshot.docs.isNotEmpty ? snapshot.docs.last : null,
+      };
+    } catch (e) {
+      throw 'Failed to get paginated orders: ${e.toString()}';
     }
   }
 
@@ -1284,15 +1531,19 @@ class FirebaseService {
         }
       }
 
-      final docRef = await _firestore.collection(sampleOrdersCollection).add({
-        ...sampleOrderData,
-        // Explicit fields always override whatever toJson() sends
-        'category': category,
-        'imageUrls': imageUrls,
-        'status': 'Pending',
-        'createdAt': FieldValue.serverTimestamp(),
-        'updatedAt': FieldValue.serverTimestamp(),
-      });
+      final docRef = await _firestore
+          .collection(sampleOrdersCollection)
+          .add(
+            _sanitizeData({
+              ...sampleOrderData,
+              // Explicit fields always override whatever toJson() sends
+              'category': category,
+              'imageUrls': imageUrls,
+              'status': 'Pending',
+              'createdAt': FieldValue.serverTimestamp(),
+              'updatedAt': FieldValue.serverTimestamp(),
+            }),
+          );
 
       return {
         'docId': docRef.id,
@@ -1449,12 +1700,14 @@ class FirebaseService {
     try {
       DocumentReference uploadRef = await _firestore
           .collection(wholesalerUploadsCollection)
-          .add({
-            ...uploadData,
-            'userId': userId,
-            'status': 'pending',
-            'createdAt': FieldValue.serverTimestamp(),
-          });
+          .add(
+            _sanitizeData({
+              ...uploadData,
+              'userId': userId,
+              'status': 'pending',
+              'createdAt': FieldValue.serverTimestamp(),
+            }),
+          );
 
       return uploadRef.id;
     } catch (e) {
@@ -1509,6 +1762,7 @@ class FirebaseService {
     }
   }
 
+  /*
   /// ========== SEEDING INITIAL DATA ==========
   /// Populate Firestore with product categories and sample products based on original app
   Future<void> seedInitialData() async {
@@ -1679,8 +1933,8 @@ class FirebaseService {
           'name': cat['name'],
           'image_url': 'assets/logo.png', // Default image for categories
           'is_active': true,
-          'created_at': FieldValue.serverTimestamp(),
-          'updated_at': FieldValue.serverTimestamp(),
+          'createdAt': FieldValue.serverTimestamp(),
+          'updatedAt': FieldValue.serverTimestamp(),
         });
       }
 
@@ -1698,8 +1952,8 @@ class FirebaseService {
           'category_id': categoryId,
           'image_url': asset, // Use subcategory asset as its image
           'is_active': true,
-          'created_at': FieldValue.serverTimestamp(),
-          'updated_at': FieldValue.serverTimestamp(),
+          'createdAt': FieldValue.serverTimestamp(),
+          'updatedAt': FieldValue.serverTimestamp(),
         });
 
         // 2. Add products
@@ -1720,8 +1974,8 @@ class FirebaseService {
             'uploaded_by': 'admin_seeder',
             'is_active': true,
             'status': 'published', // New status for versioning
-            'created_at': DateTime.now().toIso8601String(),
-            'updated_at': DateTime.now().toIso8601String(),
+            'createdAt': DateTime.now().toIso8601String(),
+            'updatedAt': DateTime.now().toIso8601String(),
           };
           batch.set(docRef, product);
           count++;
@@ -1749,6 +2003,7 @@ class FirebaseService {
       debugPrint('Failed to seed initial data: $e');
     }
   }
+  */
 
   /// ========== WISHLIST OPERATIONS ==========
 
@@ -1820,8 +2075,8 @@ class FirebaseService {
           'email': 'admin@vishalgold.com',
           'role': 'super',
           'is_active': true,
-          'created_at': DateTime.now().toIso8601String(),
-          'updated_at': DateTime.now().toIso8601String(),
+          'createdAt': DateTime.now().toIso8601String(),
+          'updatedAt': DateTime.now().toIso8601String(),
         });
         debugPrint('Super Admin seeded successfully.');
       }
@@ -1909,7 +2164,7 @@ class FirebaseService {
 
       final Map<String, dynamic> finalUpdates = {
         ...updates,
-        'updated_at': Timestamp.fromDate(now),
+        'updatedAt': Timestamp.fromDate(now),
       };
 
       for (var id in productIds) {
@@ -1933,12 +2188,12 @@ class FirebaseService {
   }
 
   /// ========== BANNER MANAGEMENT ==========
-
+  
   /// Get active banners
   Stream<List<AppBanner>> getActiveBanners() {
     return _firestore
         .collection(bannersCollection)
-        .where('is_active', isEqualTo: true)
+        .where('isActive', isEqualTo: true)
         .orderBy('order')
         .snapshots()
         .map(
@@ -2075,7 +2330,7 @@ class FirebaseService {
       action: 'CRM_PUSH_NOTIFICATION',
       targetId: 'batch',
       targetType: 'notification',
-      details: 'CRM push sent to ${sent} users (segment: ${segment}): ${title}',
+      details: 'CRM push sent to $sent users (segment: $segment): $title',
     );
     return sent;
   }

@@ -4,7 +4,7 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:provider/provider.dart';
 import 'package:vishal_gold/constants/app_colors.dart';
-import 'package:cloud_firestore/cloud_firestore.dart';
+
 import 'package:vishal_gold/models/app_banner.dart';
 import 'package:vishal_gold/providers/auth_provider.dart';
 import 'package:vishal_gold/services/firebase_service.dart';
@@ -25,6 +25,7 @@ class _BannerManagementScreenState extends State<BannerManagementScreen> {
       backgroundColor: AppColors.background,
       appBar: AppBar(
         backgroundColor: AppColors.surface,
+        elevation: 0,
         title: Text(
           'Banner Management',
           style: GoogleFonts.playfairDisplay(
@@ -32,10 +33,18 @@ class _BannerManagementScreenState extends State<BannerManagementScreen> {
             fontWeight: FontWeight.bold,
           ),
         ),
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back_ios, color: AppColors.gold, size: 20),
+          onPressed: () => Navigator.pop(context),
+        ),
         actions: [
-          IconButton(
-            icon: const Icon(Icons.add, color: AppColors.gold),
-            onPressed: () => _openAddEditBanner(context),
+          Padding(
+            padding: const EdgeInsets.only(right: 8.0),
+            child: IconButton(
+              icon: const Icon(Icons.add_circle_outline, color: AppColors.gold),
+              onPressed: () => _openAddEditBanner(context),
+              tooltip: 'Add New Banner',
+            ),
           ),
         ],
       ),
@@ -49,9 +58,17 @@ class _BannerManagementScreenState extends State<BannerManagementScreen> {
           }
           if (snapshot.hasError) {
             return Center(
-              child: Text(
-                'Error: ${snapshot.error}',
-                style: const TextStyle(color: Colors.red),
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  const Icon(Icons.error_outline, color: Colors.red, size: 48),
+                  const SizedBox(height: 16),
+                  Text(
+                    'Error loading banners: ${snapshot.error}',
+                    style: const TextStyle(color: Colors.red),
+                    textAlign: TextAlign.center,
+                  ),
+                ],
               ),
             );
           }
@@ -61,15 +78,29 @@ class _BannerManagementScreenState extends State<BannerManagementScreen> {
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  const Icon(
-                    Icons.image_outlined,
-                    size: 64,
-                    color: AppColors.textSecondary,
+                  Icon(
+                    Icons.filter_frames_outlined,
+                    size: 80,
+                    color: AppColors.gold.withValues(alpha: 0.2),
                   ),
                   const SizedBox(height: 16),
                   Text(
-                    'No banners found',
-                    style: TextStyle(color: AppColors.textSecondary),
+                    'No banners created yet',
+                    style: GoogleFonts.outfit(
+                      color: AppColors.textSecondary,
+                      fontSize: 16,
+                    ),
+                  ),
+                  const SizedBox(height: 24),
+                  ElevatedButton.icon(
+                    onPressed: () => _openAddEditBanner(context),
+                    icon: const Icon(Icons.add),
+                    label: const Text('Add Your First Banner'),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: AppColors.gold,
+                      foregroundColor: AppColors.black,
+                      padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+                    ),
                   ),
                 ],
               ),
@@ -77,7 +108,7 @@ class _BannerManagementScreenState extends State<BannerManagementScreen> {
           }
 
           return ListView.builder(
-            padding: const EdgeInsets.all(16),
+            padding: const EdgeInsets.fromLTRB(16, 16, 16, 100),
             itemCount: banners.length,
             itemBuilder: (context, index) {
               final banner = banners[index];
@@ -86,6 +117,13 @@ class _BannerManagementScreenState extends State<BannerManagementScreen> {
           );
         },
       ),
+      floatingActionButton: FloatingActionButton.extended(
+        onPressed: () => _openAddEditBanner(context),
+        backgroundColor: AppColors.gold,
+        foregroundColor: AppColors.black,
+        icon: const Icon(Icons.add),
+        label: const Text('Add Banner'),
+      ),
     );
   }
 
@@ -93,68 +131,190 @@ class _BannerManagementScreenState extends State<BannerManagementScreen> {
     final auth = context.read<AuthProvider>();
     final performerId = auth.currentUser?.uid ?? 'unknown';
 
-    return Card(
-      color: AppColors.surface,
-      margin: const EdgeInsets.only(bottom: 16),
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+    return Container(
+      margin: const EdgeInsets.only(bottom: 20),
+      decoration: BoxDecoration(
+        color: AppColors.surface,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: AppColors.gold.withValues(alpha: 0.1)),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.2),
+            blurRadius: 10,
+            offset: const Offset(0, 4),
+          ),
+        ],
+      ),
       child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
+          // Banner Image Preview
           ClipRRect(
-            borderRadius: const BorderRadius.vertical(top: Radius.circular(12)),
+            borderRadius: const BorderRadius.vertical(top: Radius.circular(16)),
             child: AspectRatio(
               aspectRatio: 16 / 9,
-              child: Image.network(
-                banner.imageUrl,
-                fit: BoxFit.cover,
-                errorBuilder: (context, error, stackTrace) => Container(
-                  color: AppColors.background,
-                  child: const Icon(
-                    Icons.broken_image,
-                    color: AppColors.textSecondary,
+              child: Stack(
+                children: [
+                  Image.network(
+                    banner.imageUrl,
+                    width: double.infinity,
+                    fit: BoxFit.cover,
+                    loadingBuilder: (context, child, loadingProgress) {
+                      if (loadingProgress == null) return child;
+                      return const Center(
+                        child: CircularProgressIndicator(color: AppColors.gold),
+                      );
+                    },
+                    errorBuilder: (context, error, stackTrace) => Container(
+                      color: AppColors.background,
+                      child: const Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Icon(Icons.broken_image_outlined, color: Colors.white24, size: 40),
+                          SizedBox(height: 8),
+                          Text('Image load failed', style: TextStyle(color: Colors.white24, fontSize: 12)),
+                        ],
+                      ),
+                    ),
                   ),
+                  // Active Badge
+                  Positioned(
+                    top: 12,
+                    right: 12,
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                      decoration: BoxDecoration(
+                        color: banner.isActive 
+                            ? Colors.green.withValues(alpha: 0.9) 
+                            : Colors.grey.withValues(alpha: 0.9),
+                        borderRadius: BorderRadius.circular(20),
+                      ),
+                      child: Text(
+                        banner.isActive ? 'ACTIVE' : 'INACTIVE',
+                        style: const TextStyle(
+                          color: Colors.white,
+                          fontSize: 10,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+          
+          Padding(
+            padding: const EdgeInsets.all(16),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Expanded(
+                      child: Text(
+                        banner.title ?? 'Untitled Banner',
+                        style: GoogleFonts.playfairDisplay(
+                          color: AppColors.gold,
+                          fontSize: 18,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                    ),
+                    Switch.adaptive(
+                      value: banner.isActive,
+                      activeColor: AppColors.gold,
+                      onChanged: (val) {
+                        _firebaseService.updateBanner(
+                          banner.copyWith(isActive: val),
+                          performerId,
+                        );
+                      },
+                    ),
+                  ],
                 ),
-              ),
+                if (banner.subtitle != null && banner.subtitle!.isNotEmpty)
+                  Padding(
+                    padding: const EdgeInsets.only(top: 4),
+                    child: Text(
+                      banner.subtitle!,
+                      style: GoogleFonts.outfit(
+                        color: AppColors.textSecondary,
+                        fontSize: 14,
+                      ),
+                    ),
+                  ),
+                const Divider(height: 24, color: AppColors.cardBorder),
+                Row(
+                  children: [
+                    _buildInfoChip(
+                      icon: Icons.link,
+                      label: banner.actionType.toUpperCase(),
+                      color: Colors.blueAccent,
+                    ),
+                    const SizedBox(width: 8),
+                    _buildInfoChip(
+                      icon: Icons.layers_outlined,
+                      label: banner.templateType.toUpperCase().replaceAll('_', ' '),
+                      color: AppColors.gold,
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 16),
+                Row(
+                  children: [
+                    Expanded(
+                      child: OutlinedButton.icon(
+                        onPressed: () => _openAddEditBanner(context, banner: banner),
+                        icon: const Icon(Icons.edit_outlined, size: 18),
+                        label: const Text('Edit'),
+                        style: OutlinedButton.styleFrom(
+                          foregroundColor: Colors.white,
+                          side: BorderSide(color: Colors.white.withValues(alpha: 0.2)),
+                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                        ),
+                      ),
+                    ),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: OutlinedButton.icon(
+                        onPressed: () => _confirmDelete(banner),
+                        icon: const Icon(Icons.delete_outline, size: 18),
+                        label: const Text('Delete'),
+                        style: OutlinedButton.styleFrom(
+                          foregroundColor: Colors.redAccent,
+                          side: BorderSide(color: Colors.redAccent.withValues(alpha: 0.2)),
+                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ],
             ),
           ),
-          ListTile(
-            title: Text(
-              banner.title ?? 'No Title',
-              style: const TextStyle(
-                color: AppColors.textPrimary,
-                fontWeight: FontWeight.bold,
-              ),
-            ),
-            subtitle: Text(
-              'Action: ${banner.actionType} (${banner.actionValue ?? 'No Value'})',
-              style: const TextStyle(
-                color: AppColors.textSecondary,
-                fontSize: 12,
-              ),
-            ),
-            trailing: Switch(
-              value: banner.isActive,
-              activeThumbColor: AppColors.gold,
-              onChanged: (val) {
-                _firebaseService.updateBanner(
-                  banner.copyWith(isActive: val),
-                  performerId,
-                );
-              },
-            ),
-          ),
-          Row(
-            mainAxisAlignment: MainAxisAlignment.end,
-            children: [
-              IconButton(
-                icon: const Icon(Icons.edit_outlined, color: Colors.blue),
-                onPressed: () => _openAddEditBanner(context, banner: banner),
-              ),
-              IconButton(
-                icon: const Icon(Icons.delete_outline, color: Colors.red),
-                onPressed: () => _confirmDelete(banner),
-              ),
-              const SizedBox(width: 8),
-            ],
+        ],
+      ),
+    );
+  }
+
+  Widget _buildInfoChip({required IconData icon, required String label, required Color color}) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+      decoration: BoxDecoration(
+        color: color.withValues(alpha: 0.1),
+        borderRadius: BorderRadius.circular(6),
+        border: Border.all(color: color.withValues(alpha: 0.2)),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(icon, size: 12, color: color),
+          const SizedBox(width: 4),
+          Text(
+            label,
+            style: TextStyle(color: color, fontSize: 10, fontWeight: FontWeight.bold),
           ),
         ],
       ),
@@ -168,29 +328,37 @@ class _BannerManagementScreenState extends State<BannerManagementScreen> {
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
-        backgroundColor: AppColors.surface,
-        title: const Text(
-          'Delete Banner',
-          style: TextStyle(color: AppColors.gold),
+        backgroundColor: const Color(0xFF1A1A1A),
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(20),
+          side: const BorderSide(color: AppColors.cardBorder),
         ),
-        content: const Text(
-          'Are you sure you want to delete this banner?',
-          style: TextStyle(color: AppColors.textPrimary),
+        title: Text(
+          'Delete Banner',
+          style: GoogleFonts.playfairDisplay(color: Colors.redAccent, fontWeight: FontWeight.bold),
+        ),
+        content: Text(
+          'This action cannot be undone. Are you sure you want to delete this banner?',
+          style: GoogleFonts.outfit(color: Colors.white70),
         ),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context),
-            child: const Text(
-              'Cancel',
-              style: TextStyle(color: AppColors.textSecondary),
-            ),
+            child: Text('Cancel', style: GoogleFonts.outfit(color: Colors.white54)),
           ),
-          TextButton(
+          ElevatedButton(
             onPressed: () {
               _firebaseService.deleteBanner(banner.id, performerId);
               Navigator.pop(context);
+              ScaffoldMessenger.of(context).showSnackBar(
+                const SnackBar(
+                  content: Text('Banner deleted successfully'),
+                  backgroundColor: Colors.redAccent,
+                ),
+              );
             },
-            child: const Text('Delete', style: TextStyle(color: Colors.red)),
+            style: ElevatedButton.styleFrom(backgroundColor: Colors.redAccent, foregroundColor: Colors.white),
+            child: const Text('Delete'),
           ),
         ],
       ),
@@ -201,15 +369,32 @@ class _BannerManagementScreenState extends State<BannerManagementScreen> {
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
-      backgroundColor: AppColors.surface,
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
-      ),
-      builder: (_) => Padding(
+      backgroundColor: Colors.transparent,
+      builder: (_) => Container(
+        decoration: const BoxDecoration(
+          color: AppColors.surface,
+          borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+        ),
         padding: EdgeInsets.only(
           bottom: MediaQuery.of(context).viewInsets.bottom,
         ),
-        child: _AddEditBannerSheet(banner: banner),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            const SizedBox(height: 12),
+            Container(
+              width: 40,
+              height: 4,
+              decoration: BoxDecoration(
+                color: Colors.white24,
+                borderRadius: BorderRadius.circular(2),
+              ),
+            ),
+            Flexible(
+              child: _AddEditBannerSheet(banner: banner),
+            ),
+          ],
+        ),
       ),
     );
   }
@@ -233,10 +418,8 @@ class _AddEditBannerSheetState extends State<_AddEditBannerSheet> {
   late bool _isActive;
   late int _order;
   bool _loading = false;
-  String _searchTerm = '';
   final FirebaseService _firebaseService = FirebaseService();
 
-  // Image Upload State
   File? _imageFile;
   String? _existingImageUrl;
   final ImagePicker _picker = ImagePicker();
@@ -246,25 +429,16 @@ class _AddEditBannerSheetState extends State<_AddEditBannerSheet> {
     super.initState();
     _existingImageUrl = widget.banner?.imageUrl;
     _titleController = TextEditingController(text: widget.banner?.title ?? '');
-    _subtitleController = TextEditingController(
-      text: widget.banner?.subtitle ?? '',
-    );
-    _actionValueController = TextEditingController(
-      text: widget.banner?.actionValue ?? '',
-    );
+    _subtitleController = TextEditingController(text: widget.banner?.subtitle ?? '');
+    _actionValueController = TextEditingController(text: widget.banner?.actionValue ?? '');
     _actionType = widget.banner?.actionType ?? 'category';
     _templateType = widget.banner?.templateType ?? 'theme1';
     _isActive = widget.banner?.isActive ?? true;
     _order = widget.banner?.order ?? 0;
-
-    _titleController.addListener(() => setState(() {}));
-    _subtitleController.addListener(() => setState(() {}));
   }
 
   @override
   void dispose() {
-    _titleController.removeListener(() {});
-    _subtitleController.removeListener(() {});
     _titleController.dispose();
     _subtitleController.dispose();
     _actionValueController.dispose();
@@ -274,7 +448,8 @@ class _AddEditBannerSheetState extends State<_AddEditBannerSheet> {
   Future<void> _pickImage() async {
     final pickedFile = await _picker.pickImage(
       source: ImageSource.gallery,
-      imageQuality: 85,
+      maxWidth: 1920,
+      imageQuality: 80,
     );
     if (pickedFile != null) {
       setState(() {
@@ -286,10 +461,9 @@ class _AddEditBannerSheetState extends State<_AddEditBannerSheet> {
   Future<void> _save() async {
     if (!_formKey.currentState!.validate()) return;
 
-    if (_imageFile == null &&
-        (_existingImageUrl == null || _existingImageUrl!.isEmpty)) {
+    if (_imageFile == null && (_existingImageUrl == null || _existingImageUrl!.isEmpty)) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Please select a banner image')),
+        const SnackBar(content: Text('Please select a banner image'), backgroundColor: Colors.orange),
       );
       return;
     }
@@ -300,44 +474,45 @@ class _AddEditBannerSheetState extends State<_AddEditBannerSheet> {
       final auth = context.read<AuthProvider>();
       final performerId = auth.currentUser?.uid ?? 'unknown';
 
-      String finalImageUrl = _existingImageUrl ?? '';
+      String? finalImageUrl = _existingImageUrl;
 
-      // Upload new image if selected
       if (_imageFile != null) {
         finalImageUrl = await _firebaseService.uploadBannerImage(_imageFile!);
       }
 
-      final banner = AppBanner(
+      final newBanner = AppBanner(
         id: widget.banner?.id ?? '',
-        imageUrl: finalImageUrl,
-        title: _titleController.text.trim().isEmpty
-            ? null
-            : _titleController.text.trim(),
-        subtitle: _subtitleController.text.trim().isEmpty
-            ? null
-            : _subtitleController.text.trim(),
+        title: _titleController.text.trim(),
+        subtitle: _subtitleController.text.trim(),
+        imageUrl: finalImageUrl!,
         actionType: _actionType,
-        actionValue: _actionValueController.text.trim().isEmpty
-            ? null
-            : _actionValueController.text.trim(),
-        templateType: _templateType,
+        actionValue: _actionValueController.text.trim(),
         isActive: _isActive,
         order: _order,
+        templateType: _templateType,
         createdAt: widget.banner?.createdAt ?? DateTime.now(),
       );
 
       if (widget.banner == null) {
-        await _firebaseService.addBanner(banner, performerId);
+        await _firebaseService.addBanner(newBanner, performerId);
       } else {
-        await _firebaseService.updateBanner(banner, performerId);
+        await _firebaseService.updateBanner(newBanner, performerId);
       }
 
-      if (mounted) Navigator.pop(context);
+      if (mounted) {
+        Navigator.pop(context);
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(widget.banner == null ? 'Banner added!' : 'Banner updated!'),
+            backgroundColor: Colors.green,
+          ),
+        );
+      }
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(
-          context,
-        ).showSnackBar(SnackBar(content: Text('Error: ${e.toString()}')));
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Error: $e'), backgroundColor: Colors.redAccent),
+        );
       }
     } finally {
       if (mounted) setState(() => _loading = false);
@@ -346,463 +521,231 @@ class _AddEditBannerSheetState extends State<_AddEditBannerSheet> {
 
   @override
   Widget build(BuildContext context) {
-    return Container(
+    return SingleChildScrollView(
       padding: const EdgeInsets.all(24),
       child: Form(
         key: _formKey,
-        child: SingleChildScrollView(
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              Text(
-                widget.banner == null ? 'Add New Banner' : 'Edit Banner',
-                style: GoogleFonts.playfairDisplay(
-                  fontSize: 20,
-                  fontWeight: FontWeight.bold,
-                  color: AppColors.gold,
-                ),
-              ),
-              const SizedBox(height: 16),
-              const Text(
-                'Live Preview',
-                style: TextStyle(
-                  color: AppColors.textSecondary,
-                  fontWeight: FontWeight.w500,
-                  fontSize: 14,
-                ),
-              ),
-              const SizedBox(height: 8),
-              _buildLivePreview(),
-              const SizedBox(height: 24),
-
-              // Image Picker Section
-              GestureDetector(
-                onTap: _pickImage,
-                child: Container(
-                  height: 180,
-                  decoration: BoxDecoration(
-                    color: AppColors.background,
-                    borderRadius: BorderRadius.circular(12),
-                    border: Border.all(
-                      color: AppColors.gold.withValues(alpha: 0.5),
-                    ),
-                    image: _imageFile != null
-                        ? DecorationImage(
-                            image: FileImage(_imageFile!),
-                            fit: BoxFit.cover,
-                          )
-                        : (_existingImageUrl != null &&
-                              _existingImageUrl!.isNotEmpty)
-                        ? DecorationImage(
-                            image: NetworkImage(_existingImageUrl!),
-                            fit: BoxFit.cover,
-                          )
-                        : null,
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Text(
+                  widget.banner == null ? 'Create New Banner' : 'Edit Banner',
+                  style: GoogleFonts.playfairDisplay(
+                    color: AppColors.gold,
+                    fontSize: 22,
+                    fontWeight: FontWeight.bold,
                   ),
-                  child:
-                      (_imageFile == null &&
-                          (_existingImageUrl == null ||
-                              _existingImageUrl!.isEmpty))
-                      ? Column(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: [
-                            const Icon(
-                              Icons.add_photo_alternate,
-                              size: 48,
-                              color: AppColors.gold,
-                            ),
-                            const SizedBox(height: 8),
-                            Text(
-                              'Tap to upload banner image',
-                              style: TextStyle(color: AppColors.textSecondary),
-                            ),
-                          ],
-                        )
-                      : Align(
-                          alignment: Alignment.topRight,
-                          child: Container(
-                            margin: const EdgeInsets.all(8),
-                            decoration: const BoxDecoration(
-                              color: Colors.black54,
-                              shape: BoxShape.circle,
-                            ),
-                            child: IconButton(
-                              icon: const Icon(
-                                Icons.edit,
-                                color: Colors.white,
-                                size: 20,
-                              ),
-                              onPressed: _pickImage,
-                            ),
-                          ),
-                        ),
                 ),
-              ),
-              const SizedBox(height: 16),
-
-              // Template Type Selection
-              const Text(
-                'Select Template Layout',
-                style: TextStyle(
-                  color: AppColors.textSecondary,
-                  fontWeight: FontWeight.w500,
-                  fontSize: 14,
+                IconButton(
+                  onPressed: () => Navigator.pop(context),
+                  icon: const Icon(Icons.close, color: Colors.white54),
                 ),
-              ),
-              const SizedBox(height: 12),
-              SizedBox(
-                height: 100,
-                child: ListView(
-                  scrollDirection: Axis.horizontal,
-                  children: [
-                    _buildTemplateOption('theme1', 'Classic'),
-                    _buildTemplateOption('theme2', 'Modern'),
-                    _buildTemplateOption('full_image', 'Full Image'),
-                    _buildTemplateOption('blank', 'Blank'),
-                  ],
-                ),
-              ),
-              const SizedBox(height: 16),
-
-              // Only show text fields if template isn't full_image
-              if (_templateType != 'full_image') ...[
-                TextFormField(
-                  controller: _titleController,
-                  maxLength: 50,
-                  decoration: const InputDecoration(
-                    labelText: 'Title (Optional)',
-                    counterStyle: TextStyle(
-                      color: AppColors.textSecondary,
-                      fontSize: 10,
-                    ),
-                  ),
-                  style: const TextStyle(color: AppColors.textPrimary),
-                ),
-                const SizedBox(height: 16),
-                TextFormField(
-                  controller: _subtitleController,
-                  maxLength: 100,
-                  decoration: const InputDecoration(
-                    labelText: 'Subtitle (Optional)',
-                    counterStyle: TextStyle(
-                      color: AppColors.textSecondary,
-                      fontSize: 10,
-                    ),
-                  ),
-                  style: const TextStyle(color: AppColors.textPrimary),
-                ),
-                const SizedBox(height: 16),
               ],
-
-              DropdownButtonFormField<String>(
-                initialValue: _actionType,
-                dropdownColor: AppColors.surface,
-                decoration: const InputDecoration(labelText: 'Action Type'),
-                items: ['category', 'subcategory', 'product', 'external']
-                    .map(
-                      (t) => DropdownMenuItem(
-                        value: t,
-                        child: Text(
-                          t,
-                          style: const TextStyle(color: AppColors.textPrimary),
-                        ),
-                      ),
-                    )
-                    .toList(),
-                onChanged: (v) {
-                  setState(() {
-                    _actionType = v!;
-                    _actionValueController.clear();
-                  });
-                },
-              ),
-              const SizedBox(height: 16),
-              const SizedBox(height: 16),
-              if (_actionType == 'external')
-                TextFormField(
-                  controller: _actionValueController,
-                  decoration: const InputDecoration(
-                    labelText: 'URL Link',
-                    hintText: 'https://...',
-                  ),
-                  style: const TextStyle(color: AppColors.textPrimary),
-                )
-              else
-                StreamBuilder<QuerySnapshot>(
-                  stream: _actionType == 'category'
-                      ? _firebaseService.getCategories()
-                      : _actionType == 'subcategory'
-                      ? _firebaseService.getSubcategories(null)
-                      : _firebaseService.getProducts(),
-                  builder: (context, snapshot) {
-                    if (snapshot.connectionState == ConnectionState.waiting) {
-                      return const Center(
-                        child: CircularProgressIndicator(color: AppColors.gold),
-                      );
-                    }
-
-                    final items =
-                        snapshot.data?.docs.where((doc) {
-                          final data = doc.data() as Map<String, dynamic>;
-                          final name = (data['name'] ?? data['title'] ?? doc.id)
-                              .toString()
-                              .toLowerCase();
-                          return name.contains(_searchTerm.toLowerCase());
-                        }).toList() ??
-                        [];
-
-                    return Column(
-                      crossAxisAlignment: CrossAxisAlignment.stretch,
-                      children: [
-                        TextFormField(
-                          decoration: InputDecoration(
-                            labelText: 'Search $_actionType...',
-                            prefixIcon: const Icon(
-                              Icons.search,
-                              color: AppColors.gold,
-                            ),
-                          ),
-                          onChanged: (val) {
-                            setState(() {
-                              _searchTerm = val;
-                            });
-                          },
-                        ),
-                        const SizedBox(height: 8),
-                        DropdownButtonFormField<String>(
-                          initialValue:
-                              items.any(
-                                (doc) => doc.id == _actionValueController.text,
-                              )
-                              ? _actionValueController.text
-                              : null,
-                          dropdownColor: AppColors.surface,
-                          decoration: InputDecoration(
-                            labelText:
-                                'Select ${_actionType.substring(0, 1).toUpperCase()}${_actionType.substring(1)}',
-                          ),
-                          items: items.map((doc) {
-                            final data = doc.data() as Map<String, dynamic>;
-                            return DropdownMenuItem(
-                              value: doc.id,
-                              child: Text(
-                                data['name'] ?? data['title'] ?? doc.id,
-                                style: const TextStyle(
-                                  color: AppColors.textPrimary,
-                                ),
-                              ),
-                            );
-                          }).toList(),
-                          onChanged: (val) {
-                            setState(() {
-                              _actionValueController.text = val ?? '';
-                            });
-                          },
-                        ),
-                      ],
-                    );
-                  },
+            ),
+            const SizedBox(height: 24),
+            
+            // Image Picker Area
+            GestureDetector(
+              onTap: _pickImage,
+              child: Container(
+                height: 180,
+                width: double.infinity,
+                decoration: BoxDecoration(
+                  color: AppColors.background,
+                  borderRadius: BorderRadius.circular(16),
+                  border: Border.all(color: AppColors.cardBorder, style: BorderStyle.values[1]), // Dashed would be better if available
                 ),
-              const SizedBox(height: 16),
-              Row(
+                child: _imageFile != null
+                    ? ClipRRect(
+                        borderRadius: BorderRadius.circular(16),
+                        child: Image.file(_imageFile!, fit: BoxFit.cover),
+                      )
+                    : (_existingImageUrl != null && _existingImageUrl!.isNotEmpty)
+                        ? ClipRRect(
+                            borderRadius: BorderRadius.circular(16),
+                            child: Image.network(_existingImageUrl!, fit: BoxFit.cover),
+                          )
+                        : Column(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              Icon(Icons.add_photo_alternate_outlined, size: 48, color: AppColors.gold.withValues(alpha: 0.5)),
+                              const SizedBox(height: 12),
+                              Text('Tap to select banner image', style: TextStyle(color: AppColors.textSecondary)),
+                              Text('(16:9 aspect ratio recommended)', style: TextStyle(color: AppColors.textTertiary, fontSize: 10)),
+                            ],
+                          ),
+              ),
+            ),
+            const SizedBox(height: 24),
+
+            _buildTextField(
+              controller: _titleController,
+              label: 'Title',
+              hint: 'e.g. MEGA SUMMER SALE',
+            ),
+            const SizedBox(height: 16),
+            _buildTextField(
+              controller: _subtitleController,
+              label: 'Subtitle',
+              hint: 'e.g. Get up to 50% OFF on all Gold items',
+            ),
+            const SizedBox(height: 16),
+
+            Row(
+              children: [
+                Expanded(
+                  child: _buildDropdown(
+                    label: 'Action Type',
+                    value: _actionType,
+                    items: [
+                      const DropdownMenuItem(value: 'category', child: Text('Category Link')),
+                      const DropdownMenuItem(value: 'product', child: Text('Specific Product')),
+                      const DropdownMenuItem(value: 'url', child: Text('External Website')),
+                      const DropdownMenuItem(value: 'none', child: Text('No Action')),
+                    ],
+                    onChanged: (val) => setState(() => _actionType = val!),
+                  ),
+                ),
+                const SizedBox(width: 16),
+                Expanded(
+                  child: _buildTextField(
+                    controller: _actionValueController,
+                    label: 'Action Value',
+                    hint: _actionType == 'url' ? 'https://...' : 'ID or Slug',
+                    enabled: _actionType != 'none',
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 24),
+
+            const Text(
+              'Layout Template',
+              style: TextStyle(color: Colors.white70, fontWeight: FontWeight.bold, fontSize: 14),
+            ),
+            const SizedBox(height: 12),
+            SizedBox(
+              height: 100,
+              child: ListView(
+                scrollDirection: Axis.horizontal,
                 children: [
-                  const Text(
-                    'Active',
-                    style: TextStyle(color: AppColors.textPrimary),
-                  ),
-                  const Spacer(),
-                  Switch(
-                    value: _isActive,
-                    onChanged: (v) => setState(() => _isActive = v),
-                    activeThumbColor: AppColors.gold,
-                  ),
+                  _buildTemplateOption('theme1', 'Elegant Overlay'),
+                  _buildTemplateOption('theme2', 'Side Content'),
+                  _buildTemplateOption('full_image', 'Full Image Only'),
+                  _buildTemplateOption('blank', 'Clean Minimalism'),
                 ],
               ),
-              const SizedBox(height: 32),
-              ElevatedButton(
+            ),
+            const SizedBox(height: 24),
+
+            Row(
+              children: [
+                const Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text('Active Status', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
+                      Text('Visibility on User App', style: TextStyle(color: Colors.white38, fontSize: 12)),
+                    ],
+                  ),
+                ),
+                Switch.adaptive(
+                  value: _isActive,
+                  activeColor: AppColors.gold,
+                  onChanged: (val) => setState(() => _isActive = val),
+                ),
+              ],
+            ),
+            const SizedBox(height: 32),
+
+            SizedBox(
+              width: double.infinity,
+              height: 54,
+              child: ElevatedButton(
                 onPressed: _loading ? null : _save,
                 style: ElevatedButton.styleFrom(
                   backgroundColor: AppColors.gold,
-                  padding: const EdgeInsets.symmetric(vertical: 16),
+                  foregroundColor: AppColors.black,
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                  elevation: 0,
                 ),
                 child: _loading
-                    ? const CircularProgressIndicator(color: AppColors.black)
+                    ? const SizedBox(
+                        height: 24,
+                        width: 24,
+                        child: CircularProgressIndicator(color: AppColors.black, strokeWidth: 2),
+                      )
                     : Text(
-                        widget.banner == null ? 'Add Banner' : 'Update Banner',
-                        style: const TextStyle(
-                          color: AppColors.black,
-                          fontWeight: FontWeight.bold,
-                        ),
+                        widget.banner == null ? 'CREATE BANNER' : 'UPDATE BANNER',
+                        style: const TextStyle(fontWeight: FontWeight.bold, letterSpacing: 1),
                       ),
               ),
-              const SizedBox(height: 16),
-            ],
-          ),
+            ),
+            const SizedBox(height: 12),
+          ],
         ),
       ),
     );
   }
 
-  Widget _buildLivePreview() {
-    return Container(
-      height: 180,
-      decoration: BoxDecoration(
-        color: AppColors.surface,
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: AppColors.gold.withValues(alpha: 0.3)),
-      ),
-      child: ClipRRect(
-        borderRadius: BorderRadius.circular(15),
-        child: _buildMockBannerContent(),
-      ),
+  Widget _buildTextField({
+    required TextEditingController controller,
+    required String label,
+    required String hint,
+    bool enabled = true,
+  }) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(label, style: const TextStyle(color: Colors.white70, fontWeight: FontWeight.bold, fontSize: 12)),
+        const SizedBox(height: 8),
+        TextFormField(
+          controller: controller,
+          enabled: enabled,
+          style: const TextStyle(color: Colors.white),
+          decoration: InputDecoration(
+            hintText: hint,
+            hintStyle: const TextStyle(color: Colors.white24, fontSize: 14),
+            fillColor: AppColors.cardBorder.withValues(alpha: 0.1),
+            filled: true,
+            contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+            border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide.none),
+          ),
+        ),
+      ],
     );
   }
 
-  Widget _buildMockBannerContent() {
-    ImageProvider? imageProvider;
-    if (_imageFile != null) {
-      imageProvider = FileImage(_imageFile!);
-    } else if (_existingImageUrl != null && _existingImageUrl!.isNotEmpty) {
-      imageProvider = NetworkImage(_existingImageUrl!);
-    } else {
-      // Placeholder if no image is present
-      return Center(
-        child: Text(
-          'Preview Area',
-          style: TextStyle(
-            color: AppColors.textSecondary.withValues(alpha: 0.5),
+  Widget _buildDropdown({
+    required String label,
+    required String value,
+    required List<DropdownMenuItem<String>> items,
+    required Function(String?) onChanged,
+  }) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(label, style: const TextStyle(color: Colors.white70, fontWeight: FontWeight.bold, fontSize: 12)),
+        const SizedBox(height: 8),
+        DropdownButtonFormField<String>(
+          isExpanded: true,
+          value: value,
+          items: items,
+          onChanged: onChanged,
+          dropdownColor: AppColors.surface,
+          style: const TextStyle(color: Colors.white),
+          decoration: InputDecoration(
+            fillColor: AppColors.cardBorder.withValues(alpha: 0.1),
+            filled: true,
+            contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+            border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide.none),
           ),
         ),
-      );
-    }
-
-    final title = _titleController.text.isNotEmpty
-        ? _titleController.text
-        : null;
-    final subtitle = _subtitleController.text.isNotEmpty
-        ? _subtitleController.text
-        : null;
-
-    switch (_templateType) {
-      case 'theme2':
-        return Row(
-          children: [
-            Expanded(
-              flex: 3,
-              child: Padding(
-                padding: const EdgeInsets.all(16.0),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    if (title != null)
-                      Text(
-                        title,
-                        style: GoogleFonts.playfairDisplay(
-                          fontSize: 22,
-                          fontWeight: FontWeight.bold,
-                          color: AppColors.gold,
-                        ),
-                        maxLines: 2,
-                        overflow: TextOverflow.ellipsis,
-                      ),
-                    if (subtitle != null) ...[
-                      const SizedBox(height: 8),
-                      Text(
-                        subtitle,
-                        style: const TextStyle(
-                          fontSize: 13,
-                          color: AppColors.textSecondary,
-                        ),
-                        maxLines: 2,
-                        overflow: TextOverflow.ellipsis,
-                      ),
-                    ],
-                  ],
-                ),
-              ),
-            ),
-            Expanded(
-              flex: 2,
-              child: Image(
-                image: imageProvider,
-                fit: BoxFit.cover,
-                height: double.infinity,
-                width: double.infinity,
-              ),
-            ),
-          ],
-        );
-      case 'full_image':
-        return Image(
-          image: imageProvider,
-          fit: BoxFit.cover,
-          width: double.infinity,
-          height: double.infinity,
-        );
-      case 'blank':
-        return Image(
-          image: imageProvider,
-          fit: BoxFit.contain,
-          width: double.infinity,
-          height: double.infinity,
-        );
-      case 'theme1':
-      default:
-        return Stack(
-          children: [
-            Image(
-              image: imageProvider,
-              fit: BoxFit.cover,
-              width: double.infinity,
-              height: double.infinity,
-            ),
-            if (title != null || subtitle != null)
-              Container(
-                decoration: BoxDecoration(
-                  gradient: LinearGradient(
-                    begin: Alignment.bottomCenter,
-                    end: Alignment.topCenter,
-                    colors: [
-                      Colors.black.withValues(alpha: 0.7),
-                      Colors.transparent,
-                    ],
-                  ),
-                ),
-              ),
-            Padding(
-              padding: const EdgeInsets.all(20),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                mainAxisAlignment: MainAxisAlignment.end,
-                children: [
-                  if (title != null)
-                    Text(
-                      title,
-                      style: const TextStyle(
-                        fontSize: 24,
-                        fontWeight: FontWeight.bold,
-                        color: AppColors.white,
-                        letterSpacing: 1.2,
-                      ),
-                    ),
-                  if (subtitle != null) ...[
-                    const SizedBox(height: 4),
-                    Text(
-                      subtitle,
-                      style: TextStyle(
-                        fontSize: 14,
-                        color: AppColors.white.withValues(alpha: 0.9),
-                      ),
-                    ),
-                  ],
-                ],
-              ),
-            ),
-          ],
-        );
-    }
+      ],
+    );
   }
 
   Widget _buildTemplateOption(String type, String label) {
@@ -813,27 +756,24 @@ class _AddEditBannerSheetState extends State<_AddEditBannerSheet> {
         width: 100,
         margin: const EdgeInsets.only(right: 12),
         decoration: BoxDecoration(
-          color: isSelected
-              ? AppColors.gold.withValues(alpha: 0.1)
-              : AppColors.background,
+          color: isSelected ? AppColors.gold.withValues(alpha: 0.1) : AppColors.background,
           borderRadius: BorderRadius.circular(12),
           border: Border.all(
-            color: isSelected
-                ? AppColors.gold
-                : AppColors.gold.withValues(alpha: 0.2),
+            color: isSelected ? AppColors.gold : AppColors.cardBorder,
             width: isSelected ? 2 : 1,
           ),
         ),
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            _buildMiniTemplatePreview(type),
-            const SizedBox(height: 4),
+             _buildMiniTemplatePreview(type),
+            const SizedBox(height: 8),
             Text(
               label,
+              textAlign: TextAlign.center,
               style: TextStyle(
-                color: isSelected ? AppColors.gold : AppColors.textSecondary,
-                fontSize: 10,
+                color: isSelected ? AppColors.gold : Colors.white54,
+                fontSize: 9,
                 fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
               ),
             ),
@@ -845,68 +785,39 @@ class _AddEditBannerSheetState extends State<_AddEditBannerSheet> {
 
   Widget _buildMiniTemplatePreview(String type) {
     return Container(
-      width: 60,
-      height: 40,
+      width: 50,
+      height: 30,
       decoration: BoxDecoration(
-        color: AppColors.surface,
+        color: Colors.white.withValues(alpha: 0.05),
         borderRadius: BorderRadius.circular(4),
-        border: Border.all(
-          color: AppColors.textSecondary.withValues(alpha: 0.3),
+        border: Border.all(color: Colors.white.withValues(alpha: 0.1)),
+      ),
+      child: ClipRRect(
+        borderRadius: BorderRadius.circular(4),
+        child: Stack(
+          children: [
+            if (type == 'theme1') ...[
+              Container(color: AppColors.gold.withValues(alpha: 0.2)),
+              Align(
+                alignment: Alignment.bottomLeft,
+                child: Container(height: 8, width: 25, margin: const EdgeInsets.all(2), color: Colors.white30),
+              ),
+            ] else if (type == 'theme2') ...[
+              Row(
+                children: [
+                  Expanded(flex: 3, child: Container(color: Colors.black12)),
+                  Expanded(flex: 2, child: Container(color: AppColors.gold.withValues(alpha: 0.3))),
+                ],
+              ),
+            ] else if (type == 'full_image') ...[
+              Container(color: AppColors.gold.withValues(alpha: 0.4)),
+              const Center(child: Icon(Icons.image, size: 14, color: Colors.white30)),
+            ] else ...[
+              const Center(child: Icon(Icons.crop_free, size: 14, color: Colors.white24)),
+            ],
+          ],
         ),
       ),
-      child: _buildMiniContent(type),
     );
-  }
-
-  Widget _buildMiniContent(String type) {
-    switch (type) {
-      case 'theme1':
-        return Stack(
-          children: [
-            Container(color: AppColors.gold.withValues(alpha: 0.3)),
-            Align(
-              alignment: Alignment.bottomLeft,
-              child: Container(
-                height: 10,
-                width: 30,
-                margin: const EdgeInsets.all(4),
-                color: Colors.white,
-              ),
-            ),
-          ],
-        );
-      case 'theme2':
-        return Row(
-          children: [
-            Expanded(
-              flex: 2,
-              child: Center(
-                child: Container(height: 5, width: 20, color: AppColors.gold),
-              ),
-            ),
-            Expanded(
-              flex: 1,
-              child: Container(color: AppColors.gold.withValues(alpha: 0.3)),
-            ),
-          ],
-        );
-      case 'full_image':
-        return Container(
-          color: AppColors.gold.withValues(alpha: 0.5),
-          child: const Center(
-            child: Icon(Icons.image, size: 20, color: Colors.white70),
-          ),
-        );
-      case 'blank':
-        return const Center(
-          child: Icon(
-            Icons.crop_free,
-            size: 20,
-            color: AppColors.textSecondary,
-          ),
-        );
-      default:
-        return Container();
-    }
   }
 }

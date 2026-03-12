@@ -39,34 +39,34 @@ class User {
 
     return User(
       id: json['id'] as String? ?? '',
-      fullName: json['full_name'] as String? ?? '',
+      fullName: (json['fullName'] ?? json['full_name']) as String? ?? '',
       email: json['email'] as String? ?? '',
       phone: json['phone'] as String?,
-      userType: json['user_type'] as String?,
-      companyName: json['company_name'] as String?,
-      companyAddress: json['company_address'] as String?,
+      userType: (json['userType'] ?? json['user_type']) as String?,
+      companyName: (json['companyName'] ?? json['company_name']) as String?,
+      companyAddress: (json['companyAddress'] ?? json['company_address']) as String?,
       city: json['city'] as String?,
-      profileImageUrl: json['profile_image_url'] as String?,
-      isActive: json['is_active'] as bool? ?? true,
-      createdAt: parseDate(json['created_at']),
-      updatedAt: parseDate(json['updated_at']),
+      profileImageUrl: (json['profileImageUrl'] ?? json['profile_image_url']) as String?,
+      isActive: json['isActive'] as bool? ?? json['is_active'] as bool? ?? true,
+      createdAt: parseDate(json['createdAt'] ?? json['created_at']),
+      updatedAt: parseDate(json['updatedAt'] ?? json['updated_at']),
     );
   }
 
   Map<String, dynamic> toJson() {
     return {
       'id': id,
-      'full_name': fullName,
+      'fullName': fullName,
       'email': email,
       'phone': phone,
-      'user_type': userType,
-      'company_name': companyName,
-      'company_address': companyAddress,
+      'userType': userType,
+      'companyName': companyName,
+      'companyAddress': companyAddress,
       'city': city,
-      'profile_image_url': profileImageUrl,
-      'is_active': isActive,
-      'created_at': createdAt.toIso8601String(),
-      'updated_at': updatedAt.toIso8601String(),
+      'profileImageUrl': profileImageUrl,
+      'isActive': isActive,
+      'createdAt': createdAt.toIso8601String(),
+      'updatedAt': updatedAt.toIso8601String(),
     };
   }
 

@@ -9,6 +9,7 @@ import 'package:provider/provider.dart';
 import 'package:vishal_gold/providers/auth_provider.dart';
 import 'package:vishal_gold/screens/auth/quick_login_setup_screen.dart';
 import 'package:vishal_gold/screens/auth/pin_unlock_screen.dart';
+import 'package:vishal_gold/services/fcm_service.dart';
 
 class AdminLoginScreen extends StatefulWidget {
   final bool returnFromQuickLogin;
@@ -39,8 +40,11 @@ class _AdminLoginScreenState extends State<AdminLoginScreen> {
 
     final authProvider = Provider.of<AuthProvider>(context, listen: false);
 
-    // Trigger Quick Login if setup exists, regardless of current Firebase authentication state.
-    // This allows PIN/Biometric to perform a background login after a manual logout.
+    // Primary Auth Check: Only trigger Quick Login if a Firebase session IS active.
+    // If not authenticated, they MUST use ID/Password first.
+    if (!authProvider.isAuthenticated) return;
+
+    // Trigger Quick Login if setup exists
     if (authProvider.hasPinSetup || authProvider.isBiometricEnabled) {
       if (!authProvider.hasOptedOutQuickLogin) {
         Navigator.pushReplacement(
@@ -98,6 +102,9 @@ class _AdminLoginScreenState extends State<AdminLoginScreen> {
           final adminId = adminData['id'] as String? ?? credential.user!.uid;
           final admin = Admin.fromJson(adminData, adminId);
           if (admin.isActive) {
+            // Strict Subscription: Only for active admins after successful authentication
+            await FCMService().subscribeToTopic('admins');
+
             if (!mounted) return;
             final authProvider = Provider.of<AuthProvider>(
               context,
@@ -114,7 +121,8 @@ class _AdminLoginScreenState extends State<AdminLoginScreen> {
               }
             }
 
-            if (!authProvider.hasPinSetup &&
+            if (!authProvider.isSetupComplete &&
+                !authProvider.hasPinSetup &&
                 !authProvider.isBiometricEnabled &&
                 !authProvider.hasOptedOutQuickLogin) {
               if (mounted) {
@@ -123,7 +131,7 @@ class _AdminLoginScreenState extends State<AdminLoginScreen> {
                   MaterialPageRoute(
                     builder: (_) => QuickLoginSetupScreen(
                       password: _passwordController.text.trim(),
-                      onSkip: () => _navigateToAdminDashboard(admin),
+                      admin: admin,
                     ),
                   ),
                 );
@@ -164,7 +172,7 @@ class _AdminLoginScreenState extends State<AdminLoginScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      resizeToAvoidBottomInset: false,
+      resizeToAvoidBottomInset: true,
       backgroundColor: AppColors.background,
       appBar: AppBar(
         backgroundColor: Colors.transparent,
@@ -183,52 +191,61 @@ class _AdminLoginScreenState extends State<AdminLoginScreen> {
         ),
         centerTitle: true,
       ),
-      body: Center(
-        child: SingleChildScrollView(
-          padding: const EdgeInsets.all(30),
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              Image.asset('assets/logo.png', height: 120, fit: BoxFit.contain),
-              const SizedBox(height: 40),
+      body: SafeArea(
+        child: Center(
+          child: SingleChildScrollView(
+            child: Container(
+              constraints: const BoxConstraints(maxWidth: 500),
+              padding: const EdgeInsets.all(30),
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  Image.asset(
+                    'assets/logo.png',
+                    height: 120,
+                    fit: BoxFit.contain,
+                  ),
+                  const SizedBox(height: 40),
 
-              if (_errorMessage != null)
-                Container(
-                  padding: const EdgeInsets.all(12),
-                  margin: const EdgeInsets.only(bottom: 24),
-                  decoration: BoxDecoration(
-                    color: AppColors.errorRed.withValues(alpha: 0.1),
-                    borderRadius: BorderRadius.circular(12),
-                    border: Border.all(
-                      color: AppColors.errorRed.withValues(alpha: 0.3),
+                  if (_errorMessage != null)
+                    Container(
+                      padding: const EdgeInsets.all(12),
+                      margin: const EdgeInsets.only(bottom: 24),
+                      decoration: BoxDecoration(
+                        color: AppColors.errorRed.withValues(alpha: 0.1),
+                        borderRadius: BorderRadius.circular(12),
+                        border: Border.all(
+                          color: AppColors.errorRed.withValues(alpha: 0.3),
+                        ),
+                      ),
+                      child: Text(
+                        _errorMessage!,
+                        style: const TextStyle(color: AppColors.errorRed),
+                        textAlign: TextAlign.center,
+                      ),
                     ),
-                  ),
-                  child: Text(
-                    _errorMessage!,
-                    style: const TextStyle(color: AppColors.errorRed),
-                    textAlign: TextAlign.center,
-                  ),
-                ),
 
-              _buildTextField(
-                controller: _emailController,
-                label: 'ADMIN ID / EMAIL',
-                hint: 'VishalGoldAdmin',
-                icon: Icons.person_outline,
-              ),
-              const SizedBox(height: 20),
-              _buildTextField(
-                controller: _passwordController,
-                label: 'PASSWORD',
-                hint: '••••••••',
-                icon: Icons.lock_outline,
-                isPassword: true,
-              ),
-              const SizedBox(height: 40),
+                  _buildTextField(
+                    controller: _emailController,
+                    label: 'ADMIN ID / EMAIL',
+                    hint: 'VishalGoldAdmin',
+                    icon: Icons.person_outline,
+                  ),
+                  const SizedBox(height: 20),
+                  _buildTextField(
+                    controller: _passwordController,
+                    label: 'PASSWORD',
+                    hint: '••••••••',
+                    icon: Icons.lock_outline,
+                    isPassword: true,
+                  ),
+                  const SizedBox(height: 40),
 
-              _buildLoginButton(),
-            ],
+                  _buildLoginButton(),
+                ],
+              ),
+            ),
           ),
         ),
       ),

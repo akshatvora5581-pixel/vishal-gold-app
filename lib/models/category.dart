@@ -40,24 +40,24 @@ class Category {
               ?.map((e) => e.toString())
               .toList() ??
           const ['18K', '20K', '22K'],
-      makingChargePerGram: (json['making_charge_per_gram'] ?? 0.0).toDouble(),
-      makingChargeFlat: (json['making_charge_flat'] ?? 0.0).toDouble(),
-      isActive: json['is_active'] as bool? ?? true,
-      createdAt: parseDate(json['created_at']),
-      updatedAt: parseDate(json['updated_at']),
+      makingChargePerGram: (json['makingChargePerGram'] ?? json['making_charge_per_gram'] ?? 0.0).toDouble(),
+      makingChargeFlat: (json['makingChargeFlat'] ?? json['making_charge_flat'] ?? 0.0).toDouble(),
+      isActive: json['isActive'] as bool? ?? json['is_active'] as bool? ?? true,
+      createdAt: parseDate(json['createdAt'] ?? json['created_at']),
+      updatedAt: parseDate(json['updatedAt'] ?? json['updated_at']),
     );
   }
 
   Map<String, dynamic> toJson() {
     return {
       'name': name,
-      'image_url': imageUrl,
-      'purity_options': purityOptions,
-      'making_charge_per_gram': makingChargePerGram,
-      'making_charge_flat': makingChargeFlat,
-      'is_active': isActive,
-      'created_at': Timestamp.fromDate(createdAt),
-      'updated_at': Timestamp.fromDate(updatedAt),
+      'imageUrl': imageUrl,
+      'purityOptions': purityOptions,
+      'makingChargePerGram': makingChargePerGram,
+      'makingChargeFlat': makingChargeFlat,
+      'isActive': isActive,
+      'createdAt': Timestamp.fromDate(createdAt),
+      'updatedAt': Timestamp.fromDate(updatedAt),
     };
   }
 

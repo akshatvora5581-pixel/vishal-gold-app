@@ -8,12 +8,13 @@ import re
 import json
 from pathlib import Path
 
-# Fix Windows console encoding for Unicode output
-try:
-    sys.stdout.reconfigure(encoding='utf-8', errors='replace')
-    sys.stderr.reconfigure(encoding='utf-8', errors='replace')
-except AttributeError:
-    pass  # Python < 3.7
+# Fix Windows console encoding
+for stream in [sys.stdout, sys.stderr]:
+    if stream and hasattr(stream, 'reconfigure'):
+        try:
+            stream.reconfigure(encoding='utf-8', errors='replace')
+        except Exception:
+            pass
 
 # Patterns that indicate hardcoded strings (should be translated)
 HARDCODED_PATTERNS = {

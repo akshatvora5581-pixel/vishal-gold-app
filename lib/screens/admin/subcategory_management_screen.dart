@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:cached_network_image/cached_network_image.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'dart:io';
 import 'package:image_picker/image_picker.dart';
@@ -122,15 +123,47 @@ class _SubcategoryManagementScreenState
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
       child: ListTile(
         contentPadding: const EdgeInsets.all(12),
-        leading: Container(
-          width: 50,
-          height: 50,
-          decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(8),
-            image: DecorationImage(
-              image: _getImageProvider(subcategory.imageUrl),
-              fit: BoxFit.cover,
-            ),
+        leading: ClipRRect(
+          borderRadius: BorderRadius.circular(8),
+          child: SizedBox(
+            width: 50,
+            height: 50,
+            child:
+                subcategory.imageUrl.isNotEmpty &&
+                    !subcategory.imageUrl.startsWith('assets/')
+                ? CachedNetworkImage(
+                    imageUrl: subcategory.imageUrl,
+                    fit: BoxFit.cover,
+                    placeholder: (_, __) => Container(
+                      color: AppColors.background,
+                      child: const Center(
+                        child: SizedBox(
+                          width: 20,
+                          height: 20,
+                          child: CircularProgressIndicator(
+                            strokeWidth: 2,
+                            color: AppColors.gold,
+                          ),
+                        ),
+                      ),
+                    ),
+                    errorWidget: (_, __, ___) => Container(
+                      color: AppColors.background,
+                      child: const Icon(
+                        Icons.broken_image,
+                        color: AppColors.textSecondary,
+                        size: 24,
+                      ),
+                    ),
+                  )
+                : Container(
+                    color: AppColors.background,
+                    child: const Icon(
+                      Icons.category_outlined,
+                      color: AppColors.textSecondary,
+                      size: 24,
+                    ),
+                  ),
           ),
         ),
         title: Text(
@@ -165,6 +198,10 @@ class _SubcategoryManagementScreenState
                 color: AppColors.gold,
               ),
               onPressed: () => _toggleSubcategoryStatus(subcategory),
+            ),
+            IconButton(
+              icon: const Icon(Icons.delete_forever, color: Colors.red),
+              onPressed: () => _confirmDeleteSubcategory(context, subcategory),
             ),
           ],
         ),
@@ -213,11 +250,78 @@ class _SubcategoryManagementScreenState
     }
   }
 
-  ImageProvider _getImageProvider(String url) {
-    if (url.startsWith('assets/')) {
-      return AssetImage(url);
+  Future<void> _confirmDeleteSubcategory(
+    BuildContext context,
+    Subcategory subcategory,
+  ) async {
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        backgroundColor: AppColors.surface,
+        title: Text(
+          'Delete Subcategory?',
+          style: GoogleFonts.playfairDisplay(
+            color: Colors.red,
+            fontWeight: FontWeight.bold,
+          ),
+        ),
+        content: Text(
+          'Are you sure you want to delete "${subcategory.name}"?\n\nAll products under it might become inaccessible.',
+          style: GoogleFonts.outfit(color: AppColors.textPrimary),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx, false),
+            child: Text(
+              'Cancel',
+              style: GoogleFonts.outfit(color: AppColors.textSecondary),
+            ),
+          ),
+          ElevatedButton(
+            style: ElevatedButton.styleFrom(backgroundColor: Colors.red),
+            onPressed: () => Navigator.pop(ctx, true),
+            child: Text(
+              'Delete',
+              style: GoogleFonts.outfit(
+                color: Colors.white,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+
+    if (confirmed == true) {
+      await _deleteSubcategory(subcategory);
     }
-    return NetworkImage(url);
+  }
+
+  Future<void> _deleteSubcategory(Subcategory subcategory) async {
+    try {
+      await FirebaseFirestore.instance
+          .collection('subcategories')
+          .doc(subcategory.id)
+          .delete();
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('"${subcategory.name}" deleted successfully.'),
+            backgroundColor: Colors.red.shade700,
+          ),
+        );
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Delete failed: ${e.toString()}')),
+        );
+      }
+    }
+  }
+
+  ImageProvider _getImageProvider(String url) {
+    return CachedNetworkImageProvider(url);
   }
 }
 
@@ -291,7 +395,10 @@ class _AddEditSubcategorySheetState extends State<_AddEditSubcategorySheet> {
   }
 
   Future<void> _pickImage() async {
-    final pickedFile = await _picker.pickImage(source: ImageSource.gallery);
+    final pickedFile = await _picker.pickImage(
+      source: ImageSource.gallery,
+      imageQuality: 100, // Full quality — no compression
+    );
     if (pickedFile != null) {
       setState(() {
         _imageFile = File(pickedFile.path);
@@ -426,53 +533,142 @@ class _AddEditSubcategorySheetState extends State<_AddEditSubcategorySheet> {
               validator: (v) => v!.isEmpty ? 'Enter name' : null,
             ),
             const SizedBox(height: 16),
+            // ── Banner Image Section ──
+            const Text(
+              'Subcategory Banner Image',
+              style: TextStyle(color: AppColors.gold, fontSize: 14),
+            ),
+            const SizedBox(height: 12),
+            // 16:9 Banner Preview
+            AspectRatio(
+              aspectRatio: 16 / 9,
+              child: GestureDetector(
+                onTap: _pickImage,
+                child: ClipRRect(
+                  borderRadius: BorderRadius.circular(12),
+                  child: _imageFile != null
+                      ? Stack(
+                          fit: StackFit.expand,
+                          children: [
+                            Image.file(_imageFile!, fit: BoxFit.cover),
+                            Positioned(
+                              top: 8,
+                              right: 8,
+                              child: GestureDetector(
+                                onTap: () => setState(() => _imageFile = null),
+                                child: Container(
+                                  padding: const EdgeInsets.all(4),
+                                  decoration: const BoxDecoration(
+                                    color: Colors.red,
+                                    shape: BoxShape.circle,
+                                  ),
+                                  child: const Icon(
+                                    Icons.close,
+                                    size: 16,
+                                    color: Colors.white,
+                                  ),
+                                ),
+                              ),
+                            ),
+                          ],
+                        )
+                      : _imageUrlController.text.trim().isNotEmpty &&
+                            !_imageUrlController.text.trim().startsWith(
+                              'assets/',
+                            )
+                      ? Image.network(
+                          _imageUrlController.text.trim(),
+                          fit: BoxFit.cover,
+                          loadingBuilder: (context, child, loadingProgress) {
+                            if (loadingProgress == null) return child;
+                            return Container(
+                              color: AppColors.background,
+                              child: const Center(
+                                child: CircularProgressIndicator(
+                                  color: AppColors.gold,
+                                ),
+                              ),
+                            );
+                          },
+                          errorBuilder: (_, __, ___) => Container(
+                            color: AppColors.background,
+                            child: const Center(
+                              child: Column(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  Icon(
+                                    Icons.broken_image,
+                                    color: AppColors.textSecondary,
+                                    size: 40,
+                                  ),
+                                  SizedBox(height: 8),
+                                  Text(
+                                    'Failed to load image',
+                                    style: TextStyle(
+                                      color: AppColors.textSecondary,
+                                      fontSize: 12,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ),
+                        )
+                      : Container(
+                          color: AppColors.background,
+                          child: const Center(
+                            child: Column(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                Icon(
+                                  Icons.add_photo_alternate_outlined,
+                                  color: AppColors.gold,
+                                  size: 40,
+                                ),
+                                SizedBox(height: 8),
+                                Text(
+                                  'Tap to select banner image',
+                                  style: TextStyle(
+                                    color: AppColors.textSecondary,
+                                    fontSize: 12,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ),
+                ),
+              ),
+            ),
+            const SizedBox(height: 8),
+            // Manual URL input (fallback)
             Row(
               children: [
                 Expanded(
                   child: TextFormField(
                     controller: _imageUrlController,
                     decoration: InputDecoration(
-                      labelText: 'Image URL',
-                      labelStyle: const TextStyle(color: AppColors.gold),
+                      labelText: 'Or paste Image URL',
+                      labelStyle: const TextStyle(
+                        color: AppColors.textSecondary,
+                        fontSize: 12,
+                      ),
                       enabledBorder: UnderlineInputBorder(
                         borderSide: BorderSide(
                           color: AppColors.white.withValues(alpha: 0.3),
                         ),
                       ),
                     ),
-                    style: const TextStyle(color: AppColors.textPrimary),
+                    style: const TextStyle(
+                      color: AppColors.textPrimary,
+                      fontSize: 13,
+                    ),
                     enabled: _imageFile == null,
-                  ),
-                ),
-                const SizedBox(width: 8),
-                TextButton.icon(
-                  onPressed: _pickImage,
-                  icon: const Icon(Icons.image, color: AppColors.gold),
-                  label: const Text(
-                    'Pick',
-                    style: TextStyle(color: AppColors.gold),
+                    onChanged: (_) => setState(() {}),
                   ),
                 ),
               ],
             ),
-            if (_imageFile != null) ...[
-              const SizedBox(height: 8),
-              Row(
-                children: [
-                  const Icon(Icons.check_circle, color: Colors.green, size: 16),
-                  const SizedBox(width: 4),
-                  Text(
-                    'Image selected: ${_imageFile!.path.split('/').last}',
-                    style: const TextStyle(color: Colors.green, fontSize: 12),
-                  ),
-                  const Spacer(),
-                  IconButton(
-                    icon: const Icon(Icons.close, color: Colors.red, size: 16),
-                    onPressed: () => setState(() => _imageFile = null),
-                  ),
-                ],
-              ),
-            ],
             const SizedBox(height: 32),
             ElevatedButton(
               onPressed: _loading ? null : _save,

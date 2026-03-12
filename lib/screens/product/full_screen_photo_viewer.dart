@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'dart:ui';
 import 'package:flutter/services.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:vishal_gold/constants/app_colors.dart';
@@ -287,35 +286,27 @@ class _NavCircleButtonState extends State<_NavCircleButton> {
       onTapUp: (_) => setState(() => _isPressed = false),
       onTapCancel: () => setState(() => _isPressed = false),
       onTap: widget.onTap,
-      child: ClipRRect(
-        borderRadius: BorderRadius.circular(25),
-        child: BackdropFilter(
-          filter: ImageFilter.blur(sigmaX: 8, sigmaY: 8),
-          child: AnimatedContainer(
-            duration: const Duration(milliseconds: 150),
-            width: 50,
-            height: 50,
-            decoration: BoxDecoration(
-              color: Colors.black.withValues(alpha: 0.45),
-              shape: BoxShape.circle,
-              border: Border.all(
-                color: Colors.white.withValues(alpha: 0.2),
-                width: 1,
-              ),
-              boxShadow: [
-                if (_isPressed)
-                  BoxShadow(
-                    color: AppColors.gold.withValues(alpha: 0.6),
-                    blurRadius: 15,
-                    spreadRadius: 2,
-                  ),
-              ],
-            ),
-            child: Center(
-              child: Icon(widget.icon, color: Colors.white, size: 26),
-            ),
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 150),
+        width: 50,
+        height: 50,
+        decoration: BoxDecoration(
+          color: Colors.black.withValues(alpha: 0.8),
+          shape: BoxShape.circle,
+          border: Border.all(
+            color: Colors.white.withValues(alpha: 0.2),
+            width: 1,
           ),
+          boxShadow: [
+            if (_isPressed)
+              BoxShadow(
+                color: AppColors.gold.withValues(alpha: 0.6),
+                blurRadius: 15,
+                spreadRadius: 2,
+              ),
+          ],
         ),
+        child: Center(child: Icon(widget.icon, color: Colors.white, size: 26)),
       ),
     );
   }
@@ -331,24 +322,18 @@ class _GlassButton extends StatelessWidget {
   Widget build(BuildContext context) {
     return GestureDetector(
       onTap: onTap,
-      child: ClipRRect(
-        borderRadius: BorderRadius.circular(22),
-        child: BackdropFilter(
-          filter: ImageFilter.blur(sigmaX: 5, sigmaY: 5),
-          child: Container(
-            width: 44,
-            height: 44,
-            decoration: BoxDecoration(
-              color: Colors.white.withValues(alpha: 0.12),
-              shape: BoxShape.circle,
-              border: Border.all(
-                color: Colors.white.withValues(alpha: 0.25),
-                width: 0.5,
-              ),
-            ),
-            child: Center(child: child),
+      child: Container(
+        width: 44,
+        height: 44,
+        decoration: BoxDecoration(
+          color: Colors.black.withValues(alpha: 0.7),
+          shape: BoxShape.circle,
+          border: Border.all(
+            color: Colors.white.withValues(alpha: 0.25),
+            width: 0.5,
           ),
         ),
+        child: Center(child: child),
       ),
     );
   }

@@ -31,11 +31,20 @@ android {
     }
 
     signingConfigs {
-        create("release") {
-            keyAlias = keyProperties["keyAlias"] as String
-            keyPassword = keyProperties["keyPassword"] as String
-            storeFile = file(keyProperties["storeFile"] as String)
-            storePassword = keyProperties["storePassword"] as String
+        if (keyPropertiesFile.exists()) {
+            val alias = keyProperties.getProperty("keyAlias")
+            val keyPass = keyProperties.getProperty("keyPassword")
+            val storeFileStr = keyProperties.getProperty("storeFile")
+            val storePass = keyProperties.getProperty("storePassword")
+            
+            if (alias != null && keyPass != null && storeFileStr != null && storePass != null) {
+                create("release") {
+                    keyAlias = alias
+                    keyPassword = keyPass
+                    storeFile = file(storeFileStr)
+                    storePassword = storePass
+                }
+            }
         }
     }
 
@@ -45,13 +54,23 @@ android {
         targetSdk = flutter.targetSdkVersion
         versionCode = flutter.versionCode
         versionName = flutter.versionName
+
+        // Removed restrictive abiFilters to ensure compatibility across all architectures
+
     }
 
     buildTypes {
         release {
-            signingConfig = signingConfigs.getByName("release")
-            isMinifyEnabled = false
-            isShrinkResources = false
+            val releaseConfig = signingConfigs.findByName("release")
+            if (releaseConfig != null) {
+                signingConfig = releaseConfig
+            }
+            isMinifyEnabled = true
+            isShrinkResources = true
+            proguardFiles(
+                getDefaultProguardFile("proguard-android-optimize.txt"),
+                "proguard-rules.pro"
+            )
         }
     }
 }

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:cached_network_image/cached_network_image.dart';
 import 'package:carousel_slider/carousel_slider.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:smooth_page_indicator/smooth_page_indicator.dart';
@@ -92,48 +93,50 @@ class _BannerCarouselState extends State<BannerCarousel> {
         final banners = snapshot.data ?? [];
         if (banners.isEmpty) return const SizedBox.shrink();
 
-        return Column(
-          children: [
-            CarouselSlider(
-              options: CarouselOptions(
-                height: AppLayout.of(context).bannerHeight,
-                autoPlay: true,
-                autoPlayInterval: const Duration(seconds: 4),
-                enlargeCenterPage: false,
-                viewportFraction: 1.0,
-                onPageChanged: (index, reason) {
-                  setState(() {
-                    _currentIndex = index;
-                  });
-                },
-              ),
-              items: banners.map((banner) {
-                return Builder(
-                  builder: (BuildContext context) {
-                    return GestureDetector(
-                      onTap: () => _onBannerTap(banner),
-                      child: Container(
-                        width: MediaQuery.of(context).size.width,
-                        margin: const EdgeInsets.symmetric(horizontal: 16.0),
-                        child: _buildBannerContent(banner),
-                      ),
-                    );
+        return RepaintBoundary(
+          child: Column(
+            children: [
+              CarouselSlider(
+                options: CarouselOptions(
+                  height: AppLayout.of(context).bannerHeight,
+                  autoPlay: true,
+                  autoPlayInterval: const Duration(seconds: 4),
+                  enlargeCenterPage: false,
+                  viewportFraction: 1.0,
+                  onPageChanged: (index, reason) {
+                    setState(() {
+                      _currentIndex = index;
+                    });
                   },
-                );
-              }).toList(),
-            ),
-            const SizedBox(height: 16),
-            AnimatedSmoothIndicator(
-              activeIndex: _currentIndex,
-              count: banners.length,
-              effect: const WormEffect(
-                dotColor: AppColors.lightGrey,
-                activeDotColor: AppColors.gold,
-                dotHeight: 8,
-                dotWidth: 8,
+                ),
+                items: banners.map((banner) {
+                  return Builder(
+                    builder: (BuildContext context) {
+                      return GestureDetector(
+                        onTap: () => _onBannerTap(banner),
+                        child: Container(
+                          width: MediaQuery.of(context).size.width,
+                          margin: const EdgeInsets.symmetric(horizontal: 16.0),
+                          child: _buildBannerContent(banner),
+                        ),
+                      );
+                    },
+                  );
+                }).toList(),
               ),
-            ),
-          ],
+              const SizedBox(height: 16),
+              AnimatedSmoothIndicator(
+                activeIndex: _currentIndex,
+                count: banners.length,
+                effect: const WormEffect(
+                  dotColor: AppColors.lightGrey,
+                  activeDotColor: AppColors.gold,
+                  dotHeight: 8,
+                  dotWidth: 8,
+                ),
+              ),
+            ],
+          ),
         );
       },
     );
@@ -158,7 +161,7 @@ class _BannerCarouselState extends State<BannerCarousel> {
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(16),
         image: DecorationImage(
-          image: NetworkImage(banner.imageUrl),
+          image: CachedNetworkImageProvider(banner.imageUrl),
           fit: BoxFit.cover,
         ),
         boxShadow: [
@@ -277,10 +280,13 @@ class _BannerCarouselState extends State<BannerCarousel> {
                 topRight: Radius.circular(16),
                 bottomRight: Radius.circular(16),
               ),
-              child: Image.network(
-                banner.imageUrl,
+              child: CachedNetworkImage(
+                imageUrl: banner.imageUrl,
                 fit: BoxFit.cover,
                 height: double.infinity,
+                placeholder: (context, url) =>
+                    Container(color: AppColors.surface),
+                errorWidget: (context, url, error) => const Icon(Icons.error),
               ),
             ),
           ),
@@ -294,7 +300,7 @@ class _BannerCarouselState extends State<BannerCarousel> {
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(16),
         image: DecorationImage(
-          image: NetworkImage(banner.imageUrl),
+          image: CachedNetworkImageProvider(banner.imageUrl),
           fit: BoxFit.cover,
         ),
         boxShadow: [
@@ -314,7 +320,7 @@ class _BannerCarouselState extends State<BannerCarousel> {
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(16),
         image: DecorationImage(
-          image: NetworkImage(banner.imageUrl),
+          image: CachedNetworkImageProvider(banner.imageUrl),
           fit: BoxFit.contain, // Contain rather than cover to prevent cropping
         ),
       ),

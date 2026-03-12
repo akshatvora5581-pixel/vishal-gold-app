@@ -22,14 +22,19 @@ class ProductProvider with ChangeNotifier {
   ProductSortOrder _currentSort = ProductSortOrder.newestFirst;
   bool _viewDrafts = false;
 
+  // Pagination states
+  DocumentSnapshot? _lastVisibleDocument;
+  bool _hasMoreData = true;
+  bool _isFetchingMore = false;
+  final int _pageSize = 20;
+
   // ── Advanced Filters ───────────────────────────────────────────────────────
   double? _minWeight;
   double? _maxWeight;
   InventoryStatusFilter _inventoryStatusFilter = InventoryStatusFilter.all;
 
   // Getters
-  List<Product> get products =>
-      _filteredProducts.isNotEmpty ? _filteredProducts : _products;
+  List<Product> get products => _filteredProducts;
   bool get isLoading => _isLoading;
   String? get error => _error;
   String get currentCategory => _currentCategory;
@@ -41,6 +46,10 @@ class ProductProvider with ChangeNotifier {
   double? get maxWeightFilter => _maxWeight;
   InventoryStatusFilter get inventoryStatusFilter => _inventoryStatusFilter;
 
+  // Pagination getters
+  bool get hasMoreData => _hasMoreData;
+  bool get isFetchingMore => _isFetchingMore;
+
   /// Returns true if any non-default filter is active.
   bool get hasActiveFilters =>
       _currentSort != ProductSortOrder.newestFirst ||
@@ -48,60 +57,42 @@ class ProductProvider with ChangeNotifier {
       _maxWeight != null ||
       _inventoryStatusFilter != InventoryStatusFilter.all;
 
-  /// Load all products
-  Future<void> loadProducts({List<QueryDocumentSnapshot>? stagedDocs}) async {
-    _isLoading = true;
-    _error = null;
-    notifyListeners();
-
-    try {
-      final liveProducts = await _firebaseService.getAllProducts(
-        status: _viewDrafts ? 'draft' : 'published',
-      );
-
-      if (stagedDocs != null && stagedDocs.isNotEmpty) {
-        _products = _mergeProducts(liveProducts, stagedDocs);
-      } else {
-        _products = liveProducts;
-      }
-
-      _applyFilters();
-    } catch (e) {
-      _error = e.toString();
-      debugPrint('Failed to load products: $e');
-    } finally {
-      _isLoading = false;
-      notifyListeners();
+  /// Generate the order by field based on current sorting
+  String? _getOrderByField() {
+    switch (_currentSort) {
+      case ProductSortOrder.newestFirst:
+        return 'createdAt';
+      case ProductSortOrder.tagAsc:
+        return 'tag_number';
+      case ProductSortOrder.tagDesc:
+        return 'tag_number';
+      case ProductSortOrder.weightAsc:
+        return 'gross_weight';
+      case ProductSortOrder.weightDesc:
+        return 'gross_weight';
     }
   }
 
-  List<Product> _mergeProducts(
-    List<Product> liveItems,
-    List<QueryDocumentSnapshot> stagedDocs,
-  ) {
-    final Map<String, Product> mergedMap = {
-      for (var item in liveItems) item.id: item,
-    };
-
-    for (var doc in stagedDocs) {
-      final change = doc.data() as Map<String, dynamic>;
-      final String collectionName = change['collection_name'];
-      if (collectionName != 'products') continue;
-
-      final String changeType = change['change_type'];
-      final String docId = change['doc_id'];
-      final Map<String, dynamic>? data = change['data'];
-
-      if (changeType == 'delete') {
-        mergedMap.remove(docId);
-      } else if (data != null) {
-        // Ensure id is present in data for fromJson
-        final Map<String, dynamic> completeData = Map.from(data);
-        completeData['id'] = docId;
-        mergedMap[docId] = Product.fromJson(completeData);
-      }
+  bool _getSortDescending() {
+    switch (_currentSort) {
+      case ProductSortOrder.newestFirst:
+        return true;
+      case ProductSortOrder.tagAsc:
+        return false;
+      case ProductSortOrder.tagDesc:
+        return true;
+      case ProductSortOrder.weightAsc:
+        return false;
+      case ProductSortOrder.weightDesc:
+        return true;
     }
-    return mergedMap.values.toList();
+  }
+
+  /// Load all products
+  Future<void> loadProducts({List<QueryDocumentSnapshot>? stagedDocs}) async {
+    _currentCategory = 'all';
+    _currentSubcategory = null;
+    await fetchInitialProducts();
   }
 
   /// Load products by category
@@ -112,34 +103,78 @@ class ProductProvider with ChangeNotifier {
   }) async {
     _currentCategory = category;
     _currentSubcategory = subcategory;
+    await fetchInitialProducts();
+  }
+
+  /// Fetch initial set of paginated products
+  Future<void> fetchInitialProducts() async {
     _isLoading = true;
     _error = null;
+    _lastVisibleDocument = null;
+    _hasMoreData = true;
+    _products = [];
+    _filteredProducts = [];
     notifyListeners();
 
     try {
       final status = _viewDrafts ? 'draft' : 'published';
-      final List<Product> liveProducts;
-      if (category == 'all') {
-        liveProducts = await _firebaseService.getAllProducts(status: status);
-      } else {
-        liveProducts = await _firebaseService.getProductsByCategory(
-          category,
-          status: status,
-        );
-      }
+      final result = await _firebaseService.getProductsPaginated(
+        category: _currentCategory,
+        subcategory: _currentSubcategory,
+        limit: _pageSize,
+        startAfter: null,
+        status: status,
+        orderByField: _getOrderByField(),
+        descending: _getSortDescending(),
+      );
 
-      if (stagedDocs != null && stagedDocs.isNotEmpty) {
-        _products = _mergeProducts(liveProducts, stagedDocs);
-      } else {
-        _products = liveProducts;
-      }
+      _products = result['products'] as List<Product>;
+      _lastVisibleDocument = result['lastDocument'] as DocumentSnapshot?;
+      _hasMoreData = _products.length >= _pageSize;
 
       _applyFilters();
     } catch (e) {
       _error = e.toString();
-      debugPrint('Failed to load products by category: $e');
+      debugPrint('Failed to load initial products: $e');
     } finally {
       _isLoading = false;
+      notifyListeners();
+    }
+  }
+
+  /// Fetch next page of products
+  Future<void> fetchMoreProducts() async {
+    if (_isFetchingMore || !_hasMoreData || _isLoading) return;
+
+    _isFetchingMore = true;
+    notifyListeners();
+
+    try {
+      final status = _viewDrafts ? 'draft' : 'published';
+      final result = await _firebaseService.getProductsPaginated(
+        category: _currentCategory,
+        subcategory: _currentSubcategory,
+        limit: _pageSize,
+        startAfter: _lastVisibleDocument,
+        status: status,
+        orderByField: _getOrderByField(),
+        descending: _getSortDescending(),
+      );
+
+      final newProducts = result['products'] as List<Product>;
+      if (newProducts.isEmpty) {
+        _hasMoreData = false;
+      } else {
+        _products.addAll(newProducts);
+        _lastVisibleDocument = result['lastDocument'] as DocumentSnapshot?;
+        _hasMoreData = newProducts.length >= _pageSize;
+      }
+
+      _applyFilters();
+    } catch (e) {
+      debugPrint('Failed to fetch more products: $e');
+    } finally {
+      _isFetchingMore = false;
       notifyListeners();
     }
   }
@@ -228,15 +263,38 @@ class ProductProvider with ChangeNotifier {
   void sortProducts(ProductSortOrder order) {
     if (_currentSort == order) return;
     _currentSort = order;
-    _applyFilters();
-    notifyListeners();
+    fetchInitialProducts();
   }
 
   /// Toggle Draft View
   void setViewDrafts(bool value) {
     if (_viewDrafts == value) return;
     _viewDrafts = value;
-    loadProductsByCategory(_currentCategory, subcategory: _currentSubcategory);
+    fetchInitialProducts();
+  }
+
+  /// User Requested: Apply sort by string criteria
+  void applySort(String criteria) {
+    ProductSortOrder order;
+    switch (criteria) {
+      case 'TagNo (A - Z)':
+        order = ProductSortOrder.tagAsc;
+        break;
+      case 'TagNo (Z - A)':
+        order = ProductSortOrder.tagDesc;
+        break;
+      case 'Weight (Low - High)':
+        order = ProductSortOrder.weightAsc;
+        break;
+      case 'Weight (High - Low)':
+        order = ProductSortOrder.weightDesc;
+        break;
+      case 'Newest First':
+      default:
+        order = ProductSortOrder.newestFirst;
+        break;
+    }
+    sortProducts(order);
   }
 
   /// Get single product by ID
@@ -286,6 +344,7 @@ class ProductProvider with ChangeNotifier {
     required String uploadedBy,
     String? name,
     String? description,
+    String status = 'published',
   }) async {
     try {
       final productId = await _firebaseService.uploadProduct(
@@ -299,10 +358,11 @@ class ProductProvider with ChangeNotifier {
         uploadedBy: uploadedBy,
         name: name,
         description: description,
+        status: status,
       );
 
       // Reload products
-      await loadProducts();
+      await fetchInitialProducts();
 
       return productId;
     } catch (e) {
@@ -340,7 +400,7 @@ class ProductProvider with ChangeNotifier {
       );
 
       // Reload products
-      await loadProducts();
+      await fetchInitialProducts();
     } catch (e) {
       debugPrint('Failed to update product: $e');
       rethrow;
@@ -369,16 +429,14 @@ class ProductProvider with ChangeNotifier {
     _maxWeight = null;
     _inventoryStatusFilter = InventoryStatusFilter.all;
     _currentSort = ProductSortOrder.newestFirst;
-    _applyFilters();
-    notifyListeners();
+    fetchInitialProducts();
   }
 
   /// Clear filters (legacy – keeps category context)
   void clearFilters() {
     _searchQuery = '';
     _currentCategory = 'all';
-    _applyFilters();
-    notifyListeners();
+    fetchInitialProducts();
   }
 
   /// Refresh products

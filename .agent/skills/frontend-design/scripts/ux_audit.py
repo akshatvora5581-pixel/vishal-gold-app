@@ -95,6 +95,14 @@ import re
 import json
 from pathlib import Path
 
+# Fix Windows console encoding
+for stream in [sys.stdout, sys.stderr]:
+    if stream and hasattr(stream, 'reconfigure'):
+        try:
+            stream.reconfigure(encoding='utf-8', errors='replace')
+        except Exception:
+            pass
+
 class UXAuditor:
     def __init__(self):
         self.issues = []

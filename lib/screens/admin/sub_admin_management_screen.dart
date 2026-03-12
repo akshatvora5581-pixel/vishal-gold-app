@@ -303,7 +303,7 @@ class _SubAdminManagementScreenState extends State<SubAdminManagementScreen> {
                       contentPadding: EdgeInsets.zero,
                       controlAffinity: ListTileControlAffinity.leading,
                     );
-                  }).toList(),
+                  }),
                 ],
                 const SizedBox(height: 24),
                 SizedBox(
@@ -446,7 +446,7 @@ class _SubAdminManagementScreenState extends State<SubAdminManagementScreen> {
                       contentPadding: EdgeInsets.zero,
                       controlAffinity: ListTileControlAffinity.leading,
                     );
-                  }).toList(),
+                  }),
                 ],
                 const SizedBox(height: 24),
                 SizedBox(
