@@ -1,9 +1,12 @@
-import 'dart:io';
 import 'package:flutter/material.dart';
+import 'package:flutter/foundation.dart';
 import 'package:provider/provider.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:firebase_core/firebase_core.dart';
-import 'package:vishal_gold/services/firebase_service.dart';
+import 'package:firebase_app_check/firebase_app_check.dart';
+import 'package:firebase_analytics/firebase_analytics.dart';
+import 'firebase_options.dart';
+import 'package:vishal_gold/services/local_storage_service.dart';
 import 'package:vishal_gold/constants/app_colors.dart';
 import 'package:vishal_gold/constants/app_strings.dart';
 import 'package:vishal_gold/providers/auth_provider.dart';
@@ -11,29 +14,48 @@ import 'package:vishal_gold/providers/cart_provider.dart';
 import 'package:vishal_gold/providers/product_provider.dart';
 import 'package:vishal_gold/providers/order_provider.dart';
 import 'package:vishal_gold/providers/wishlist_provider.dart';
-import 'package:vishal_gold/screens/splash_screen.dart';
+import 'package:vishal_gold/providers/preview_provider.dart';
+import 'package:vishal_gold/providers/notification_provider.dart';
+import 'package:vishal_gold/providers/language_provider.dart';
+import 'package:vishal_gold/providers/notification_settings_provider.dart';
+import 'package:vishal_gold/widgets/auth/auth_wrapper.dart';
+import 'package:vishal_gold/widgets/shared/presence_wrapper.dart';
+import 'package:vishal_gold/services/fcm_service.dart';
+
+/// Global navigator key — used by FCMService for deep-link navigation
+/// when a push notification is tapped from background/terminated state.
+final GlobalKey<NavigatorState> navigatorKey = GlobalKey<NavigatorState>();
 
 void main() async {
-  WidgetsFlutterBinding.ensureInitialized();
+  try {
+    WidgetsFlutterBinding.ensureInitialized();
+    await LocalStorageService.init();
 
-  // Initialize Firebase
-  // Initialize Firebase
-  if (Platform.isAndroid) {
+    // --- Firebase Setup ---
     await Firebase.initializeApp(
-      options: const FirebaseOptions(
-        apiKey: 'AIzaSyDB5v9Aq7yPz6QRoLIBgPsvue5UcZgBQP0',
-        appId: '1:373212780191:android:a7bdbcba05e8bc3c5874aa',
-        messagingSenderId: '373212780191',
-        projectId: 'vishal-gold-app',
-        storageBucket: 'vishal-gold-app.firebasestorage.app',
-      ),
+      options: DefaultFirebaseOptions.currentPlatform,
     );
-  } else {
-    await Firebase.initializeApp();
-  }
 
-  // Seed initial data (temporary call)
-  await FirebaseService().seedInitialData();
+    await FirebaseAppCheck.instance.activate(
+      providerAndroid: kDebugMode
+          ? AndroidDebugProvider()
+          : const AndroidPlayIntegrityProvider(),
+      providerApple: const AppleDeviceCheckProvider(),
+    );
+
+    // Initialize FCM and inject the navigator key for deep-link navigation
+    final fcmService = FCMService();
+    fcmService.navigatorKey = navigatorKey;
+    await fcmService.initialize();
+
+    // Initialize Analytics
+    FirebaseAnalytics.instance.setAnalyticsCollectionEnabled(true);
+
+    // Initialize Analytics
+    FirebaseAnalytics.instance.setAnalyticsCollectionEnabled(true);
+  } catch (e) {
+    debugPrint('Initialization error: $e');
+  }
 
   runApp(const MyApp());
 }
@@ -50,22 +72,29 @@ class MyApp extends StatelessWidget {
         ChangeNotifierProvider(create: (_) => ProductProvider()),
         ChangeNotifierProvider(create: (_) => OrderProvider()),
         ChangeNotifierProvider(create: (_) => WishlistProvider()),
+        ChangeNotifierProvider(create: (_) => PreviewProvider()),
+        ChangeNotifierProxyProvider<AuthProvider, NotificationProvider>(
+          create: (_) => NotificationProvider(),
+          update: (_, auth, notif) =>
+              notif!..updateUser(auth.currentUser?.uid, isAdmin: auth.isAdmin),
+        ),
+        ChangeNotifierProvider(create: (_) => LanguageProvider()),
+        ChangeNotifierProvider(create: (_) => NotificationSettingsProvider()),
       ],
       child: MaterialApp(
         title: AppStrings.appName,
         debugShowCheckedModeBanner: false,
+        navigatorKey: navigatorKey,
         theme: ThemeData(
           useMaterial3: true,
           colorScheme: const ColorScheme.dark(
             primary: AppColors.gold,
             secondary: AppColors.softGold,
             surface: AppColors.surface,
-            background: AppColors.background,
             error: AppColors.errorRed,
             onPrimary: AppColors.black,
             onSecondary: AppColors.black,
             onSurface: AppColors.textPrimary,
-            onBackground: AppColors.textPrimary,
             onError: AppColors.black,
           ),
           scaffoldBackgroundColor: AppColors.background,
@@ -143,7 +172,7 @@ class MyApp extends StatelessWidget {
             hintStyle: const TextStyle(color: AppColors.textTertiary),
           ),
         ),
-        home: const SplashScreen(),
+        home: const PresenceWrapper(child: AuthWrapper()),
       ),
     );
   }

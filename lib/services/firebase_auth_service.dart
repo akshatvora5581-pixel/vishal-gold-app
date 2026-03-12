@@ -1,4 +1,5 @@
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:flutter/foundation.dart';
 
 class FirebaseAuthService {
   final FirebaseAuth _auth = FirebaseAuth.instance;
@@ -17,6 +18,7 @@ class FirebaseAuthService {
     required String phoneNumber,
     required Function(String verificationId) onCodeSent,
     required Function(String error) onError,
+    required VoidCallback onTimeout,
     Function(User user)? onAutoVerified,
   }) async {
     try {
@@ -34,19 +36,31 @@ class FirebaseAuthService {
               onAutoVerified(userCredential.user!);
             }
           } catch (e) {
-            onError('Auto-verification failed: ${e.toString()}');
+            onError('The app was unable to automatically verify your code. Please enter it manually below.');
           }
         },
 
         // Called when verification fails
         verificationFailed: (FirebaseAuthException e) {
-          String errorMessage = 'Verification failed';
-          if (e.code == 'invalid-phone-number') {
-            errorMessage = 'Invalid phone number format';
-          } else if (e.code == 'too-many-requests') {
-            errorMessage = 'Too many requests. Please try again later';
-          } else {
-            errorMessage = e.message ?? 'Verification failed';
+          String errorMessage;
+          switch (e.code) {
+            case 'invalid-phone-number':
+              errorMessage = 'Invalid phone number format.';
+              break;
+            case 'too-many-requests':
+              errorMessage = 'Request blocked due to unusual activity or quota. Try again later.';
+              break;
+            case 'network-request-failed':
+              errorMessage = 'Please check your internet connection.';
+              break;
+            case 'app-not-authorized':
+              errorMessage = 'App verification failed (App Check/Play Integrity).';
+              break;
+            case 'web-context-cancelled':
+              errorMessage = 'reCAPTCHA verification was cancelled.';
+              break;
+            default:
+              errorMessage = e.message ?? 'Authentication failed. Please try again.';
           }
           onError(errorMessage);
         },
@@ -58,7 +72,7 @@ class FirebaseAuthService {
 
         // Called when auto-retrieval times out
         codeAutoRetrievalTimeout: (String verificationId) {
-          // No action needed for timeout
+          onTimeout();
         },
       );
     } catch (e) {
@@ -82,13 +96,24 @@ class FirebaseAuthService {
       );
       return userCredential;
     } on FirebaseAuthException catch (e) {
-      if (e.code == 'invalid-verification-code') {
-        throw 'Invalid OTP code. Please try again.';
-      } else if (e.code == 'session-expired') {
-        throw 'OTP expired. Please request a new code.';
-      } else {
-        throw e.message ?? 'Verification failed';
+      String errorMessage;
+      switch (e.code) {
+        case 'invalid-verification-code':
+          errorMessage = 'The OTP you entered is incorrect. Please try again.';
+          break;
+        case 'session-expired':
+          errorMessage = 'OTP expired. Please request a new code.';
+          break;
+        case 'too-many-requests':
+          errorMessage = 'Too many attempts. Please try again after some time.';
+          break;
+        case 'network-request-failed':
+          errorMessage = 'No internet connection.';
+          break;
+        default:
+          errorMessage = 'Something went wrong. Please check your details and try again.';
       }
+      throw errorMessage;
     } catch (e) {
       throw 'Failed to verify OTP: ${e.toString()}';
     }
@@ -114,11 +139,13 @@ class FirebaseAuthService {
     required String phoneNumber,
     required Function(String verificationId) onCodeSent,
     required Function(String error) onError,
+    required VoidCallback onTimeout,
   }) async {
     await sendOTP(
       phoneNumber: phoneNumber,
       onCodeSent: onCodeSent,
       onError: onError,
+      onTimeout: onTimeout,
     );
   }
 

@@ -119,7 +119,6 @@ vishal_gold/
 │   ├── 📂 screens/
 │   │   ├── splash_screen.dart       # 🚀 App entry point
 │   │   ├── auth/                    # 🔑 Login & Signup
-│   │   ├── role_selection/          # 👥 User role selection
 │   │   ├── company_details/         # 🏢 Wholesaler company info
 │   │   ├── home/                    # 🏠 Main home screen
 │   │   ├── product/                 # 💎 Product listing & details

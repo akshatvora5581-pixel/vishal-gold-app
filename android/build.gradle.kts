@@ -13,6 +13,9 @@ allprojects {
         google()
         mavenCentral()
     }
+    tasks.withType<JavaCompile> {
+        options.compilerArgs.addAll(listOf("-Xlint:-options"))
+    }
 }
 
 val newBuildDir: Directory =

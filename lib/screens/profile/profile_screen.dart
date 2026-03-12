@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:firebase_auth/firebase_auth.dart' hide AuthProvider;
+import 'package:vishal_gold/services/firebase_service.dart';
 import 'package:provider/provider.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:cached_network_image/cached_network_image.dart';
@@ -6,9 +8,16 @@ import 'package:vishal_gold/constants/app_colors.dart';
 import 'package:vishal_gold/providers/auth_provider.dart';
 import 'package:vishal_gold/screens/auth/phone_auth_screen.dart';
 import 'package:vishal_gold/screens/order/order_history_screen.dart';
-import 'package:vishal_gold/screens/info/contact_us_screen.dart';
-import 'package:vishal_gold/screens/info/policy_screen.dart';
-import 'package:vishal_gold/services/image_picker_service.dart';
+import 'package:vishal_gold/screens/info/privacy_policy_screen.dart';
+import 'package:vishal_gold/screens/profile/edit_profile_screen.dart';
+import 'package:vishal_gold/screens/profile/quick_login_settings_screen.dart';
+import 'package:vishal_gold/screens/settings/language_settings_screen.dart';
+import 'package:vishal_gold/screens/settings/notification_settings_screen.dart';
+import 'package:vishal_gold/screens/settings/security_center_screen.dart';
+import 'package:vishal_gold/screens/settings/storage_settings_screen.dart';
+import 'package:vishal_gold/screens/settings/support_hub_screen.dart';
+import 'package:vishal_gold/services/local_storage_service.dart';
+import 'package:vishal_gold/screens/dev/database_cleanup_screen.dart';
 
 class ProfileScreen extends StatefulWidget {
   const ProfileScreen({super.key});
@@ -18,46 +27,21 @@ class ProfileScreen extends StatefulWidget {
 }
 
 class _ProfileScreenState extends State<ProfileScreen> {
-  final _imagePickerService = ImagePickerService();
-  bool _isUploadingAvatar = false;
+  String _localUserName = '';
+  int _devTapCount = 0;
+  DateTime? _lastTapTime;
+  final FirebaseService _firebaseService = FirebaseService();
 
-  Future<void> _uploadProfileImage() async {
-    final authProvider = Provider.of<AuthProvider>(context, listen: false);
-    if (authProvider.currentUser == null) return;
+  @override
+  void initState() {
+    super.initState();
+    _loadLocalName();
+  }
 
-    final source = await _imagePickerService.showImageSourcePicker(context);
-    if (source == null) return;
-
-    setState(() => _isUploadingAvatar = true);
-
-    try {
-      final url = await _imagePickerService.pickAndUploadAvatar(
-        userId: authProvider.currentUser!.uid,
-        source: source,
-      );
-
-      if (url != null && mounted) {
-        await authProvider.updateProfile({'profile_image_url': url});
-        if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(
-              content: Text('Profile picture updated!'),
-              backgroundColor: AppColors.successGreen,
-            ),
-          );
-        }
-      }
-    } catch (e) {
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Failed to update: $e'),
-            backgroundColor: AppColors.errorRed,
-          ),
-        );
-      }
-    } finally {
-      if (mounted) setState(() => _isUploadingAvatar = false);
+  Future<void> _loadLocalName() async {
+    final name = await LocalStorageService.getUserName();
+    if (mounted) {
+      setState(() => _localUserName = name ?? '');
     }
   }
 
@@ -119,240 +103,462 @@ class _ProfileScreenState extends State<ProfileScreen> {
   @override
   Widget build(BuildContext context) {
     final authProvider = Provider.of<AuthProvider>(context);
-    final userProfile = authProvider.userProfile;
+    final user = authProvider.currentUser;
 
-    if (userProfile == null)
-      return const Center(
-        child: CircularProgressIndicator(color: AppColors.gold),
+    if (user == null) {
+      return Scaffold(
+        backgroundColor: AppColors.background,
+        body: _buildErrorUI(
+          'Authentication Required',
+          'Please login to view your profile.',
+          onRetry: () => Navigator.pushAndRemoveUntil(
+            context,
+            MaterialPageRoute(builder: (_) => const PhoneAuthScreen()),
+            (route) => false,
+          ),
+        ),
       );
+    }
 
     return Scaffold(
       backgroundColor: AppColors.background,
-      body: SingleChildScrollView(
-        child: Column(
-          children: [
-            // Header Section
-            Container(
-              padding: const EdgeInsets.fromLTRB(24, 60, 24, 40),
-              decoration: BoxDecoration(
-                color: AppColors.surface,
-                borderRadius: const BorderRadius.only(
-                  bottomLeft: Radius.circular(40),
-                  bottomRight: Radius.circular(40),
-                ),
-                boxShadow: [
-                  BoxShadow(
-                    color: Colors.black.withOpacity(0.3),
-                    blurRadius: 20,
-                    offset: const Offset(0, 10),
-                  ),
-                ],
-              ),
-              child: Column(
-                children: [
-                  Stack(
-                    alignment: Alignment.bottomRight,
-                    children: [
-                      Container(
-                        padding: const EdgeInsets.all(4),
-                        decoration: BoxDecoration(
-                          shape: BoxShape.circle,
-                          border: Border.all(color: AppColors.gold, width: 2),
-                        ),
-                        child: CircleAvatar(
-                          radius: 50,
-                          backgroundColor: AppColors.background,
-                          backgroundImage:
-                              (userProfile['profile_image_url'] as String?)
-                                      ?.isNotEmpty ==
-                                  true
-                              ? CachedNetworkImageProvider(
-                                  userProfile['profile_image_url'],
-                                )
-                              : null,
-                          child:
-                              (userProfile['profile_image_url'] as String?)
-                                      ?.isNotEmpty !=
-                                  true
-                              ? Text(
-                                  (userProfile['name'] as String? ?? 'U')[0]
-                                      .toUpperCase(),
-                                  style: GoogleFonts.playfairDisplay(
-                                    fontSize: 40,
-                                    color: AppColors.gold,
-                                    fontWeight: FontWeight.bold,
-                                  ),
-                                )
-                              : null,
-                        ),
+      body: FutureBuilder<Map<String, dynamic>?>(
+        future: _firebaseService.getUserProfile(user.uid),
+        builder: (context, snapshot) {
+          // 1. Handling Loading State
+          if (snapshot.connectionState == ConnectionState.waiting) {
+            return const Center(
+              child: CircularProgressIndicator(color: AppColors.gold),
+            );
+          }
+
+          // 2. Handling Error State
+          if (snapshot.hasError) {
+            return _buildErrorUI(
+              'Failed to load profile',
+              snapshot.error.toString(),
+              onRetry: () => setState(() {}),
+            );
+          }
+
+          // 3. Handling Missing Data (Default Profile)
+          if (!snapshot.hasData || snapshot.data == null) {
+            return _buildDefaultProfileUI(user);
+          }
+
+          final data = snapshot.data!;
+          // Use null-aware operators for all fields
+          final String name = _localUserName.isNotEmpty
+              ? _localUserName
+              : (data['fullName'] as String? ?? data['name'] as String? ?? 'Guest User');
+          final String email = data['email'] as String? ?? user.email ?? 'N/A';
+          final String phone = data['phone'] as String? ?? user.phoneNumber ?? 'N/A';
+          final String role = (data['role'] as String? ?? 'User').toUpperCase();
+          final String? profileImageUrl = data['profile_image_url'] as String?;
+
+          return SingleChildScrollView(
+            child: Column(
+              children: [
+                // Header Section
+                Container(
+                  padding: const EdgeInsets.fromLTRB(24, 60, 24, 40),
+                  decoration: BoxDecoration(
+                    color: AppColors.surface,
+                    borderRadius: const BorderRadius.only(
+                      bottomLeft: Radius.circular(40),
+                      bottomRight: Radius.circular(40),
+                    ),
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.black.withValues(alpha: 0.3),
+                        blurRadius: 20,
+                        offset: const Offset(0, 10),
                       ),
-                      GestureDetector(
-                        onTap: _isUploadingAvatar ? null : _uploadProfileImage,
-                        child: Container(
-                          padding: const EdgeInsets.all(8),
-                          decoration: const BoxDecoration(
-                            color: AppColors.gold,
-                            shape: BoxShape.circle,
+                    ],
+                  ),
+                  child: Column(
+                    children: [
+                      Stack(
+                        alignment: Alignment.bottomRight,
+                        children: [
+                          Container(
+                            padding: const EdgeInsets.all(4),
+                            decoration: BoxDecoration(
+                              shape: BoxShape.circle,
+                              border: Border.all(color: AppColors.gold, width: 2),
+                            ),
+                            child: GestureDetector(
+                              onTap: () {
+                                final now = DateTime.now();
+                                if (_lastTapTime == null ||
+                                    now.difference(_lastTapTime!) >
+                                        const Duration(seconds: 2)) {
+                                  _devTapCount = 1;
+                                } else {
+                                  _devTapCount++;
+                                }
+                                _lastTapTime = now;
+
+                                if (_devTapCount >= 7) {
+                                  _devTapCount = 0;
+                                  Navigator.push(
+                                    context,
+                                    MaterialPageRoute(
+                                      builder: (_) =>
+                                          const DatabaseCleanupScreen(),
+                                    ),
+                                  );
+                                }
+                              },
+                              child: CircleAvatar(
+                                radius: 50,
+                                backgroundColor: AppColors.background,
+                                backgroundImage: (profileImageUrl?.isNotEmpty ==
+                                        true)
+                                    ? CachedNetworkImageProvider(profileImageUrl!)
+                                    : null,
+                                child: (profileImageUrl?.isNotEmpty != true)
+                                    ? Text(
+                                        name.isNotEmpty ? name[0].toUpperCase() : 'U',
+                                        style: GoogleFonts.playfairDisplay(
+                                          fontSize: 40,
+                                          color: AppColors.gold,
+                                          fontWeight: FontWeight.bold,
+                                        ),
+                                      )
+                                    : null,
+                              ),
+                            ),
                           ),
-                          child: _isUploadingAvatar
-                              ? const SizedBox(
-                                  width: 16,
-                                  height: 16,
-                                  child: CircularProgressIndicator(
-                                    strokeWidth: 2,
-                                    color: AppColors.black,
-                                  ),
-                                )
-                              : const Icon(
-                                  Icons.camera_alt,
-                                  color: AppColors.black,
-                                  size: 18,
+                        ],
+                      ),
+                      const SizedBox(height: 16),
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Flexible(
+                            child: Text(
+                              name,
+                              style: GoogleFonts.playfairDisplay(
+                                fontSize: 28,
+                                fontWeight: FontWeight.bold,
+                                color: AppColors.white,
+                              ),
+                              textAlign: TextAlign.center,
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                          ),
+                          const SizedBox(width: 8),
+                          GestureDetector(
+                            onTap: () {
+                              Navigator.push(
+                                context,
+                                MaterialPageRoute(
+                                  builder: (_) => const EditProfileScreen(),
                                 ),
+                              ).then((_) => _loadLocalName());
+                            },
+                            child: Container(
+                              padding: const EdgeInsets.all(6),
+                              decoration: BoxDecoration(
+                                color: AppColors.gold.withValues(alpha: 0.1),
+                                shape: BoxShape.circle,
+                              ),
+                              child: const Icon(
+                                Icons.edit,
+                                color: AppColors.gold,
+                                size: 18,
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 8),
+                      Container(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 16,
+                          vertical: 6,
+                        ),
+                        decoration: BoxDecoration(
+                          color: AppColors.gold.withValues(alpha: 0.1),
+                          borderRadius: BorderRadius.circular(20),
+                          border: Border.all(
+                            color: AppColors.gold.withValues(alpha: 0.3),
+                          ),
+                        ),
+                        child: Text(
+                          role,
+                          style: GoogleFonts.outfit(
+                            fontSize: 12,
+                            fontWeight: FontWeight.bold,
+                            color: AppColors.gold,
+                            letterSpacing: 1.2,
+                          ),
                         ),
                       ),
                     ],
                   ),
-                  const SizedBox(height: 16),
-                  Text(
-                    userProfile['name'] as String? ?? 'User',
-                    style: GoogleFonts.playfairDisplay(
-                      fontSize: 28,
-                      fontWeight: FontWeight.bold,
-                      color: AppColors.white,
-                    ),
-                  ),
-                  const SizedBox(height: 8),
-                  Container(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 16,
-                      vertical: 6,
-                    ),
-                    decoration: BoxDecoration(
-                      color: AppColors.gold.withOpacity(0.1),
-                      borderRadius: BorderRadius.circular(20),
-                      border: Border.all(
-                        color: AppColors.gold.withOpacity(0.3),
+                ),
+
+                const SizedBox(height: 24),
+
+                // Info Section
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 24),
+                  child: Column(
+                    children: [
+                      _buildSectionTitle('ACCOUNT INFO'),
+                      const SizedBox(height: 16),
+                      _buildInfoCard([
+                        _InfoRow(
+                          icon: Icons.email_outlined,
+                          label: 'Email',
+                          value: email,
+                        ),
+                        _InfoRow(
+                          icon: Icons.phone_outlined,
+                          label: 'Phone',
+                          value: phone,
+                        ),
+                        if (authProvider.isWholesaler) ...[
+                          _InfoRow(
+                            icon: Icons.business_outlined,
+                            label: 'Company',
+                            value: data['company_name'] as String? ?? 'N/A',
+                          ),
+                          _InfoRow(
+                            icon: Icons.location_city_outlined,
+                            label: 'City',
+                            value: data['city'] as String? ?? 'N/A',
+                          ),
+                        ],
+                      ]),
+
+                      const SizedBox(height: 32),
+                      _buildSectionTitle('SETTINGS & SUPPORT'),
+                      const SizedBox(height: 16),
+                      _buildMenuCard([
+                        _MenuRow(
+                          icon: Icons.history,
+                          title: 'Order History',
+                          onTap: () => Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (_) => const OrderHistoryScreen(),
+                            ),
+                          ),
+                        ),
+                        if (role == 'ADMIN' || role == 'SUPER_ADMIN')
+                          _MenuRow(
+                            icon: Icons.security,
+                            title: 'Quick Login Settings',
+                            onTap: () => Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (_) => const QuickLoginSettingsScreen(),
+                              ),
+                            ),
+                          ),
+
+                        if (role == 'ADMIN' || role == 'SUPER_ADMIN')
+                          _MenuRow(
+                            icon: Icons.security_outlined,
+                            title: 'Security Center',
+                            onTap: () => Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (_) => const SecurityCenterScreen(),
+                              ),
+                            ),
+                          ),
+
+                        if (role == 'ADMIN' || role == 'SUPER_ADMIN')
+                          _MenuRow(
+                            icon: Icons.notifications_none_outlined,
+                            title: 'Notification Preferences',
+                            onTap: () => Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (_) =>
+                                    const NotificationSettingsScreen(),
+                              ),
+                            ),
+                          ),
+
+                        _MenuRow(
+                          icon: Icons.language_outlined,
+                          title: 'App Language',
+                          onTap: () => Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (_) => const LanguageSettingsScreen(),
+                            ),
+                          ),
+                        ),
+
+                        if (role == 'ADMIN' || role == 'SUPER_ADMIN')
+                          _MenuRow(
+                            icon: Icons.storage_outlined,
+                            title: 'Storage & Data',
+                            onTap: () => Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (_) => const StorageSettingsScreen(),
+                              ),
+                            ),
+                          ),
+
+                        _MenuRow(
+                          icon: Icons.support_agent_outlined,
+                          title: 'Support Hub',
+                          onTap: () => Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (_) => const SupportHubScreen(),
+                            ),
+                          ),
+                        ),
+                        _MenuRow(
+                          icon: Icons.privacy_tip_outlined,
+                          title: 'Privacy Policy',
+                          onTap: () => Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (_) => const PrivacyPolicyScreen(),
+                            ),
+                          ),
+                        ),
+                      ]),
+
+                      const SizedBox(height: 24),
+                      SizedBox(
+                        width: double.infinity,
+                        child: OutlinedButton.icon(
+                          onPressed: () => _logout(context),
+                          icon:
+                              const Icon(Icons.logout, color: AppColors.errorRed),
+                          label: Text(
+                            'LOGOUT',
+                            style: GoogleFonts.outfit(
+                              fontWeight: FontWeight.bold,
+                              color: AppColors.errorRed,
+                            ),
+                          ),
+                          style: OutlinedButton.styleFrom(
+                            padding: const EdgeInsets.symmetric(vertical: 16),
+                            side: const BorderSide(color: AppColors.errorRed),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(12),
+                            ),
+                          ),
+                        ),
                       ),
-                    ),
-                    child: Text(
-                      (userProfile['role'] as String? ?? 'USER').toUpperCase(),
-                      style: GoogleFonts.outfit(
-                        fontSize: 12,
-                        fontWeight: FontWeight.bold,
-                        color: AppColors.gold,
-                        letterSpacing: 1.2,
-                      ),
-                    ),
+                      const SizedBox(height: 40),
+                    ],
                   ),
-                ],
+                ),
+              ],
+            ),
+          );
+        },
+      ),
+    );
+  }
+
+  Widget _buildErrorUI(String title, String message, {VoidCallback? onRetry}) {
+    return Center(
+      child: Padding(
+        padding: const EdgeInsets.all(24.0),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            const Icon(Icons.error_outline, color: AppColors.errorRed, size: 64),
+            const SizedBox(height: 16),
+            Text(
+              title,
+              style: GoogleFonts.playfairDisplay(
+                fontSize: 24,
+                fontWeight: FontWeight.bold,
+                color: AppColors.white,
               ),
             ),
-
+            const SizedBox(height: 8),
+            Text(
+              message,
+              style: GoogleFonts.outfit(color: AppColors.grey),
+              textAlign: TextAlign.center,
+            ),
             const SizedBox(height: 24),
+            ElevatedButton(
+              onPressed: onRetry,
+              style: ElevatedButton.styleFrom(
+                backgroundColor: AppColors.gold,
+                foregroundColor: AppColors.background,
+                padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 12),
+              ),
+              child: const Text('RETRY'),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
 
-            // Info Section
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 24),
-              child: Column(
-                children: [
-                  _buildSectionTitle('ACCOUNT INFO'),
-                  const SizedBox(height: 16),
-                  _buildInfoCard([
-                    _InfoRow(
-                      icon: Icons.email_outlined,
-                      label: 'Email',
-                      value: userProfile['email'] as String? ?? 'N/A',
-                    ),
-                    _InfoRow(
-                      icon: Icons.phone_outlined,
-                      label: 'Phone',
-                      value: userProfile['phone'] as String? ?? 'N/A',
-                    ),
-                    if (authProvider.isWholesaler) ...[
-                      _InfoRow(
-                        icon: Icons.business_outlined,
-                        label: 'Company',
-                        value: userProfile['company_name'] as String? ?? 'N/A',
-                      ),
-                      _InfoRow(
-                        icon: Icons.location_city_outlined,
-                        label: 'City',
-                        value: userProfile['city'] as String? ?? 'N/A',
-                      ),
-                    ],
-                  ]),
-
-                  const SizedBox(height: 32),
-                  _buildSectionTitle('SETTINGS & SUPPORT'),
-                  const SizedBox(height: 16),
-                  _buildMenuCard([
-                    _MenuRow(
-                      icon: Icons.history,
-                      title: 'Order History',
-                      onTap: () => Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                          builder: (_) => const OrderHistoryScreen(),
-                        ),
-                      ),
-                    ),
-                    _MenuRow(
-                      icon: Icons.info_outline,
-                      title: 'About App',
-                      onTap: () => showAboutDialog(
-                        context: context,
-                        applicationName: 'Vishal Gold',
-                      ),
-                    ),
-                    _MenuRow(
-                      icon: Icons.support_agent_outlined,
-                      title: 'Contact Us',
-                      onTap: () => Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                          builder: (_) => const ContactUsScreen(),
-                        ),
-                      ),
-                    ),
-                    _MenuRow(
-                      icon: Icons.privacy_tip_outlined,
-                      title: 'Privacy Policy',
-                      onTap: () => Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                          builder: (_) => const PolicyScreen(
-                            title: 'Privacy Policy',
-                            content: 'Privacy Content...',
-                          ),
-                        ),
-                      ),
-                    ),
-                  ]),
-
-                  const SizedBox(height: 24),
-                  SizedBox(
-                    width: double.infinity,
-                    child: OutlinedButton.icon(
-                      onPressed: () => _logout(context),
-                      icon: const Icon(Icons.logout, color: AppColors.errorRed),
-                      label: Text(
-                        'LOGOUT',
-                        style: GoogleFonts.outfit(
-                          fontWeight: FontWeight.bold,
-                          color: AppColors.errorRed,
-                        ),
-                      ),
-                      style: OutlinedButton.styleFrom(
-                        padding: const EdgeInsets.symmetric(vertical: 16),
-                        side: const BorderSide(color: AppColors.errorRed),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(12),
-                        ),
-                      ),
-                    ),
-                  ),
-                  const SizedBox(height: 40),
-                ],
+  Widget _buildDefaultProfileUI(User user) {
+    return Center(
+      child: Padding(
+        padding: const EdgeInsets.all(24.0),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Container(
+              padding: const EdgeInsets.all(20),
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                border: Border.all(color: AppColors.gold, width: 2),
+              ),
+              child: const Icon(Icons.person_outline,
+                  color: AppColors.gold, size: 64),
+            ),
+            const SizedBox(height: 24),
+            Text(
+              'Profile Not Found',
+              style: GoogleFonts.playfairDisplay(
+                fontSize: 24,
+                fontWeight: FontWeight.bold,
+                color: AppColors.white,
+              ),
+            ),
+            const SizedBox(height: 8),
+            Text(
+              'Your profile details are not set up yet. Would you like to set it up now?',
+              style: GoogleFonts.outfit(color: AppColors.grey),
+              textAlign: TextAlign.center,
+            ),
+            const SizedBox(height: 32),
+            ElevatedButton(
+              onPressed: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (_) => const EditProfileScreen()),
+                ).then((_) => setState(() {}));
+              },
+              style: ElevatedButton.styleFrom(
+                backgroundColor: AppColors.gold,
+                foregroundColor: AppColors.background,
+                padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 12),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(12),
+                ),
+              ),
+              child: const Text('SET UP PROFILE'),
+            ),
+            const SizedBox(height: 16),
+            TextButton(
+              onPressed: () => _logout(context),
+              child: Text(
+                'LOGOUT',
+                style: GoogleFonts.outfit(color: AppColors.errorRed),
               ),
             ),
           ],
@@ -382,7 +588,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
       decoration: BoxDecoration(
         color: AppColors.surface,
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: AppColors.grey.withOpacity(0.1)),
+        border: Border.all(color: AppColors.grey.withValues(alpha: 0.1)),
       ),
       child: Column(children: children),
     );
@@ -393,7 +599,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
       decoration: BoxDecoration(
         color: AppColors.surface,
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: AppColors.grey.withOpacity(0.1)),
+        border: Border.all(color: AppColors.grey.withValues(alpha: 0.1)),
       ),
       child: Column(children: children),
     );

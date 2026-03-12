@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:cached_network_image/cached_network_image.dart';
 import 'package:vishal_gold/constants/app_colors.dart';
+import 'package:vishal_gold/widgets/common/shimmer_widget.dart';
 
 class CategoryCard extends StatelessWidget {
   final String name;
@@ -32,17 +34,7 @@ class CategoryCard extends StatelessWidget {
                 borderRadius: const BorderRadius.vertical(
                   top: Radius.circular(16),
                 ),
-                child: Image.asset(
-                  imagePath,
-                  fit: BoxFit.cover,
-                  errorBuilder: (_, __, ___) => Container(
-                    color: AppColors.background,
-                    child: const Icon(
-                      Icons.broken_image,
-                      color: AppColors.grey,
-                    ),
-                  ),
-                ),
+                child: _buildImage(),
               ),
             ),
             Expanded(
@@ -64,6 +56,50 @@ class CategoryCard extends StatelessWidget {
             ),
           ],
         ),
+      ),
+    );
+  }
+
+  Widget _buildImage() {
+    // Empty URL → placeholder icon
+    if (imagePath.isEmpty) {
+      return Container(
+        color: AppColors.background,
+        child: const Center(
+          child: Icon(Icons.category_outlined, color: AppColors.textSecondary),
+        ),
+      );
+    }
+
+    // Local asset path
+    if (imagePath.toLowerCase().contains('assets/')) {
+      return Image.asset(
+        imagePath,
+        fit: BoxFit.cover,
+        width: double.infinity,
+        cacheWidth: 300,
+        errorBuilder: (_, _, _) => _brokenImagePlaceholder(),
+      );
+    }
+
+    // Network URL (Firestore image_url) — matches View All screen
+    return CachedNetworkImage(
+      imageUrl: imagePath,
+      fit: BoxFit.cover,
+      width: double.infinity,
+      memCacheWidth: 300,
+      memCacheHeight: 300,
+      placeholder: (context, url) =>
+          ShimmerWidget.rectangular(height: double.infinity),
+      errorWidget: (_, _, _) => _brokenImagePlaceholder(),
+    );
+  }
+
+  Widget _brokenImagePlaceholder() {
+    return Container(
+      color: AppColors.background,
+      child: const Center(
+        child: Icon(Icons.broken_image, color: AppColors.grey),
       ),
     );
   }

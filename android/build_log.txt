@@ -1,0 +1,13 @@
+Initialized native services in: C:\Users\aksha\.gradle\native
+Initialized jansi services in: C:\Users\aksha\.gradle\native
+
+FAILURE: Build failed with an exception.
+
+* What went wrong:
+Value 'C:Program FilesEclipse Adoptiumjdk-17' given for org.gradle.java.home Gradle property is invalid (Java home supplied is invalid)
+
+* Try:
+> Run with --stacktrace option to get the stack trace.
+> Run with --debug option to get more log output.
+> Run with --scan to get full insights.
+> Get more help at https://help.gradle.org.

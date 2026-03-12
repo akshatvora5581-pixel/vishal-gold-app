@@ -14,24 +14,29 @@ dependencies:
   provider: ^6.1.1
   
   # Backend & Auth - Firebase
-  firebase_core: ^3.6.0
-  firebase_auth: ^5.3.1
-  cloud_firestore: ^5.4.4
-  firebase_storage: ^12.3.4
+  firebase_core: ^4.4.0
+  firebase_auth: ^6.1.4
+  cloud_firestore: ^6.1.1
+  firebase_storage: ^13.0.6
+  firebase_messaging: ^16.1.1
+  flutter_local_notifications: ^18.0.0
   
   # UI Components
   cached_network_image: ^3.3.0
   carousel_slider: ^5.1.1
   flutter_svg: ^2.0.9
+  screenshot: ^3.0.0
+  share_plus: ^10.1.0
   
   # Image Handling
-  image_picker: ^1.0.4
+  image_picker: ^1.2.1
   
   # Utilities
   intl: ^0.20.2
   uuid: ^4.2.1
   flutter_secure_storage: ^10.0.0
-  shared_preferences: ^2.3.3
+  shared_preferences: ^2.5.4
+  crypto: ^3.0.6
   
   # Additional UI
   shimmer: ^3.0.0
@@ -39,11 +44,18 @@ dependencies:
   google_fonts: ^8.0.0
   url_launcher: ^6.3.2
   flutter_staggered_animations: ^1.1.1
+  fl_chart: ^1.1.1
+  firebase_app_check: ^0.4.1+4
+  font_awesome_flutter: ^10.12.0
+  firebase_analytics: ^12.1.2
+  local_auth: ^3.0.1
+  path_provider: ^2.1.5
 
 dev_dependencies:
   flutter_test:
     sdk: flutter
   flutter_lints: ^6.0.0
+  flutter_launcher_icons: ^0.14.3
 
 flutter:
   uses-material-design: true
@@ -52,3 +64,11 @@ flutter:
     - assets/
     - assets/images/
     - assets/icons/
+
+flutter_launcher_icons:
+  android: "ic_launcher"
+  ios: true
+  image_path: "assets/logo_dark.png"
+  min_sdk_android: 21
+  adaptive_icon_background: "#1A1A2E"
+  adaptive_icon_foreground: "assets/logo_dark.png"

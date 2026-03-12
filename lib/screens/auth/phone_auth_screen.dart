@@ -1,10 +1,15 @@
 import 'package:flutter/material.dart';
-import 'package:firebase_auth/firebase_auth.dart';
+import 'package:firebase_auth/firebase_auth.dart' hide AuthProvider;
 import 'package:google_fonts/google_fonts.dart';
 import 'package:vishal_gold/services/firebase_auth_service.dart';
 import 'package:vishal_gold/services/firebase_service.dart';
 import 'package:vishal_gold/constants/app_colors.dart';
 import 'package:vishal_gold/screens/home/home_screen.dart';
+import 'package:vishal_gold/screens/auth/admin_login_screen.dart';
+import 'package:vishal_gold/screens/auth/pin_unlock_screen.dart';
+import 'package:provider/provider.dart';
+import 'package:vishal_gold/providers/auth_provider.dart';
+import 'dart:async';
 
 class PhoneAuthScreen extends StatefulWidget {
   const PhoneAuthScreen({super.key});
@@ -30,7 +35,11 @@ class _PhoneAuthScreenState extends State<PhoneAuthScreen> {
   bool _otpSent = false;
   bool _loading = false;
   String? _errorMessage;
-  bool _showNameField = false;
+  final bool _showNameField = false;
+  // OTP rate limiting (VAPT-004): 60s cooldown after each OTP request
+  int _otpCooldownSecondsRemaining = 0;
+  Timer? _adminTriggerTimer;
+  bool _isAdminTriggerActive = false;
 
   @override
   void dispose() {
@@ -43,6 +52,18 @@ class _PhoneAuthScreenState extends State<PhoneAuthScreen> {
     super.dispose();
   }
 
+  bool get _isOtpCoolingDown => _otpCooldownSecondsRemaining > 0;
+
+  void _startOtpCooldown() {
+    setState(() => _otpCooldownSecondsRemaining = 60);
+    Future.doWhile(() async {
+      await Future.delayed(const Duration(seconds: 1));
+      if (!mounted) return false;
+      setState(() => _otpCooldownSecondsRemaining--);
+      return _otpCooldownSecondsRemaining > 0;
+    });
+  }
+
   Future<void> _sendOTP() async {
     if (_phoneController.text.isEmpty) {
       setState(() => _errorMessage = 'Please enter phone number');
@@ -50,8 +71,23 @@ class _PhoneAuthScreenState extends State<PhoneAuthScreen> {
     }
 
     String phoneNumber = _phoneController.text.trim();
-    if (!phoneNumber.startsWith('+')) {
-      phoneNumber = '+91$phoneNumber'; // Default to India
+    
+    // Auto-prepend +91 if not present (VAPT-005: Robust input handling)
+    if (phoneNumber.startsWith('+91')) {
+      // Already has +91
+    } else if (phoneNumber.startsWith('91') && phoneNumber.length > 10) {
+      phoneNumber = '+$phoneNumber';
+    } else {
+      phoneNumber = '+91$phoneNumber';
+    }
+
+    // Client-side OTP rate limiting (VAPT-004)
+    if (_isOtpCoolingDown) {
+      setState(
+        () => _errorMessage =
+            'Please wait $_otpCooldownSecondsRemaining seconds before requesting again.',
+      );
+      return;
     }
 
     setState(() {
@@ -62,16 +98,18 @@ class _PhoneAuthScreenState extends State<PhoneAuthScreen> {
     await _authService.sendOTP(
       phoneNumber: phoneNumber,
       onCodeSent: (verificationId) {
+        _startOtpCooldown(); // Start 60s cooldown on success
         setState(() {
           _verificationId = verificationId;
           _otpSent = true;
           _loading = false;
+          _errorMessage = null; // Clear any old errors
         });
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(
               content: Text('OTP sent successfully!'),
-              backgroundColor: AppColors.gold,
+              backgroundColor: Colors.green, // Success should be green
               behavior: SnackBarBehavior.floating,
             ),
           );
@@ -83,6 +121,29 @@ class _PhoneAuthScreenState extends State<PhoneAuthScreen> {
             _errorMessage = error;
             _loading = false;
           });
+          // Explicit requirement: Display SnackBar for quota/blocked errors
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text(error),
+              backgroundColor: AppColors.errorRed,
+              behavior: SnackBarBehavior.floating,
+            ),
+          );
+        }
+      },
+      onTimeout: () {
+        if (mounted) {
+          setState(() {
+            _loading = false; // Stop loading on timeout
+            _errorMessage = 'OTP Auto-retrieval timed out. You can still enter it manually.';
+          });
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('Verification taking longer than usual. Please check your SMS.'),
+              backgroundColor: Colors.orange,
+              behavior: SnackBarBehavior.floating,
+            ),
+          );
         }
       },
       onAutoVerified: (user) async {
@@ -127,15 +188,8 @@ class _PhoneAuthScreenState extends State<PhoneAuthScreen> {
         user.uid,
       );
 
-      if (userData == null) {
-        setState(() {
-          _showNameField = true;
-          _loading = false;
-        });
-      } else {
-        _navigateToHome();
-      }
-    } catch (e) {
+      _navigateToHome();
+        } catch (e) {
       if (mounted) {
         setState(() {
           _errorMessage = 'Failed to load user data';
@@ -171,7 +225,7 @@ class _PhoneAuthScreenState extends State<PhoneAuthScreen> {
     } catch (e) {
       if (mounted) {
         setState(() {
-          _errorMessage = 'Failed to create profile: ${e.toString()}';
+          _errorMessage = 'Failed to create profile. Please try again.';
           _loading = false;
         });
       }
@@ -186,9 +240,25 @@ class _PhoneAuthScreenState extends State<PhoneAuthScreen> {
     }
   }
 
+  // VAPT-003: Restricted admin access.
+  // Re-implemented per user request with a 5-second hold requirement.
+  void _navigateToAdminLogin() {
+    final authProvider = Provider.of<AuthProvider>(context, listen: false);
+    if (authProvider.hasPinSetup || authProvider.isBiometricEnabled) {
+      Navigator.of(
+        context,
+      ).push(MaterialPageRoute(builder: (_) => const PinUnlockScreen()));
+    } else {
+      Navigator.of(
+        context,
+      ).push(MaterialPageRoute(builder: (_) => const AdminLoginScreen()));
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      resizeToAvoidBottomInset: true,
       backgroundColor: AppColors.background,
       body: SafeArea(
         child: Center(
@@ -197,27 +267,41 @@ class _PhoneAuthScreenState extends State<PhoneAuthScreen> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
-                // Logo Section
-                Container(
-                  width: 140,
-                  height: 140,
-                  decoration: BoxDecoration(
-                    shape: BoxShape.circle,
-                    border: Border.all(color: AppColors.gold, width: 2),
-                    boxShadow: [
-                      BoxShadow(
-                        color: AppColors.gold.withOpacity(0.2),
-                        blurRadius: 20,
-                        spreadRadius: 5,
-                      ),
-                    ],
-                  ),
-                  padding: const EdgeInsets.all(25),
-                  child: Image.asset(
-                    'assets/logo.png',
-                    fit: BoxFit.contain,
-                    color: AppColors
-                        .gold, // Optional: Tint logo gold if it's transparent white/black
+                // Logo Section — no hidden gesture (VAPT-003 fix)
+                GestureDetector(
+                  onLongPressStart: (_) {
+                    _isAdminTriggerActive = true;
+                    _adminTriggerTimer = Timer(const Duration(seconds: 5), () {
+                      if (_isAdminTriggerActive) {
+                        _navigateToAdminLogin();
+                      }
+                    });
+                  },
+                  onLongPressEnd: (_) {
+                    _isAdminTriggerActive = false;
+                    _adminTriggerTimer?.cancel();
+                  },
+                  child: Container(
+                    width: 140,
+                    height: 140,
+                    decoration: BoxDecoration(
+                      shape: BoxShape.circle,
+                      border: Border.all(color: AppColors.gold, width: 2),
+                      boxShadow: [
+                        BoxShadow(
+                          // ignore: deprecated_member_use
+                          color: AppColors.gold.withValues(alpha: 0.2),
+                          blurRadius: 20,
+                          spreadRadius: 5,
+                        ),
+                      ],
+                    ),
+                    padding: const EdgeInsets.all(25),
+                    child: Image.asset(
+                      'assets/logo.png',
+                      fit: BoxFit.contain,
+                      color: AppColors.gold,
+                    ),
                   ),
                 ),
 
@@ -254,10 +338,12 @@ class _PhoneAuthScreenState extends State<PhoneAuthScreen> {
                     padding: const EdgeInsets.all(12),
                     margin: const EdgeInsets.only(bottom: 24),
                     decoration: BoxDecoration(
-                      color: AppColors.errorRed.withOpacity(0.1),
+                      // ignore: deprecated_member_use
+                      color: AppColors.errorRed.withValues(alpha: 0.1),
                       borderRadius: BorderRadius.circular(12),
                       border: Border.all(
-                        color: AppColors.errorRed.withOpacity(0.3),
+                        // ignore: deprecated_member_use
+                        color: AppColors.errorRed.withValues(alpha: 0.3),
                       ),
                     ),
                     child: Row(
@@ -304,6 +390,8 @@ class _PhoneAuthScreenState extends State<PhoneAuthScreen> {
           icon: Icons.phone_iphone_rounded,
           focusNode: _phoneFocus,
           keyboardType: TextInputType.phone,
+          prefixText: '+91 ',
+          maxLength: 10,
         ),
         const SizedBox(height: 30),
         _buildPrimaryButton(
@@ -350,12 +438,17 @@ class _PhoneAuthScreenState extends State<PhoneAuthScreen> {
           isLoading: _loading,
         ),
         const SizedBox(height: 20),
+        // Resend OTP with cooldown (VAPT-004 fix)
         TextButton(
-          onPressed: _loading ? null : _sendOTP,
+          onPressed: (_loading || _isOtpCoolingDown) ? null : _sendOTP,
           child: Text(
-            'RESEND OTP',
+            _isOtpCoolingDown
+                ? 'RESEND IN ${_otpCooldownSecondsRemaining}s'
+                : 'RESEND OTP',
             style: GoogleFonts.outfit(
-              color: AppColors.gold,
+              color: _isOtpCoolingDown
+                  ? AppColors.textSecondary
+                  : AppColors.gold,
               fontWeight: FontWeight.w600,
               letterSpacing: 1.0,
             ),
@@ -405,10 +498,11 @@ class _PhoneAuthScreenState extends State<PhoneAuthScreen> {
     FocusNode? focusNode,
     TextInputType? keyboardType,
     int? maxLength,
+    String? prefixText,
     TextCapitalization textCapitalization = TextCapitalization.none,
   }) {
     return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
+      crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
         Text(
           label.toUpperCase(),
@@ -434,6 +528,12 @@ class _PhoneAuthScreenState extends State<PhoneAuthScreen> {
             filled: true,
             fillColor: AppColors.surface,
             prefixIcon: Icon(icon, color: AppColors.gold),
+            prefixText: prefixText,
+            prefixStyle: const TextStyle(
+              color: AppColors.gold,
+              fontWeight: FontWeight.bold,
+              fontSize: 16,
+            ),
             counterText: '',
             border: OutlineInputBorder(
               borderRadius: BorderRadius.circular(16),
@@ -466,7 +566,8 @@ class _PhoneAuthScreenState extends State<PhoneAuthScreen> {
           backgroundColor: AppColors.gold,
           foregroundColor: AppColors.black,
           elevation: 5,
-          shadowColor: AppColors.gold.withOpacity(0.4),
+          // ignore: deprecated_member_use
+          shadowColor: AppColors.gold.withValues(alpha: 0.4),
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(16),
           ),

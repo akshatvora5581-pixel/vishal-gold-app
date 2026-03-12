@@ -1,4 +1,3 @@
-import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:vishal_gold/constants/app_colors.dart';
 
@@ -18,35 +17,25 @@ class CustomBottomNavBar extends StatelessWidget {
       margin: const EdgeInsets.fromLTRB(20, 0, 20, 20),
       height: 70,
       decoration: BoxDecoration(
-        color: AppColors.surface.withOpacity(0.8),
+        color: AppColors.surface.withValues(alpha: 0.8),
         borderRadius: BorderRadius.circular(35),
-        border: Border.all(color: AppColors.cardBorder.withOpacity(0.5)),
+        border: Border.all(color: AppColors.cardBorder.withValues(alpha: 0.5)),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.3),
+            color: Colors.black.withValues(alpha: 0.3),
             blurRadius: 20,
             offset: const Offset(0, 10),
           ),
         ],
       ),
-      child: ClipRRect(
-        borderRadius: BorderRadius.circular(35),
-        child: BackdropFilter(
-          filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
-          child: Row(
-            mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-            children: [
-              _buildNavItem(0, Icons.home_outlined, Icons.home),
-              _buildNavItem(1, Icons.history_outlined, Icons.history),
-              _buildNavItem(
-                2,
-                Icons.notifications_outlined,
-                Icons.notifications,
-              ),
-              _buildNavItem(3, Icons.person_outline, Icons.person),
-            ],
-          ),
-        ),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+        children: [
+          _buildNavItem(0, Icons.home_outlined, Icons.home),
+          _buildNavItem(1, Icons.history_outlined, Icons.history),
+          _buildNavItem(2, Icons.notifications_outlined, Icons.notifications),
+          _buildNavItem(3, Icons.person_outline, Icons.person),
+        ],
       ),
     );
   }

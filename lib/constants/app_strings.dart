@@ -15,13 +15,6 @@ class AppStrings {
   static const String dontHaveAccount = "Don't have an account?";
   static const String alreadyHaveAccount = "Already have an account?";
 
-  // Role Selection
-  static const String selectRole = 'Select Your Role';
-  static const String wholesaler = 'Wholesaler';
-  static const String retailer = 'Retailer';
-  static const String wholesalerDesc = 'Bulk orders & uploads';
-  static const String retailerDesc = 'Browse & order designs';
-
   // Company Details
   static const String companyDetails = 'Company Information';
   static const String companyName = 'Company Name';
