@@ -48,7 +48,7 @@ class WhatsAppService {
         }).join('\n')}';
 
     // Technical Fix: Use Uri.https to handle encoding properly
-    final Uri uri = Uri.https('wa.me', '/919510687981', {'text': message});
+    final Uri uri = Uri.https('wa.me', '/919909280997', {'text': message});
 
     try {
       if (await canLaunchUrl(uri)) {

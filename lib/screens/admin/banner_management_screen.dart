@@ -732,7 +732,7 @@ class _AddEditBannerSheetState extends State<_AddEditBannerSheet> {
         const SizedBox(height: 8),
         DropdownButtonFormField<String>(
           isExpanded: true,
-          value: value,
+          initialValue: value,
           items: items,
           onChanged: onChanged,
           dropdownColor: AppColors.surface,

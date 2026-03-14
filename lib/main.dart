@@ -5,6 +5,7 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_app_check/firebase_app_check.dart';
 import 'package:firebase_analytics/firebase_analytics.dart';
+import 'package:firebase_auth/firebase_auth.dart' hide AuthProvider;
 import 'firebase_options.dart';
 import 'package:vishal_gold/services/local_storage_service.dart';
 import 'package:vishal_gold/constants/app_colors.dart';
@@ -42,6 +43,10 @@ void main() async {
           : const AndroidPlayIntegrityProvider(),
       providerApple: const AppleDeviceCheckProvider(),
     );
+
+    if (kDebugMode) {
+      await FirebaseAuth.instance.setSettings(appVerificationDisabledForTesting: true);
+    }
 
     // Initialize FCM and inject the navigator key for deep-link navigation
     final fcmService = FCMService();

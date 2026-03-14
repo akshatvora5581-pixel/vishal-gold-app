@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart' hide AuthProvider;
-import 'package:vishal_gold/services/firebase_service.dart';
+
 import 'package:provider/provider.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:cached_network_image/cached_network_image.dart';
@@ -8,6 +8,7 @@ import 'package:vishal_gold/constants/app_colors.dart';
 import 'package:vishal_gold/providers/auth_provider.dart';
 import 'package:vishal_gold/screens/auth/phone_auth_screen.dart';
 import 'package:vishal_gold/screens/order/order_history_screen.dart';
+import 'package:vishal_gold/screens/favourite/favourite_products_screen.dart';
 import 'package:vishal_gold/screens/info/privacy_policy_screen.dart';
 import 'package:vishal_gold/screens/profile/edit_profile_screen.dart';
 import 'package:vishal_gold/screens/profile/quick_login_settings_screen.dart';
@@ -15,9 +16,9 @@ import 'package:vishal_gold/screens/settings/language_settings_screen.dart';
 import 'package:vishal_gold/screens/settings/notification_settings_screen.dart';
 import 'package:vishal_gold/screens/settings/security_center_screen.dart';
 import 'package:vishal_gold/screens/settings/storage_settings_screen.dart';
-import 'package:vishal_gold/screens/settings/support_hub_screen.dart';
-import 'package:vishal_gold/services/local_storage_service.dart';
+
 import 'package:vishal_gold/screens/dev/database_cleanup_screen.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 class ProfileScreen extends StatefulWidget {
   const ProfileScreen({super.key});
@@ -27,22 +28,174 @@ class ProfileScreen extends StatefulWidget {
 }
 
 class _ProfileScreenState extends State<ProfileScreen> {
-  String _localUserName = '';
   int _devTapCount = 0;
   DateTime? _lastTapTime;
-  final FirebaseService _firebaseService = FirebaseService();
+
 
   @override
   void initState() {
     super.initState();
-    _loadLocalName();
   }
 
-  Future<void> _loadLocalName() async {
-    final name = await LocalStorageService.getUserName();
-    if (mounted) {
-      setState(() => _localUserName = name ?? '');
+  Future<void> _launchURL(String url, {String? fallbackUrl}) async {
+    try {
+      final Uri uri = Uri.parse(url);
+      if (await canLaunchUrl(uri)) {
+        await launchUrl(uri, mode: LaunchMode.externalApplication);
+      } else if (fallbackUrl != null) {
+        final Uri fallbackUri = Uri.parse(fallbackUrl);
+        if (await canLaunchUrl(fallbackUri)) {
+          await launchUrl(fallbackUri, mode: LaunchMode.externalApplication);
+        } else {
+          throw 'Could not launch $url';
+        }
+      } else {
+        throw 'Could not launch $url';
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(
+              'Could not open the requested application.',
+              style: GoogleFonts.outfit(color: AppColors.white),
+            ),
+            backgroundColor: AppColors.errorRed,
+          ),
+        );
+      }
     }
+  }
+
+  void _showSupportBottomSheet(BuildContext context) {
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: AppColors.surface,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.only(
+          topLeft: Radius.circular(24),
+          topRight: Radius.circular(24),
+        ),
+      ),
+      builder: (context) {
+        return Container(
+          padding: const EdgeInsets.symmetric(vertical: 24, horizontal: 16),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Container(
+                width: 40,
+                height: 4,
+                margin: const EdgeInsets.only(bottom: 24),
+                decoration: BoxDecoration(
+                  color: AppColors.grey.withValues(alpha: 0.3),
+                  borderRadius: BorderRadius.circular(2),
+                ),
+              ),
+              Text(
+                'CONTACT US',
+                style: GoogleFonts.playfairDisplay(
+                  fontSize: 20,
+                  fontWeight: FontWeight.bold,
+                  color: AppColors.gold,
+                  letterSpacing: 1.2,
+                ),
+              ),
+              const SizedBox(height: 24),
+              _buildSupportTile(
+                icon: Icons.chat_outlined,
+                title: 'Chat on WhatsApp',
+                subtitle: '+91 9909280997',
+                onTap: () {
+                  Navigator.pop(context);
+                  _launchURL(
+                    'whatsapp://send?phone=+919909280997',
+                    fallbackUrl: 'https://wa.me/919909280997',
+                  );
+                },
+              ),
+              const SizedBox(height: 12),
+              _buildSupportTile(
+                icon: Icons.phone_outlined,
+                title: 'Call Us',
+                subtitle: '+91 9909280997',
+                onTap: () {
+                  Navigator.pop(context);
+                  _launchURL('tel:+919909280997');
+                },
+              ),
+              const SizedBox(height: 12),
+              _buildSupportTile(
+                icon: Icons.mail_outline,
+                title: 'Email Us',
+                subtitle: 'vishalgoldapp@gmail.com',
+                onTap: () {
+                  Navigator.pop(context);
+                  _launchURL('mailto:vishalgoldapp@gmail.com');
+                },
+              ),
+              const SizedBox(height: 16),
+            ],
+          ),
+        );
+      },
+    );
+  }
+
+  Widget _buildSupportTile({
+    required IconData icon,
+    required String title,
+    required String subtitle,
+    required VoidCallback onTap,
+  }) {
+    return InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(16),
+      child: Container(
+        padding: const EdgeInsets.all(16),
+        decoration: BoxDecoration(
+          color: AppColors.background,
+          borderRadius: BorderRadius.circular(16),
+          border: Border.all(color: AppColors.grey.withValues(alpha: 0.1)),
+        ),
+        child: Row(
+          children: [
+            Container(
+              padding: const EdgeInsets.all(10),
+              decoration: BoxDecoration(
+                color: AppColors.gold.withValues(alpha: 0.1),
+                shape: BoxShape.circle,
+              ),
+              child: Icon(icon, color: AppColors.gold, size: 24),
+            ),
+            const SizedBox(width: 16),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    title,
+                    style: GoogleFonts.outfit(
+                      color: AppColors.white,
+                      fontSize: 16,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                  Text(
+                    subtitle,
+                    style: GoogleFonts.outfit(
+                      color: AppColors.grey,
+                      fontSize: 14,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            const Icon(Icons.arrow_forward_ios, color: AppColors.grey, size: 16),
+          ],
+        ),
+      ),
+    );
   }
 
   Future<void> _logout(BuildContext context) async {
@@ -122,35 +275,20 @@ class _ProfileScreenState extends State<ProfileScreen> {
 
     return Scaffold(
       backgroundColor: AppColors.background,
-      body: FutureBuilder<Map<String, dynamic>?>(
-        future: _firebaseService.getUserProfile(user.uid),
-        builder: (context, snapshot) {
-          // 1. Handling Loading State
-          if (snapshot.connectionState == ConnectionState.waiting) {
+      body: Builder(
+        builder: (context) {
+          if (authProvider.isLoading && authProvider.userProfile == null) {
             return const Center(
               child: CircularProgressIndicator(color: AppColors.gold),
             );
           }
 
-          // 2. Handling Error State
-          if (snapshot.hasError) {
-            return _buildErrorUI(
-              'Failed to load profile',
-              snapshot.error.toString(),
-              onRetry: () => setState(() {}),
-            );
-          }
-
-          // 3. Handling Missing Data (Default Profile)
-          if (!snapshot.hasData || snapshot.data == null) {
+          if (authProvider.userProfile == null) {
             return _buildDefaultProfileUI(user);
           }
 
-          final data = snapshot.data!;
-          // Use null-aware operators for all fields
-          final String name = _localUserName.isNotEmpty
-              ? _localUserName
-              : (data['fullName'] as String? ?? data['name'] as String? ?? 'Guest User');
+          final data = authProvider.userProfile!;
+          final String name = data['fullName'] as String? ?? data['name'] as String? ?? 'Guest User';
           final String email = data['email'] as String? ?? user.email ?? 'N/A';
           final String phone = data['phone'] as String? ?? user.phoneNumber ?? 'N/A';
           final String role = (data['role'] as String? ?? 'User').toUpperCase();
@@ -256,7 +394,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                                 MaterialPageRoute(
                                   builder: (_) => const EditProfileScreen(),
                                 ),
-                              ).then((_) => _loadLocalName());
+                              );
                             },
                             child: Container(
                               padding: const EdgeInsets.all(6),
@@ -348,6 +486,17 @@ class _ProfileScreenState extends State<ProfileScreen> {
                             ),
                           ),
                         ),
+                        // Added Favourite Product Option
+                        _MenuRow(
+                          icon: Icons.favorite_border,
+                          title: 'Favourite Product',
+                          onTap: () => Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (_) => const FavouriteProductsScreen(),
+                            ),
+                          ),
+                        ),
                         if (role == 'ADMIN' || role == 'SUPER_ADMIN')
                           _MenuRow(
                             icon: Icons.security,
@@ -411,12 +560,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                         _MenuRow(
                           icon: Icons.support_agent_outlined,
                           title: 'Support Hub',
-                          onTap: () => Navigator.push(
-                            context,
-                            MaterialPageRoute(
-                              builder: (_) => const SupportHubScreen(),
-                            ),
-                          ),
+                          onTap: () => _showSupportBottomSheet(context),
                         ),
                         _MenuRow(
                           icon: Icons.privacy_tip_outlined,
@@ -541,7 +685,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 Navigator.push(
                   context,
                   MaterialPageRoute(builder: (_) => const EditProfileScreen()),
-                ).then((_) => setState(() {}));
+                );
               },
               style: ElevatedButton.styleFrom(
                 backgroundColor: AppColors.gold,

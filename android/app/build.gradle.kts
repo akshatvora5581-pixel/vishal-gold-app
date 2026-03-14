@@ -15,6 +15,7 @@ if (keyPropertiesFile.exists()) {
     keyProperties.load(FileInputStream(keyPropertiesFile))
 }
 
+
 android {
     namespace = "com.vishalgoldapp"
     compileSdk = flutter.compileSdkVersion

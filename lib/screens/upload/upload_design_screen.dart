@@ -7,6 +7,7 @@ import 'package:vishal_gold/providers/auth_provider.dart';
 import 'package:vishal_gold/providers/product_provider.dart';
 import 'package:vishal_gold/services/firebase_service.dart';
 import 'package:vishal_gold/services/whatsapp_service.dart';
+import 'package:vishal_gold/models/notification.dart';
 
 class UploadDesignScreen extends StatefulWidget {
   const UploadDesignScreen({super.key});
@@ -114,7 +115,7 @@ class _UploadDesignScreenState extends State<UploadDesignScreen> {
       );
 
       // 2. Save product metadata to Firestore
-      await productProvider.uploadProduct(
+      final productId = await productProvider.uploadProduct(
         tagNumber: _tagController.text.trim(),
         category: _selectedCategory.trim(),
         subcategory: _selectedSubcategory.trim(),
@@ -129,23 +130,53 @@ class _UploadDesignScreenState extends State<UploadDesignScreen> {
         description: _descriptionController.text.trim().isEmpty
             ? null
             : _descriptionController.text.trim(),
-        status: 'published',
+        status: 'order_design', // Use 'order_design' to avoid automatic broadcast to all users
       );
 
       if (mounted) {
+        // 3. Send Explicit Admin Notification
+        final String customerName = authProvider.displayName;
+        final String customerPhone = authProvider.phoneNumber ?? 'No Phone';
+
+        try {
+          await _firebaseService.sendNotificationRequest(
+            notificationData: {
+              'title': 'New Design Uploaded!',
+              'body': 'A new design was uploaded by $customerName for review/order.',
+              'target': 'admins',
+              'type': 'design_upload',
+            },
+            performedBy: authProvider.currentUser?.uid ?? 'system',
+          );
+
+          await _firebaseService.createDbNotification(
+            AppNotification(
+              id: '', // Firestore will auto-generate document ID
+              userId: 'admin',
+              title: 'New Design Uploaded!',
+              message: 'A new design was uploaded by $customerName ($customerPhone).',
+              type: 'design_upload',
+              relatedId: productId ?? '',
+              createdAt: DateTime.now(),
+            ),
+          );
+        } catch (e) {
+          debugPrint('Failed to send admin push notification: $e');
+        }
+
+        if (!mounted) return;
+
         // Success Handling
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
-            content: Text('✅ Product uploaded successfully!'),
+            content: Text('✅ Design uploaded successfully!'),
             backgroundColor: Colors.green,
             duration: Duration(seconds: 3),
           ),
         );
 
-        // 3. Send WhatsApp Notification
-        final String customerName = authProvider.displayName;
-        final String customerPhone = authProvider.phoneNumber ?? 'No Phone';
-
+        // 4. Send WhatsApp Notification
+        if (!mounted) return;
         await WhatsAppService.notifyAdmin(
           context: context,
           customerName: customerName,

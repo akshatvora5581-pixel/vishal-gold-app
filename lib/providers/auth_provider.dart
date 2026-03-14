@@ -110,14 +110,29 @@ class AuthProvider with ChangeNotifier {
     try {
       _userProfile = await _firebaseService.getUserProfile(_currentUser!.uid);
 
-      // If no profile found in Firestore, create a basic one from Firebase Auth
-      _userProfile ??= {
-        'uid': _currentUser!.uid,
-        'name': _currentUser!.displayName ?? 'User',
-        'email': _currentUser!.email ?? '',
-        'phone': _currentUser!.phoneNumber ?? '',
-        'role': _userRole ?? 'retailer',
-      };
+      if (_userProfile == null) {
+        final localName = await LocalStorageService.getUserName();
+        final localPhone = await LocalStorageService.getUserPhone();
+        _userProfile = {
+          'uid': _currentUser!.uid,
+          'fullName': localName ?? _currentUser!.displayName ?? 'User',
+          'name': localName ?? _currentUser!.displayName ?? 'User',
+          'email': _currentUser!.email ?? '',
+          'phone': localPhone ?? _currentUser!.phoneNumber ?? '',
+          'role': _userRole ?? 'retailer',
+        };
+      } else {
+        if (_userProfile!['fullName'] == null && _userProfile!['name'] == null) {
+          final localName = await LocalStorageService.getUserName();
+          if (localName != null && localName.isNotEmpty) {
+            _userProfile!['fullName'] = localName;
+            _userProfile!['name'] = localName;
+          } else {
+            _userProfile!['fullName'] = _currentUser!.displayName ?? 'User';
+            _userProfile!['name'] = _currentUser!.displayName ?? 'User';
+          }
+        }
+      }
 
       // Update FCM token
       await FCMService().updateUserToken(
@@ -361,6 +376,13 @@ class AuthProvider with ChangeNotifier {
         userId: _currentUser!.uid,
         updates: updates,
       );
+
+      if (updates.containsKey('fullName') || updates.containsKey('name')) {
+        final newName = updates['fullName'] ?? updates['name'];
+        if (newName != null && newName.toString().isNotEmpty) {
+          await LocalStorageService.saveUserName(newName.toString());
+        }
+      }
 
       // Reload profile
       await _loadUserProfile();

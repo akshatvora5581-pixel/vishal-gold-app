@@ -45,7 +45,7 @@ dependencies:
   url_launcher: ^6.3.2
   flutter_staggered_animations: ^1.1.1
   fl_chart: ^1.1.1
-  firebase_app_check: ^0.4.1+4
+  firebase_app_check: ^0.4.1+5
   font_awesome_flutter: ^10.12.0
   firebase_analytics: ^12.1.2
   local_auth: ^3.0.1
