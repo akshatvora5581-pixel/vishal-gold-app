@@ -28,7 +28,7 @@ class _InformationScreenState extends State<InformationScreen> {
     ),
     OnboardingData(
       title: 'DHARUKAWALA TRUST',
-      description: 'Experience the legacy of Vishal Gold, where quality meets tradition.',
+      description: 'Experience the legacy of Vishal Jewellers, where quality meets tradition.',
       image: 'assets/logo.png',
     ),
   ];

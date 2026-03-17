@@ -57,7 +57,7 @@ class _CRMHubScreenState extends State<CRMHubScreen> {
 
   void _sendWhatsApp(String phone, String name) async {
     final message =
-        'Hello $name, we missed you at Vishal Gold! Check out our latest designs.';
+        'Hello $name, we missed you at Vishal Jewellers! Check out our latest designs.';
     final url = 'https://wa.me/$phone?text=${Uri.encodeComponent(message)}';
     if (await canLaunchUrl(Uri.parse(url))) {
       await launchUrl(Uri.parse(url), mode: LaunchMode.externalApplication);

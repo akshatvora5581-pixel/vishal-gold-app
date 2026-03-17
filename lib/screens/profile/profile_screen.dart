@@ -12,7 +12,7 @@ import 'package:vishal_gold/screens/favourite/favourite_products_screen.dart';
 import 'package:vishal_gold/screens/info/privacy_policy_screen.dart';
 import 'package:vishal_gold/screens/profile/edit_profile_screen.dart';
 import 'package:vishal_gold/screens/profile/quick_login_settings_screen.dart';
-import 'package:vishal_gold/screens/settings/language_settings_screen.dart';
+
 import 'package:vishal_gold/screens/settings/notification_settings_screen.dart';
 import 'package:vishal_gold/screens/settings/security_center_screen.dart';
 import 'package:vishal_gold/screens/settings/storage_settings_screen.dart';
@@ -534,16 +534,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                             ),
                           ),
 
-                        _MenuRow(
-                          icon: Icons.language_outlined,
-                          title: 'App Language',
-                          onTap: () => Navigator.push(
-                            context,
-                            MaterialPageRoute(
-                              builder: (_) => const LanguageSettingsScreen(),
-                            ),
-                          ),
-                        ),
+
 
                         if (role == 'ADMIN' || role == 'SUPER_ADMIN')
                           _MenuRow(

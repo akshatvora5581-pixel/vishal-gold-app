@@ -1,4 +1,4 @@
-# 🏆 Vishal Gold - Jewelry Design & Ordering Platform
+# 🏆 Vishal Jewellers - Jewelry Design & Ordering Platform
 
 A premium Flutter application for jewelry wholesalers and retailers to browse, order, and upload gold jewelry designs. Built with Flutter and Supabase.
 

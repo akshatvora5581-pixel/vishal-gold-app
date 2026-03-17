@@ -114,7 +114,7 @@ class _DesignToSocialScreenState extends State<DesignToSocialScreen>
       await file.writeAsBytes(imageBytes);
       await Share.shareXFiles([
         XFile(file.path),
-      ], text: '✨ Check out our $_selectedBadge collection at Vishal Gold!');
+      ], text: '✨ Check out our $_selectedBadge collection at Vishal Jewellers!');
     } catch (e) {
       debugPrint('Error sharing image: $e');
     } finally {
@@ -268,7 +268,7 @@ class _DesignToSocialScreenState extends State<DesignToSocialScreen>
                     borderRadius: BorderRadius.circular(20),
                   ),
                   child: Text(
-                    'Vishal Gold',
+                    'Vishal Jewellers',
                     style: GoogleFonts.playfairDisplay(
                       color: AppColors.gold,
                       fontSize: 12,

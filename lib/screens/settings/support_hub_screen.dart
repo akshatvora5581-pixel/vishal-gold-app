@@ -97,7 +97,7 @@ class SupportHubScreen extends StatelessWidget {
                   ),
                   const SizedBox(height: 4),
                   Text(
-                    '© 2026 Vishal Gold. All rights reserved.',
+                    '© 2026 Vishal Jewellers. All rights reserved.',
                     style: GoogleFonts.outfit(
                       color: AppColors.textTertiary,
                       fontSize: 12,

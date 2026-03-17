@@ -2071,7 +2071,7 @@ class FirebaseService {
       if (result.docs.isEmpty) {
         // Create a default super admin document
         await _firestore.collection(adminsCollection).add({
-          'full_name': 'Vishal Gold Admin',
+          'full_name': 'Vishal Jewellers Admin',
           'email': 'admin@vishalgold.com',
           'role': 'super',
           'is_active': true,

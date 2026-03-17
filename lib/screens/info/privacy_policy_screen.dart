@@ -27,7 +27,7 @@ class PrivacyPolicyScreen extends StatelessWidget {
           children: [
             _buildHeading('Privacy Policy'),
             _buildBody(
-              'Welcome to Vishal Gold. We are committed to protecting your personal information and your right to privacy. This Privacy Policy explains how we collect, use, and share information about you when you use our application.',
+              'Welcome to Vishal Jewellers. We are committed to protecting your personal information and your right to privacy. This Privacy Policy explains how we collect, use, and share information about you when you use our application.',
             ),
             _buildSubHeading('1. Information We Collect'),
             _buildBody(
@@ -63,7 +63,7 @@ class PrivacyPolicyScreen extends StatelessWidget {
             ),
             _buildSubHeading('9. Contact Us'),
             _buildBody(
-              'If you have any questions about this Privacy Policy, please contact us at:\n\nVishal Gold\nEmail: contact@vishalgold.com\n\nLast Updated: March 2026',
+              'If you have any questions about this Privacy Policy, please contact us at:\n\nVishal Jewellers\nEmail: contact@vishalgold.com\n\nLast Updated: March 2026',
             ),
           ],
         ),

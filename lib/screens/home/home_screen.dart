@@ -15,6 +15,7 @@ import 'package:vishal_gold/widgets/home/banner_carousel.dart';
 import 'package:vishal_gold/widgets/home/category_section.dart';
 import 'package:vishal_gold/models/category.dart' as app_models;
 import 'package:vishal_gold/services/firebase_service.dart';
+import 'package:vishal_gold/providers/wishlist_provider.dart';
 import 'package:vishal_gold/providers/preview_provider.dart';
 import 'package:vishal_gold/screens/search/global_search_screen.dart';
 import 'package:vishal_gold/utils/app_layout.dart';
@@ -40,18 +41,26 @@ class _HomeScreenState extends State<HomeScreen> {
       const NotificationsScreen(), // Notifications
       const ProfileScreen(),
     ];
-    _loadCart();
+    _initializeProviders();
   }
 
-  Future<void> _loadCart() async {
+  Future<void> _initializeProviders() async {
     final authProvider = Provider.of<AuthProvider>(context, listen: false);
     final cartProvider = Provider.of<CartProvider>(context, listen: false);
+    final wishlistProvider = Provider.of<WishlistProvider>(context, listen: false);
 
     if (authProvider.currentUser != null) {
-      await cartProvider.initialize(
-        authProvider.currentUser!.uid,
-        authProvider.isWholesaler,
-      );
+      // Parallelize initialization
+      await Future.wait([
+        cartProvider.initialize(
+          authProvider.currentUser!.uid,
+          authProvider.isWholesaler,
+        ),
+        wishlistProvider.initialize(
+          authProvider.currentUser!.uid,
+          authProvider.isWholesaler,
+        ),
+      ]);
     }
   }
 
@@ -67,7 +76,7 @@ class _HomeScreenState extends State<HomeScreen> {
       backgroundColor: AppColors.background,
       appBar: AppBar(
         title: Text(
-          'VISHAL GOLD',
+          'Vishal Jewellers',
           style: GoogleFonts.playfairDisplay(
             color: AppColors.gold,
             fontWeight: FontWeight.bold,
