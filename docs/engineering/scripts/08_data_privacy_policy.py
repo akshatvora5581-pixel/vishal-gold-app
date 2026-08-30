@@ -13,9 +13,9 @@ doc = new_document()
 
 add_cover(doc,
     title    = "Data Privacy Policy",
-    subtitle = "Vishal Gold App — User Data Collection, Use & Protection Policy",
+    subtitle = "Vishal Jewelers App — User Data Collection, Use & Protection Policy",
     version  = "v1.0",
-    prepared_for = "Vishal Gold — All Users",
+    prepared_for = "Vishal Jewelers — All Users",
     prepared_by  = "Engineering Delivery Team"
 )
 
@@ -33,14 +33,14 @@ add_toc_placeholder(doc, [
 
 add_h1(doc, "1. Introduction & Scope")
 add_body(doc, (
-    "Vishal Gold operates the Vishal Gold mobile application (hereinafter referred to as 'the App'), "
+    "Vishal Jewelers operates the Vishal Jewelers mobile application (hereinafter referred to as 'the App'), "
     "a digital commerce platform for the gold and fine jewelry trade. This Data Privacy Policy "
     "describes the types of personal data we collect from users of the App, the purposes for which "
     "that data is used, and the measures we take to protect it. This policy applies to all users "
     "of the App, including Retailers, Wholesalers, and Administrators, regardless of location."
 ))
 add_body(doc, (
-    "By using the Vishal Gold App, you consent to the data practices described in this policy. "
+    "By using the Vishal Jewelers App, you consent to the data practices described in this policy. "
     "If you do not agree with any aspect of this policy, you should discontinue use of the App "
     "and contact us to request deletion of any data already collected."
 ))
@@ -48,7 +48,7 @@ add_body(doc, (
 add_h1(doc, "2. Data We Collect")
 add_h2(doc, "2.1 Data You Provide Directly")
 add_body(doc, (
-    "When you register and use the Vishal Gold App, you voluntarily provide certain information "
+    "When you register and use the Vishal Jewelers App, you voluntarily provide certain information "
     "that we require to deliver the service."
 ))
 add_table(doc,
@@ -83,13 +83,13 @@ add_table(doc,
 add_h2(doc, "2.3 Sample Order Data")
 add_body(doc, (
     "If you place a Sample Order, you may optionally provide a reference image. This image is "
-    "uploaded to a secured Firebase Storage bucket. It is used solely by the Vishal Gold team "
+    "uploaded to a secured Firebase Storage bucket. It is used solely by the Vishal Jewelers team "
     "to process your custom jewelry request and is not shared with any third party."
 ))
 
 add_h1(doc, "3. How We Use Your Data")
 add_body(doc, (
-    "Vishal Gold uses the personal data collected for the following specific and limited purposes."
+    "Vishal Jewelers uses the personal data collected for the following specific and limited purposes."
 ))
 add_numbered(doc, "Account Management: To create, maintain, and secure your user account.")
 add_numbered(doc, "Authentication: To verify your identity via OTP and provide secure access to the App.")
@@ -101,7 +101,7 @@ add_numbered(doc, "Security: To detect, investigate, and prevent fraudulent or u
 
 add_h1(doc, "4. Data Sharing & Third Parties")
 add_body(doc, (
-    "Vishal Gold does not sell, rent, or trade your personal data with third parties. We share "
+    "Vishal Jewelers does not sell, rent, or trade your personal data with third parties. We share "
     "data only with the following categories of service providers, strictly for the purposes "
     "of operating the App on your behalf."
 ))
@@ -146,7 +146,7 @@ add_body(doc, (
 
 add_h1(doc, "6. User Rights")
 add_body(doc, (
-    "You have the following rights with respect to your personal data held by Vishal Gold."
+    "You have the following rights with respect to your personal data held by Vishal Jewelers."
 ))
 add_table(doc,
     headers=["Right", "How to Exercise"],
@@ -170,7 +170,7 @@ add_body(doc, (
 
 add_h1(doc, "8. Changes to This Policy")
 add_body(doc, (
-    "Vishal Gold may update this Privacy Policy from time to time. When we make material changes, "
+    "Vishal Jewelers may update this Privacy Policy from time to time. When we make material changes, "
     "you will be notified via a push notification. The 'Version' and 'Date' on the cover page of "
     "this document will reflect the most recent update. Continued use of the App after a policy "
     "update constitutes acceptance of the revised policy."
@@ -179,10 +179,10 @@ add_body(doc, (
 add_h1(doc, "9. Contact Information")
 add_body(doc, (
     "For any queries, concerns, or requests related to this Privacy Policy or your personal data, "
-    "please contact the Vishal Gold Data Protection Representative at the following address. "
+    "please contact the Vishal Jewelers Data Protection Representative at the following address. "
     "We will respond to all valid requests within 30 business days."
 ))
-add_body(doc, "Contact Name: [VISHAL GOLD DATA PROTECTION OFFICER]")
+add_body(doc, "Contact Name: [VISHAL JEWELERS DATA PROTECTION OFFICER]")
 add_body(doc, "Email: [TO BE CONFIRMED BY CLIENT]")
 add_body(doc, "Phone: [TO BE CONFIRMED BY CLIENT]")
 add_body(doc, "Business Address: [TO BE CONFIRMED BY CLIENT]")

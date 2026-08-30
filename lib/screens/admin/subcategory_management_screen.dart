@@ -5,11 +5,11 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'dart:io';
 import 'package:image_picker/image_picker.dart';
 import 'package:provider/provider.dart';
-import 'package:vishal_gold/constants/app_colors.dart';
-import 'package:vishal_gold/models/category.dart';
-import 'package:vishal_gold/models/subcategory.dart';
-import 'package:vishal_gold/providers/auth_provider.dart';
-import 'package:vishal_gold/services/firebase_service.dart';
+import 'package:vishal_jewelers/constants/app_colors.dart';
+import 'package:vishal_jewelers/models/category.dart';
+import 'package:vishal_jewelers/models/subcategory.dart';
+import 'package:vishal_jewelers/providers/auth_provider.dart';
+import 'package:vishal_jewelers/services/firebase_service.dart';
 
 class SubcategoryManagementScreen extends StatefulWidget {
   final Category? category;
@@ -44,7 +44,7 @@ class _SubcategoryManagementScreenState
         ),
         actions: [
           IconButton(
-            icon: const Icon(Icons.add_circle_outline, color: AppColors.gold),
+            icon: Icon(Icons.add_circle_outline, color: AppColors.gold),
             onPressed: () => _openAddEditSubcategory(context),
           ),
         ],
@@ -59,7 +59,7 @@ class _SubcategoryManagementScreenState
             return Center(child: Text('Error: ${snapshot.error}'));
           }
           if (snapshot.connectionState == ConnectionState.waiting) {
-            return const Center(
+            return Center(
               child: CircularProgressIndicator(color: AppColors.gold),
             );
           }
@@ -70,7 +70,7 @@ class _SubcategoryManagementScreenState
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  const Icon(
+                  Icon(
                     Icons.category_outlined,
                     size: 64,
                     color: AppColors.textSecondary,
@@ -88,7 +88,7 @@ class _SubcategoryManagementScreenState
                     style: ElevatedButton.styleFrom(
                       backgroundColor: AppColors.gold,
                     ),
-                    child: const Text(
+                    child: Text(
                       'Add First Subcategory',
                       style: TextStyle(color: AppColors.black),
                     ),
@@ -134,9 +134,9 @@ class _SubcategoryManagementScreenState
                 ? CachedNetworkImage(
                     imageUrl: subcategory.imageUrl,
                     fit: BoxFit.cover,
-                    placeholder: (_, __) => Container(
+                    placeholder: (_, _ ) => Container(
                       color: AppColors.background,
-                      child: const Center(
+                      child: Center(
                         child: SizedBox(
                           width: 20,
                           height: 20,
@@ -147,9 +147,9 @@ class _SubcategoryManagementScreenState
                         ),
                       ),
                     ),
-                    errorWidget: (_, __, ___) => Container(
+                    errorWidget: (context, url, error) => Container(
                       color: AppColors.background,
-                      child: const Icon(
+                      child: Icon(
                         Icons.broken_image,
                         color: AppColors.textSecondary,
                         size: 24,
@@ -158,7 +158,7 @@ class _SubcategoryManagementScreenState
                   )
                 : Container(
                     color: AppColors.background,
-                    child: const Icon(
+                    child: Icon(
                       Icons.category_outlined,
                       color: AppColors.textSecondary,
                       size: 24,
@@ -320,9 +320,6 @@ class _SubcategoryManagementScreenState
     }
   }
 
-  ImageProvider _getImageProvider(String url) {
-    return CachedNetworkImageProvider(url);
-  }
 }
 
 class _AddEditSubcategorySheet extends StatefulWidget {
@@ -486,17 +483,17 @@ class _AddEditSubcategorySheetState extends State<_AddEditSubcategorySheet> {
             ),
             const SizedBox(height: 24),
             if (_fetchingCategories)
-              const LinearProgressIndicator(color: AppColors.gold)
+              LinearProgressIndicator(color: AppColors.gold)
             else
               DropdownButtonFormField<String>(
                 initialValue: (_categories.any((c) => c.id == _selectedCategoryId))
                     ? _selectedCategoryId
                     : null,
                 dropdownColor: AppColors.surface,
-                style: const TextStyle(color: AppColors.textPrimary),
+                style: TextStyle(color: AppColors.textPrimary),
                 decoration: InputDecoration(
                   labelText: 'Select Category',
-                  labelStyle: const TextStyle(color: AppColors.gold),
+                  labelStyle: TextStyle(color: AppColors.gold),
                   enabledBorder: UnderlineInputBorder(
                     borderSide: BorderSide(
                       color: AppColors.white.withValues(alpha: 0.3),
@@ -508,7 +505,7 @@ class _AddEditSubcategorySheetState extends State<_AddEditSubcategorySheet> {
                     value: c.id,
                     child: Text(
                       c.name,
-                      style: const TextStyle(color: AppColors.textPrimary),
+                      style: TextStyle(color: AppColors.textPrimary),
                     ),
                   );
                 }).toList(),
@@ -522,19 +519,19 @@ class _AddEditSubcategorySheetState extends State<_AddEditSubcategorySheet> {
               controller: _nameController,
               decoration: InputDecoration(
                 labelText: 'Subcategory Name',
-                labelStyle: const TextStyle(color: AppColors.gold),
+                labelStyle: TextStyle(color: AppColors.gold),
                 enabledBorder: UnderlineInputBorder(
                   borderSide: BorderSide(
                     color: AppColors.white.withValues(alpha: 0.3),
                   ),
                 ),
               ),
-              style: const TextStyle(color: AppColors.textPrimary),
+              style: TextStyle(color: AppColors.textPrimary),
               validator: (v) => v!.isEmpty ? 'Enter name' : null,
             ),
             const SizedBox(height: 16),
             // ── Banner Image Section ──
-            const Text(
+            Text(
               'Subcategory Banner Image',
               style: TextStyle(color: AppColors.gold, fontSize: 14),
             ),
@@ -583,16 +580,16 @@ class _AddEditSubcategorySheetState extends State<_AddEditSubcategorySheet> {
                             if (loadingProgress == null) return child;
                             return Container(
                               color: AppColors.background,
-                              child: const Center(
+                              child: Center(
                                 child: CircularProgressIndicator(
                                   color: AppColors.gold,
                                 ),
                               ),
                             );
                           },
-                          errorBuilder: (_, __, ___) => Container(
+                          errorBuilder: (context, error, stackTrace) => Container(
                             color: AppColors.background,
-                            child: const Center(
+                            child: Center(
                               child: Column(
                                 mainAxisSize: MainAxisSize.min,
                                 children: [
@@ -616,7 +613,7 @@ class _AddEditSubcategorySheetState extends State<_AddEditSubcategorySheet> {
                         )
                       : Container(
                           color: AppColors.background,
-                          child: const Center(
+                          child: Center(
                             child: Column(
                               mainAxisSize: MainAxisSize.min,
                               children: [
@@ -649,7 +646,7 @@ class _AddEditSubcategorySheetState extends State<_AddEditSubcategorySheet> {
                     controller: _imageUrlController,
                     decoration: InputDecoration(
                       labelText: 'Or paste Image URL',
-                      labelStyle: const TextStyle(
+                      labelStyle: TextStyle(
                         color: AppColors.textSecondary,
                         fontSize: 12,
                       ),
@@ -659,7 +656,7 @@ class _AddEditSubcategorySheetState extends State<_AddEditSubcategorySheet> {
                         ),
                       ),
                     ),
-                    style: const TextStyle(
+                    style: TextStyle(
                       color: AppColors.textPrimary,
                       fontSize: 13,
                     ),
@@ -677,12 +674,12 @@ class _AddEditSubcategorySheetState extends State<_AddEditSubcategorySheet> {
                 padding: const EdgeInsets.symmetric(vertical: 16),
               ),
               child: _loading
-                  ? const CircularProgressIndicator(color: AppColors.black)
+                  ? CircularProgressIndicator(color: AppColors.black)
                   : Text(
                       widget.subcategory == null
                           ? 'Create Subcategory'
                           : 'Save Changes',
-                      style: const TextStyle(
+                      style: TextStyle(
                         color: AppColors.black,
                         fontWeight: FontWeight.bold,
                       ),

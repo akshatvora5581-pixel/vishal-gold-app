@@ -13,9 +13,9 @@ doc = new_document()
 
 add_cover(doc,
     title    = "Troubleshooting Guide",
-    subtitle = "Diagnostic & Incident Resolution Manual — Vishal Gold",
+    subtitle = "Diagnostic & Incident Resolution Manual — Vishal Jewelers",
     version  = "v1.1",
-    prepared_for = "Vishal Gold Operations Support",
+    prepared_for = "Vishal Jewelers Operations Support",
     prepared_by  = "Software Engineering Group"
 )
 

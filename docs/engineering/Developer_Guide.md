@@ -1,11 +1,11 @@
-# Developer Guide — Vishal Gold App (Ultra-Detailed)
+# Developer Guide — Vishal Jewelers App (Ultra-Detailed)
 **Version:** 1.2 | **Last Updated:** 2026-02-25 | **Status:** Production-Ready
 
 ---
 
 ## 1. System Architecture & Core Philosophy
 
-Vishal Gold is built as a high-performance, security-first enterprise platform. It leverages Flutter's cross-platform capabilities with a multi-layered reactive architecture.
+Vishal Jewelers is built as a high-performance, security-first enterprise platform. It leverages Flutter's cross-platform capabilities with a multi-layered reactive architecture.
 
 ### 1.1 Architectural Layers
 1. **Presentation Layer (Widgets)**: Pure UI logic. Widgets are primarily stateless and observe state via `context.watch<T>()` or `Consumer<T>`.

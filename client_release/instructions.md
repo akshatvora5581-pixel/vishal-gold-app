@@ -1,9 +1,9 @@
-# Vishal Gold - Android Release Instructions
+# Vishal Jewelers - Android Release Instructions
 
 ## Contents
 1. **app-release.apk**: Standard Android installer for direct testing on devices.
 2. **app-release.aab**: Android App Bundle for uploading to the Google Play Store.
-3. **vishal_gold_release.jks**: Production signing key.
+3. **vishal_jewelers_release.jks**: Production signing key.
 4. **keystore_credentials.txt**: Passwords for the signing key.
 5. **Source Code**: Full application source for archival and future development.
 

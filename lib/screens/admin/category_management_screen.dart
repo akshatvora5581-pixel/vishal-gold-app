@@ -5,11 +5,11 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'dart:io';
 import 'package:image_picker/image_picker.dart';
 import 'package:provider/provider.dart';
-import 'package:vishal_gold/constants/app_colors.dart';
-import 'package:vishal_gold/models/category.dart';
-import 'package:vishal_gold/providers/auth_provider.dart';
-import 'package:vishal_gold/screens/admin/subcategory_management_screen.dart';
-import 'package:vishal_gold/services/firebase_service.dart';
+import 'package:vishal_jewelers/constants/app_colors.dart';
+import 'package:vishal_jewelers/models/category.dart';
+import 'package:vishal_jewelers/providers/auth_provider.dart';
+import 'package:vishal_jewelers/screens/admin/subcategory_management_screen.dart';
+import 'package:vishal_jewelers/services/firebase_service.dart';
 
 class CategoryManagementScreen extends StatefulWidget {
   const CategoryManagementScreen({super.key});
@@ -38,7 +38,7 @@ class _CategoryManagementScreenState extends State<CategoryManagementScreen> {
         ),
         actions: [
           IconButton(
-            icon: const Icon(Icons.add_circle_outline, color: AppColors.gold),
+            icon: Icon(Icons.add_circle_outline, color: AppColors.gold),
             onPressed: () => _openAddEditCategory(context),
           ),
         ],
@@ -50,7 +50,7 @@ class _CategoryManagementScreenState extends State<CategoryManagementScreen> {
             return Center(child: Text('Error: ${snapshot.error}'));
           }
           if (snapshot.connectionState == ConnectionState.waiting) {
-            return const Center(
+            return Center(
               child: CircularProgressIndicator(color: AppColors.gold),
             );
           }
@@ -61,7 +61,7 @@ class _CategoryManagementScreenState extends State<CategoryManagementScreen> {
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  const Icon(
+                  Icon(
                     Icons.category_outlined,
                     size: 64,
                     color: AppColors.textSecondary,
@@ -77,7 +77,7 @@ class _CategoryManagementScreenState extends State<CategoryManagementScreen> {
                     style: ElevatedButton.styleFrom(
                       backgroundColor: AppColors.gold,
                     ),
-                    child: const Text(
+                    child: Text(
                       'Add First Category',
                       style: TextStyle(color: AppColors.black),
                     ),
@@ -281,9 +281,6 @@ class _CategoryManagementScreenState extends State<CategoryManagementScreen> {
     }
   }
 
-  ImageProvider _getImageProvider(String url) {
-    return CachedNetworkImageProvider(url);
-  }
 }
 
 // ---------------------------------------------------------------------------
@@ -451,14 +448,14 @@ class _AddEditCategorySheetState extends State<_AddEditCategorySheet> {
                 controller: _nameController,
                 decoration: InputDecoration(
                   labelText: 'Category Name',
-                  labelStyle: const TextStyle(color: AppColors.gold),
+                  labelStyle: TextStyle(color: AppColors.gold),
                   enabledBorder: UnderlineInputBorder(
                     borderSide: BorderSide(
                       color: AppColors.white.withValues(alpha: 0.3),
                     ),
                   ),
                 ),
-                style: const TextStyle(color: AppColors.textPrimary),
+                style: TextStyle(color: AppColors.textPrimary),
                 validator: (v) => v!.isEmpty ? 'Enter name' : null,
               ),
               const SizedBox(height: 16),
@@ -478,7 +475,7 @@ class _AddEditCategorySheetState extends State<_AddEditCategorySheet> {
                                 controller: _imageUrlController,
                                 decoration: InputDecoration(
                                   labelText: 'Image URL',
-                                  labelStyle: const TextStyle(
+                                  labelStyle: TextStyle(
                                     color: AppColors.gold,
                                   ),
                                   enabledBorder: UnderlineInputBorder(
@@ -489,7 +486,7 @@ class _AddEditCategorySheetState extends State<_AddEditCategorySheet> {
                                     ),
                                   ),
                                 ),
-                                style: const TextStyle(
+                                style: TextStyle(
                                   color: AppColors.textPrimary,
                                 ),
                                 enabled: imageFile == null,
@@ -498,11 +495,11 @@ class _AddEditCategorySheetState extends State<_AddEditCategorySheet> {
                             const SizedBox(width: 8),
                             TextButton.icon(
                               onPressed: _pickImage,
-                              icon: const Icon(
+                              icon: Icon(
                                 Icons.image,
                                 color: AppColors.gold,
                               ),
-                              label: const Text(
+                              label: Text(
                                 'Pick',
                                 style: TextStyle(color: AppColors.gold),
                               ),
@@ -522,7 +519,7 @@ class _AddEditCategorySheetState extends State<_AddEditCategorySheet> {
                               Flexible(
                                 child: Text(
                                   'Image selected: ${imageFile.path.split(Platform.pathSeparator).last}',
-                                  style: const TextStyle(
+                                  style: TextStyle(
                                     color: Colors.green,
                                     fontSize: 12,
                                   ),
@@ -566,9 +563,9 @@ class _AddEditCategorySheetState extends State<_AddEditCategorySheet> {
                     spacing: 8,
                     children: purities.map((p) {
                       return Chip(
-                        label: Text(p, style: const TextStyle(fontSize: 12)),
+                        label: Text(p, style: TextStyle(fontSize: 12)),
                         backgroundColor: AppColors.gold.withValues(alpha: 0.1),
-                        labelStyle: const TextStyle(color: AppColors.gold),
+                        labelStyle: TextStyle(color: AppColors.gold),
                         deleteIcon: const Icon(
                           Icons.close,
                           size: 14,
@@ -591,18 +588,18 @@ class _AddEditCategorySheetState extends State<_AddEditCategorySheet> {
                       controller: _purityController,
                       decoration: InputDecoration(
                         labelText: 'Add Purity (e.g., 22K or 92)',
-                        labelStyle: const TextStyle(color: AppColors.gold),
+                        labelStyle: TextStyle(color: AppColors.gold),
                         enabledBorder: UnderlineInputBorder(
                           borderSide: BorderSide(
                             color: AppColors.white.withValues(alpha: 0.3),
                           ),
                         ),
                       ),
-                      style: const TextStyle(color: AppColors.textPrimary),
+                      style: TextStyle(color: AppColors.textPrimary),
                     ),
                   ),
                   IconButton(
-                    icon: const Icon(Icons.add_circle, color: AppColors.gold),
+                    icon: Icon(Icons.add_circle, color: AppColors.gold),
                     onPressed: () {
                       final val = _purityController.text.trim();
                       if (val.isNotEmpty &&
@@ -628,14 +625,14 @@ class _AddEditCategorySheetState extends State<_AddEditCategorySheet> {
                       controller: _makingChargeGramController,
                       decoration: InputDecoration(
                         labelText: 'Making Charge (/g)',
-                        labelStyle: const TextStyle(color: AppColors.gold),
+                        labelStyle: TextStyle(color: AppColors.gold),
                         enabledBorder: UnderlineInputBorder(
                           borderSide: BorderSide(
                             color: AppColors.white.withValues(alpha: 0.3),
                           ),
                         ),
                       ),
-                      style: const TextStyle(color: AppColors.textPrimary),
+                      style: TextStyle(color: AppColors.textPrimary),
                       keyboardType: TextInputType.number,
                     ),
                   ),
@@ -645,14 +642,14 @@ class _AddEditCategorySheetState extends State<_AddEditCategorySheet> {
                       controller: _makingChargeFlatController,
                       decoration: InputDecoration(
                         labelText: 'Making Charge (Flat)',
-                        labelStyle: const TextStyle(color: AppColors.gold),
+                        labelStyle: TextStyle(color: AppColors.gold),
                         enabledBorder: UnderlineInputBorder(
                           borderSide: BorderSide(
                             color: AppColors.white.withValues(alpha: 0.3),
                           ),
                         ),
                       ),
-                      style: const TextStyle(color: AppColors.textPrimary),
+                      style: TextStyle(color: AppColors.textPrimary),
                       keyboardType: TextInputType.number,
                     ),
                   ),
@@ -672,14 +669,14 @@ class _AddEditCategorySheetState extends State<_AddEditCategorySheet> {
                       padding: const EdgeInsets.symmetric(vertical: 16),
                     ),
                     child: loading
-                        ? const CircularProgressIndicator(
+                        ? CircularProgressIndicator(
                             color: AppColors.black,
                           )
                         : Text(
                             widget.category == null
                                 ? 'Create Category'
                                 : 'Save Changes',
-                            style: const TextStyle(
+                            style: TextStyle(
                               color: AppColors.black,
                               fontWeight: FontWeight.bold,
                             ),

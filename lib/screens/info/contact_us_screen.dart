@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:url_launcher/url_launcher.dart';
-import 'package:vishal_gold/constants/app_colors.dart';
-import 'package:vishal_gold/widgets/common/custom_app_bar.dart';
-import 'package:vishal_gold/services/firebase_service.dart';
+import 'package:vishal_jewelers/constants/app_colors.dart';
+import 'package:vishal_jewelers/widgets/common/custom_app_bar.dart';
+import 'package:vishal_jewelers/services/firebase_service.dart';
 
 class ContactUsScreen extends StatefulWidget {
   const ContactUsScreen({super.key});
@@ -43,7 +43,7 @@ class _ContactUsScreenState extends State<ContactUsScreen> {
         future: _contactInfoFuture,
         builder: (context, snapshot) {
           if (snapshot.connectionState == ConnectionState.waiting) {
-            return const Center(
+            return Center(
               child: CircularProgressIndicator(color: AppColors.gold),
             );
           }
@@ -62,7 +62,7 @@ class _ContactUsScreenState extends State<ContactUsScreen> {
                 Container(
                   width: double.infinity,
                   padding: const EdgeInsets.all(24),
-                  decoration: const BoxDecoration(
+                  decoration: BoxDecoration(
                     color: AppColors.black,
                     borderRadius: BorderRadius.only(
                       bottomLeft: Radius.circular(32),
@@ -84,7 +84,7 @@ class _ContactUsScreenState extends State<ContactUsScreen> {
                             'assets/logo.png',
                             width: 70,
                             errorBuilder: (context, error, stackTrace) =>
-                                const Icon(
+                                Icon(
                                   Icons.business,
                                   size: 50,
                                   color: AppColors.gold,

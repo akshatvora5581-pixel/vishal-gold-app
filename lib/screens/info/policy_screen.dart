@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
-import 'package:vishal_gold/constants/app_colors.dart';
-import 'package:vishal_gold/widgets/common/custom_app_bar.dart';
+import 'package:vishal_jewelers/constants/app_colors.dart';
+import 'package:vishal_jewelers/widgets/common/custom_app_bar.dart';
 
 class PolicyScreen extends StatelessWidget {
   final String title;

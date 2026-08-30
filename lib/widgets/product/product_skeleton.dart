@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:vishal_gold/widgets/common/shimmer_widget.dart';
+import 'package:vishal_jewelers/widgets/common/shimmer_widget.dart';
 
 class ProductSkeleton extends StatelessWidget {
   const ProductSkeleton({super.key});

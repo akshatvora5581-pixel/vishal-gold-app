@@ -5,17 +5,17 @@ import 'package:firebase_storage/firebase_storage.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'dart:io';
 import 'package:flutter/foundation.dart';
-import 'package:vishal_gold/models/app_banner.dart';
-import 'package:vishal_gold/models/category.dart' as app_models;
-import 'package:vishal_gold/models/market_settings.dart';
-import 'package:vishal_gold/models/notification.dart';
-import 'package:vishal_gold/models/order.dart' as app_order;
-import 'package:vishal_gold/models/product.dart';
-import 'package:vishal_gold/models/subcategory.dart';
+import 'package:vishal_jewelers/models/app_banner.dart';
+import 'package:vishal_jewelers/models/category.dart' as app_models;
+import 'package:vishal_jewelers/models/market_settings.dart';
+import 'package:vishal_jewelers/models/notification.dart';
+import 'package:vishal_jewelers/models/order.dart' as app_order;
+import 'package:vishal_jewelers/models/product.dart';
+import 'package:vishal_jewelers/models/subcategory.dart';
 
 class FirebaseService {
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
-  final FirebaseStorage _storage = FirebaseStorage.instance;
+  final FirebaseStorage _storage = FirebaseStorage.instanceFor(bucket: 'vishal-jewelers.firebasestorage.app');
 
   /// Sanitizes input data by trimming all string values recursively.
   Map<String, dynamic> _sanitizeData(Map<String, dynamic> data) {
@@ -98,12 +98,29 @@ class FirebaseService {
       final stagedDocs = await _firestore.collection(stagingCollection).get();
       final batch = _firestore.batch();
 
+      // Deduplicate changes: only apply the latest change for each document
+      final Map<String, Map<String, dynamic>> finalChanges = {};
+      
       for (var doc in stagedDocs.docs) {
         final change = doc.data();
         final String collectionName = change['collection_name'];
         final String docId = change['doc_id'];
+        final String key = '$collectionName/$docId';
+        
+        // Staged changes are ordered by timestamp (asc), so later ones overwrite earlier ones
+        finalChanges[key] = {
+          ...change,
+          'staged_doc_id': doc.id,
+        };
+      }
+
+      for (var entry in finalChanges.entries) {
+        final change = entry.value;
+        final String collectionName = change['collection_name'];
+        final String docId = change['doc_id'];
         final Map<String, dynamic>? data = change['data'];
         final String changeType = change['change_type'];
+        final String stagedDocId = change['staged_doc_id'];
 
         final targetDocRef = _firestore.collection(collectionName).doc(docId);
 
@@ -121,7 +138,7 @@ class FirebaseService {
             if (data != null) {
               batch.update(targetDocRef, {
                 ...data,
-                'updatedAt': FieldValue.serverTimestamp(),
+                'updated_at': FieldValue.serverTimestamp(),
               });
             }
             break;
@@ -129,7 +146,7 @@ class FirebaseService {
             batch.delete(targetDocRef);
             break;
           default:
-            debugPrint('Unknown change type: $changeType for doc ${doc.id}');
+            debugPrint('Unknown change type: $changeType for doc $stagedDocId');
         }
 
         // Log the action
@@ -140,7 +157,7 @@ class FirebaseService {
           targetType: collectionName,
           details:
               'Published staged change: $changeType on $collectionName/$docId',
-          metadata: {'staged_doc_id': doc.id, 'change_data': data},
+          metadata: {'staged_doc_id': stagedDocId, 'change_data': data},
         );
       }
 
@@ -920,7 +937,7 @@ class FirebaseService {
     try {
       await _firestore.collection(productsCollection).doc(productId).update({
         'is_active': false,
-        'updatedAt': DateTime.now().toIso8601String(),
+        'updatedAt': FieldValue.serverTimestamp(),
       });
 
       await logAdminAction(
@@ -942,7 +959,12 @@ class FirebaseService {
     if (onlyActive) {
       query = query.where('is_active', isEqualTo: true);
     }
-    return query.snapshots();
+    return query.snapshots().handleError((error) {
+      if (error is FirebaseException && error.code == 'failed-precondition') {
+        throw 'Database is optimizing. Please refresh in a moment.';
+      }
+      throw error;
+    });
   }
 
   Future<app_models.Category?> getCategoryById(String id) async {
@@ -1045,12 +1067,22 @@ class FirebaseService {
   }) {
     Query query = _firestore.collection(subcategoriesCollection);
     if (categoryId != null) {
-      query = query.where('category_id', isEqualTo: categoryId);
+      query = query.where(
+        Filter.or(
+          Filter('category_id', isEqualTo: categoryId),
+          Filter('categoryId', isEqualTo: categoryId),
+        ),
+      );
     }
     if (onlyActive) {
       query = query.where('is_active', isEqualTo: true);
     }
-    return query.snapshots();
+    return query.snapshots().handleError((error) {
+      if (error is FirebaseException && error.code == 'failed-precondition') {
+        throw 'Database is optimizing. Please refresh in a moment.';
+      }
+      throw error;
+    });
   }
 
   Future<void> addSubcategory(
@@ -2071,7 +2103,7 @@ class FirebaseService {
       if (result.docs.isEmpty) {
         // Create a default super admin document
         await _firestore.collection(adminsCollection).add({
-          'full_name': 'Vishal Jewellers Admin',
+          'full_name': 'Vishal Jewelers Admin',
           'email': 'admin@vishalgold.com',
           'role': 'super',
           'is_active': true,
@@ -2187,33 +2219,51 @@ class FirebaseService {
     }
   }
 
-  /// ========== BANNER MANAGEMENT ==========
-  
-  /// Get active banners
+  /// ========== BANNER MANAGEMENT
+  /// Get all active banners ordered by their 'order' field.
+  /// Handles both 'isActive' and 'is_active' for backward compatibility.
   Stream<List<AppBanner>> getActiveBanners() {
     return _firestore
         .collection(bannersCollection)
-        .where('isActive', isEqualTo: true)
-        .orderBy('order')
         .snapshots()
-        .map(
-          (snapshot) => snapshot.docs
-              .map((doc) => AppBanner.fromJson(doc.data(), doc.id))
-              .toList(),
-        );
+        .handleError((error) {
+      if (error is FirebaseException && error.code == 'failed-precondition') {
+        throw 'Banners are loading. Please wait...';
+      }
+      throw error;
+    }).map((snapshot) {
+      final banners = <AppBanner>[];
+      for (var doc in snapshot.docs) {
+        try {
+          final banner = AppBanner.fromJson(doc.data(), doc.id);
+          if (banner.isActive) {
+            banners.add(banner);
+          }
+        } catch (e) {
+          debugPrint('Error parsing banner ${doc.id}: $e');
+        }
+      }
+      
+      // Sort in memory for consistency
+      banners.sort((a, b) => a.order.compareTo(b.order));
+      return banners;
+    });
   }
 
   /// Get all banners (for admin)
   Stream<List<AppBanner>> getAllBanners() {
     return _firestore
         .collection(bannersCollection)
-        .orderBy('order')
         .snapshots()
-        .map(
-          (snapshot) => snapshot.docs
-              .map((doc) => AppBanner.fromJson(doc.data(), doc.id))
-              .toList(),
-        );
+        .map((snapshot) {
+      final banners = snapshot.docs
+          .map((doc) => AppBanner.fromJson(doc.data(), doc.id))
+          .toList();
+      
+      // Sort in memory for consistency
+      banners.sort((a, b) => a.order.compareTo(b.order));
+      return banners;
+    });
   }
 
   /// Add new banner

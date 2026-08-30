@@ -1,5 +1,5 @@
 /**
- * Firebase Cloud Functions for Vishal Jewellers App
+ * Firebase Cloud Functions for Vishal Jewelers App
  *
  * Functions:
  * 1. onNewStockPublished  - Fires when a product's status changes to 'published'

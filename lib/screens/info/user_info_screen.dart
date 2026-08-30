@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
-import 'package:vishal_gold/constants/app_colors.dart';
-import 'package:vishal_gold/screens/auth/phone_auth_screen.dart';
-import 'package:vishal_gold/services/local_storage_service.dart';
+import 'package:vishal_jewelers/constants/app_colors.dart';
+import 'package:vishal_jewelers/screens/auth/phone_auth_screen.dart';
+import 'package:vishal_jewelers/services/local_storage_service.dart';
 
 class UserInfoScreen extends StatefulWidget {
   const UserInfoScreen({super.key});
@@ -153,7 +153,7 @@ class _UserInfoScreenState extends State<UserInfoScreen> {
                     ),
                     child: Row(
                       children: [
-                        const Icon(
+                        Icon(
                           Icons.error_outline,
                           color: AppColors.errorRed,
                           size: 20,
@@ -162,7 +162,7 @@ class _UserInfoScreenState extends State<UserInfoScreen> {
                         Expanded(
                           child: Text(
                             _errorMessage!,
-                            style: const TextStyle(color: AppColors.errorRed),
+                            style: TextStyle(color: AppColors.errorRed),
                           ),
                         ),
                       ],
@@ -252,11 +252,11 @@ class _UserInfoScreenState extends State<UserInfoScreen> {
           keyboardType: keyboardType,
           maxLength: maxLength,
           textCapitalization: textCapitalization,
-          style: const TextStyle(color: AppColors.white, fontSize: 16),
+          style: TextStyle(color: AppColors.white, fontSize: 16),
           cursorColor: AppColors.gold,
           decoration: InputDecoration(
             hintText: hint,
-            hintStyle: const TextStyle(color: Colors.white30),
+            hintStyle: TextStyle(color: Colors.white30),
             filled: true,
             fillColor: AppColors.surface,
             prefixIcon: Icon(icon, color: AppColors.gold),
@@ -271,7 +271,7 @@ class _UserInfoScreenState extends State<UserInfoScreen> {
             ),
             focusedBorder: OutlineInputBorder(
               borderRadius: BorderRadius.circular(16),
-              borderSide: const BorderSide(color: AppColors.gold, width: 1),
+              borderSide: BorderSide(color: AppColors.gold, width: 1),
             ),
           ),
         ),
@@ -298,7 +298,7 @@ class _UserInfoScreenState extends State<UserInfoScreen> {
           ),
         ),
         child: isLoading
-            ? const SizedBox(
+            ? SizedBox(
                 height: 24,
                 width: 24,
                 child: CircularProgressIndicator(

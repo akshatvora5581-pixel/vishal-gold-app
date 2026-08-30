@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import 'package:vishal_gold/providers/auth_provider.dart';
-import 'package:vishal_gold/services/analytics_service.dart';
+import 'package:vishal_jewelers/providers/auth_provider.dart';
+import 'package:vishal_jewelers/services/analytics_service.dart';
 
 class PresenceWrapper extends StatefulWidget {
   final Widget child;

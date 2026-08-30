@@ -13,9 +13,9 @@ doc = new_document()
 
 add_cover(doc,
     title    = "Deployment Guide",
-    subtitle = "Vishal Gold App — Build, Sign, and Play Store Submission",
+    subtitle = "Vishal Jewelers App — Build, Sign, and Play Store Submission",
     version  = "v1.0",
-    prepared_for = "Vishal Gold Technical Team",
+    prepared_for = "Vishal Jewelers Technical Team",
     prepared_by  = "Engineering Delivery Team"
 )
 
@@ -72,7 +72,7 @@ add_body(doc, (
 add_body(doc, "storePassword=[STORE_PASSWORD]")
 add_body(doc, "keyPassword=[KEY_PASSWORD]")
 add_body(doc, "keyAlias=[KEY_ALIAS]")
-add_body(doc, "storeFile=../../keys/vishal_gold_release.jks")
+add_body(doc, "storeFile=../../keys/vishal_jewelers_release.jks")
 add_body(doc, "(Place the .jks file in a 'keys/' folder adjacent to the project root. "
               "Ensure both key.properties and keys/ are in .gitignore.)")
 add_note(doc, "SECURITY",
@@ -138,14 +138,14 @@ add_note(doc, "CRITICAL",
 add_h1(doc, "6. Google Play Store Submission")
 add_h2(doc, "6.1 Creating a Play Store Listing")
 add_body(doc, (
-    "If this is the first submission for the Vishal Gold app, a new application listing must be "
+    "If this is the first submission for the Vishal Jewelers app, a new application listing must be "
     "created in the Google Play Console. Navigate to play.google.com/console, sign in with the "
     "client's Google account, and follow the 'Create app' wizard."
 ))
 add_table(doc,
     headers=["Field", "Recommended Value"],
     rows=[
-        ["App Name",        "Vishal Gold"],
+        ["App Name",        "Vishal Jewelers"],
         ["Default Language","English (India)"],
         ["App or Game",     "App"],
         ["Free or Paid",    "Free"],

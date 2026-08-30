@@ -1,10 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:google_fonts/google_fonts.dart';
-import 'package:vishal_gold/constants/app_colors.dart';
-import 'package:vishal_gold/providers/auth_provider.dart';
-import 'package:vishal_gold/screens/auth/setup_pin_screen.dart';
-import 'package:vishal_gold/models/admin.dart';
+import 'package:vishal_jewelers/constants/app_colors.dart';
+import 'package:vishal_jewelers/providers/auth_provider.dart';
+import 'package:vishal_jewelers/screens/auth/setup_pin_screen.dart';
+import 'package:vishal_jewelers/models/admin.dart';
 
 class QuickLoginSettingsScreen extends StatefulWidget {
   const QuickLoginSettingsScreen({super.key});
@@ -45,16 +45,16 @@ class _QuickLoginSettingsScreenState extends State<QuickLoginSettingsScreen> {
             TextField(
               controller: _passwordController,
               obscureText: true,
-              style: const TextStyle(color: AppColors.textPrimary),
+              style: TextStyle(color: AppColors.textPrimary),
               decoration: InputDecoration(
                 hintText: 'Admin Password',
-                hintStyle: const TextStyle(color: AppColors.textTertiary),
+                hintStyle: TextStyle(color: AppColors.textTertiary),
                 enabledBorder: UnderlineInputBorder(
                   borderSide: BorderSide(
                     color: AppColors.gold.withValues(alpha: 0.5),
                   ),
                 ),
-                focusedBorder: const UnderlineInputBorder(
+                focusedBorder: UnderlineInputBorder(
                   borderSide: BorderSide(color: AppColors.gold),
                 ),
               ),
@@ -102,7 +102,7 @@ class _QuickLoginSettingsScreenState extends State<QuickLoginSettingsScreen> {
           ),
         ),
         backgroundColor: AppColors.surface,
-        iconTheme: const IconThemeData(color: AppColors.gold),
+        iconTheme: IconThemeData(color: AppColors.gold),
       ),
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(24),
@@ -183,7 +183,7 @@ class _QuickLoginSettingsScreenState extends State<QuickLoginSettingsScreen> {
                       );
                     }
                   },
-                  icon: const Icon(
+                  icon: Icon(
                     Icons.delete_outline,
                     color: AppColors.errorRed,
                   ),
@@ -196,7 +196,7 @@ class _QuickLoginSettingsScreenState extends State<QuickLoginSettingsScreen> {
                   ),
                   style: OutlinedButton.styleFrom(
                     padding: const EdgeInsets.symmetric(vertical: 16),
-                    side: const BorderSide(color: AppColors.errorRed),
+                    side: BorderSide(color: AppColors.errorRed),
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(12),
                     ),
@@ -250,7 +250,7 @@ class _QuickLoginSettingsScreenState extends State<QuickLoginSettingsScreen> {
         ),
         trailing:
             trailing ??
-            const Icon(
+            Icon(
               Icons.arrow_forward_ios,
               color: AppColors.textTertiary,
               size: 16,

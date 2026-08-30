@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
-import 'package:vishal_gold/services/firebase_service.dart';
-import 'package:vishal_gold/models/admin.dart';
-import 'package:vishal_gold/constants/app_colors.dart';
+import 'package:vishal_jewelers/services/firebase_service.dart';
+import 'package:vishal_jewelers/models/admin.dart';
+import 'package:vishal_jewelers/constants/app_colors.dart';
 
 class AdminFCMConsoleScreen extends StatefulWidget {
   final Admin admin;
@@ -136,7 +136,7 @@ class _AdminFCMConsoleScreenState extends State<AdminFCMConsoleScreen> {
       ),
       child: Row(
         children: [
-          const Icon(Icons.campaign_outlined, color: AppColors.gold, size: 32),
+          Icon(Icons.campaign_outlined, color: AppColors.gold, size: 32),
           const SizedBox(width: 16),
           Expanded(
             child: Column(
@@ -266,15 +266,15 @@ class _AdminFCMConsoleScreenState extends State<AdminFCMConsoleScreen> {
             ),
             enabledBorder: OutlineInputBorder(
               borderRadius: BorderRadius.circular(12),
-              borderSide: const BorderSide(color: Colors.white10),
+              borderSide: BorderSide(color: Colors.white10),
             ),
             focusedBorder: OutlineInputBorder(
               borderRadius: BorderRadius.circular(12),
-              borderSide: const BorderSide(color: AppColors.gold, width: 1),
+              borderSide: BorderSide(color: AppColors.gold, width: 1),
             ),
             errorBorder: OutlineInputBorder(
               borderRadius: BorderRadius.circular(12),
-              borderSide: const BorderSide(color: Colors.redAccent, width: 1),
+              borderSide: BorderSide(color: Colors.redAccent, width: 1),
             ),
           ),
         ),

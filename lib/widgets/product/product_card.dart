@@ -1,11 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:provider/provider.dart';
-import 'package:vishal_gold/constants/app_colors.dart';
-import 'package:vishal_gold/models/product.dart';
-import 'package:vishal_gold/providers/wishlist_provider.dart';
-import 'package:vishal_gold/screens/product/product_detail_screen.dart';
-import 'package:vishal_gold/widgets/common/shimmer_widget.dart';
+import 'package:vishal_jewelers/constants/app_colors.dart';
+import 'package:vishal_jewelers/models/product.dart';
+import 'package:vishal_jewelers/providers/wishlist_provider.dart';
+import 'package:vishal_jewelers/screens/product/product_detail_screen.dart';
+import 'package:vishal_jewelers/widgets/common/shimmer_widget.dart';
 
 class ProductCard extends StatelessWidget {
   final Product product;
@@ -123,7 +123,7 @@ class ProductCard extends StatelessWidget {
                         ),
                         const SizedBox(height: 2),
                         Text(
-                          '${product.grossWeight}g  •  ${product.purity}K',
+                          '${product.grossWeight}g  •  ${product.purityDisplay}',
                           style: Theme.of(context).textTheme.bodySmall
                               ?.copyWith(
                                 color: AppColors.textSecondary,
@@ -146,7 +146,7 @@ class ProductCard extends StatelessWidget {
     if (product.imageUrls.isEmpty) {
       return Container(
         color: AppColors.background,
-        child: const Center(
+        child: Center(
           child: Icon(Icons.diamond_outlined, color: AppColors.textTertiary),
         ),
       );
@@ -160,7 +160,7 @@ class ProductCard extends StatelessWidget {
         width: double.infinity,
         errorBuilder: (_, _, _) => Container(
           color: AppColors.background,
-          child: const Center(
+          child: Center(
             child: Icon(
               Icons.broken_image_outlined,
               color: AppColors.textTertiary,
@@ -179,7 +179,7 @@ class ProductCard extends StatelessWidget {
             ShimmerWidget.rectangular(height: double.infinity),
         errorWidget: (_, _, _) => Container(
           color: AppColors.background,
-          child: const Center(
+          child: Center(
             child: Icon(
               Icons.broken_image_outlined,
               color: AppColors.textTertiary,

@@ -1,4 +1,4 @@
-import 'package:vishal_gold/models/product.dart';
+import 'package:vishal_jewelers/models/product.dart';
 
 class CartItem {
   final String id;

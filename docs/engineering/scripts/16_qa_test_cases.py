@@ -13,9 +13,9 @@ doc = new_document()
 
 add_cover(doc,
     title    = "QA Test Execution Results",
-    subtitle = "Comprehensive Test Lifecycle Report — Vishal Gold",
+    subtitle = "Comprehensive Test Lifecycle Report — Vishal Jewelers",
     version  = "v1.1",
-    prepared_for = "Vishal Gold QA Stakeholders",
+    prepared_for = "Vishal Jewelers QA Stakeholders",
     prepared_by  = "Senior QA Engineer"
 )
 

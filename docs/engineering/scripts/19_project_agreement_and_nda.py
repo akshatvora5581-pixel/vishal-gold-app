@@ -1,6 +1,6 @@
 """
 19_project_agreement_and_nda.py
-Project Agreement & Non-Disclosure Agreement — Vishal Gold App
+Project Agreement & Non-Disclosure Agreement — Vishal Jewelers App
 Client: Savan Bhai Kondhia (Saar Data Services Pvt. Ltd.)
 Developer: Akshat Vora (Engineering Delivery Team)
 """
@@ -20,7 +20,7 @@ CLIENT_COMPANY = "Saar Data Services Pvt. Ltd."
 CLIENT_FULL    = f"{CLIENT_NAME} ({CLIENT_COMPANY})"
 DEV_NAME       = "Akshat Vora"
 DEV_COMPANY    = "Engineering Delivery Team"
-PROJECT_NAME   = "Vishal Gold — B2B/B2C Jewelry Application (Android)"
+PROJECT_NAME   = "Vishal Jewelers — B2B/B2C Jewelry Application (Android)"
 TOTAL_COST     = "Rs. 26,000/- (Rupees Twenty-Six Thousand Only)"
 AGREEMENT_NO   = "AGR-APP0152158-R1"
 
@@ -355,7 +355,7 @@ add_body(doc, (
 # ── 12. REFERENCE COMPARISON ──────────────────────────────────────────────────
 add_h1(doc, "12. Reference Application Comparison")
 add_table(doc,
-    headers=["Aspect", "Reference Application", "Vishal Gold Application (This Project)"],
+    headers=["Aspect", "Reference Application", "Vishal Jewelers Application (This Project)"],
     rows=[
         ["Platform",           "Android",                    "Android (Flutter — future iOS ready)"],
         ["UI / UX Flow",       "Existing production design", "Custom redesign — dark glassmorphism gold theme"],

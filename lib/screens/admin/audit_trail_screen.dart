@@ -2,8 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:intl/intl.dart';
-import 'package:vishal_gold/constants/app_colors.dart';
-import 'package:vishal_gold/services/audit_service.dart';
+import 'package:vishal_jewelers/constants/app_colors.dart';
+import 'package:vishal_jewelers/services/audit_service.dart';
 
 class AuditTrailScreen extends StatelessWidget {
   const AuditTrailScreen({super.key});
@@ -27,7 +27,7 @@ class AuditTrailScreen extends StatelessWidget {
         stream: auditService.getAuditLogs(),
         builder: (context, snapshot) {
           if (snapshot.connectionState == ConnectionState.waiting) {
-            return const Center(
+            return Center(
               child: CircularProgressIndicator(color: AppColors.gold),
             );
           }

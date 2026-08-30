@@ -2,10 +2,10 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:intl/intl.dart';
-import 'package:vishal_gold/constants/app_colors.dart';
-import 'package:vishal_gold/providers/auth_provider.dart';
-import 'package:vishal_gold/providers/order_provider.dart';
-import 'package:vishal_gold/screens/order/order_detail_screen.dart';
+import 'package:vishal_jewelers/constants/app_colors.dart';
+import 'package:vishal_jewelers/providers/auth_provider.dart';
+import 'package:vishal_jewelers/providers/order_provider.dart';
+import 'package:vishal_jewelers/screens/order/order_detail_screen.dart';
 import 'dart:math';
 
 class OrderHistoryScreen extends StatefulWidget {
@@ -46,12 +46,12 @@ class _OrderHistoryScreenState extends State<OrderHistoryScreen> {
         centerTitle: true,
         backgroundColor: AppColors.background,
         elevation: 0,
-        iconTheme: const IconThemeData(color: AppColors.white),
+        iconTheme: IconThemeData(color: AppColors.white),
       ),
       body: Consumer<OrderProvider>(
         builder: (context, orderProvider, child) {
           if (orderProvider.isLoading && orderProvider.orders.isEmpty) {
-            return const Center(
+            return Center(
               child: CircularProgressIndicator(color: AppColors.gold),
             );
           }

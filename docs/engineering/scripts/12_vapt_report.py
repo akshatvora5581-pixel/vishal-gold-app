@@ -1,6 +1,6 @@
 """
 12_vapt_report.py — Enterprise-Grade Vulnerability Assessment & Penetration Testing Report
-Vishal Gold Android Application
+Vishal Jewelers Android Application
 """
 import sys, os
 sys.path.insert(0, os.path.dirname(__file__))
@@ -15,9 +15,9 @@ doc = new_document()
 # ── COVER PAGE ────────────────────────────────────────────────────────────────
 add_cover(doc,
     title       = "Vulnerability Assessment & Penetration Testing Report",
-    subtitle    = "Vishal Gold — Android Mobile Application",
+    subtitle    = "Vishal Jewelers — Android Mobile Application",
     version     = "v2.0 (Post-Remediation)",
-    prepared_for= "Vishal Gold Management & Technical Stakeholders",
+    prepared_for= "Vishal Jewelers Management & Technical Stakeholders",
     prepared_by = "Senior Android VAPT Expert — Engineering Security Team"
 )
 
@@ -27,14 +27,14 @@ add_table(doc,
     headers=["Attribute", "Detail"],
     rows=[
         ["Document Title",      "Vulnerability Assessment and Penetration Testing Report"],
-        ["Target Application",  "Vishal Gold — B2B/B2C Jewelry Mobile Application (Android)"],
+        ["Target Application",  "Vishal Jewelers — B2B/B2C Jewelry Mobile Application (Android)"],
         ["Document Version",    "v2.0 — Post-Remediation Final"],
         ["Classification",      "CONFIDENTIAL — Restricted Distribution"],
         ["Assessment Date",     "February 2026"],
         ["Report Date",         "February 25, 2026"],
         ["Lead Assessor",       "Senior Android VAPT Expert, Engineering Security Team"],
         ["Reviewed By",         "Engineering Team Lead"],
-        ["Distribution",        "Vishal Gold CTO, Project Manager, Engineering Lead"],
+        ["Distribution",        "Vishal Jewelers CTO, Project Manager, Engineering Lead"],
     ]
 )
 add_h2(doc, "Version History")
@@ -76,7 +76,7 @@ add_toc_placeholder(doc, [
 add_h1(doc, "1. Executive Summary")
 add_body(doc, (
     "The Engineering Security Team conducted a comprehensive Vulnerability Assessment and "
-    "Penetration Testing (VAPT) exercise against the Vishal Gold Android mobile application, "
+    "Penetration Testing (VAPT) exercise against the Vishal Jewelers Android mobile application, "
     "a B2B and B2C commerce platform serving gold jewellery wholesalers, retailers, and "
     "administrators. The assessment was performed in two phases: an initial black-box and "
     "grey-box assessment against the pre-remediation build, followed by a targeted retest "
@@ -127,7 +127,7 @@ add_h1(doc, "2. Scope and Objectives")
 add_h2(doc, "2.1 Assessment Objectives")
 add_body(doc, (
     "The primary objective of this assessment was to identify, evaluate, and document all "
-    "security vulnerabilities present in the Vishal Gold Android application, with particular "
+    "security vulnerabilities present in the Vishal Jewelers Android application, with particular "
     "focus on vulnerabilities relevant to the OWASP Mobile Top 10 and the OWASP Mobile "
     "Application Security Verification Standard (MASVS). Secondary objectives included "
     "verifying the effectiveness of implemented security controls, providing actionable "
@@ -137,7 +137,7 @@ add_h2(doc, "2.2 In-Scope Systems")
 add_table(doc,
     headers=["Asset", "Type", "Version / Identifier"],
     rows=[
-        ["Vishal Gold Android Application",  "Mobile APK",         "Version 1.0 — Debug & Release builds"],
+        ["Vishal Jewelers Android Application",  "Mobile APK",         "Version 1.0 — Debug & Release builds"],
         ["Firebase Authentication",           "Cloud Service",      "Firebase Auth SDK 22.x"],
         ["Cloud Firestore",                   "Cloud Database",     "Firebase SDK — default instance"],
         ["Firebase Storage",                  "Cloud File Store",   "Firebase Storage SDK"],
@@ -253,7 +253,7 @@ add_h1(doc, "5. Target Environment Details")
 add_table(doc,
     headers=["Component", "Detail"],
     rows=[
-        ["Application Name",        "Vishal Gold"],
+        ["Application Name",        "Vishal Jewelers"],
         ["Platform",                "Android (minSdkVersion 21 — Android 5.0+)"],
         ["Framework",               "Flutter 3.32 / Dart 3.9"],
         ["Primary Language",        "Dart"],
@@ -368,7 +368,7 @@ findings = [
         "component": "lib/screens/auth/phone_auth_screen.dart — GestureDetector",
         "description": (
             "A hidden navigation pathway to the administrator login screen was implemented "
-            "through an undocumented long-press gesture applied to the Vishal Gold logo on "
+            "through an undocumented long-press gesture applied to the Vishal Jewelers logo on "
             "the phone authentication screen. This gesture would silently redirect the user "
             "to the administrator credential entry screen without any visual indication or "
             "authentication challenge. The source code contained the route directly embedded "
@@ -925,7 +925,7 @@ add_table(doc,
 # ── 11. CONCLUSION ────────────────────────────────────────────────────────────
 add_h1(doc, "11. Conclusion")
 add_body(doc, (
-    "The Vishal Gold Android application has undergone a thorough professional security "
+    "The Vishal Jewelers Android application has undergone a thorough professional security "
     "assessment spanning two full iterations of testing and remediation. All seventeen "
     "findings identified during the initial assessment have been addressed: sixteen "
     "are fully resolved and verified, and one (VAPT-007 — google-services.json rotation) "
@@ -943,7 +943,7 @@ add_body(doc, (
 add_body(doc, (
     "With all Critical and High findings closed and all Medium findings addressed, the "
     "application's overall risk posture has improved from Critical to Low. The engineering "
-    "team clears the Vishal Gold application for production launch, pending completion of "
+    "team clears the Vishal Jewelers application for production launch, pending completion of "
     "the client-side VAPT-007 credential rotation."
 ))
 

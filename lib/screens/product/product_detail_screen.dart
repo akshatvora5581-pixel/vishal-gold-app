@@ -3,18 +3,18 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:provider/provider.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:google_fonts/google_fonts.dart';
-import 'package:vishal_gold/constants/app_colors.dart';
-import 'package:vishal_gold/models/product.dart';
-import 'package:vishal_gold/models/category.dart' as app_category;
-import 'package:vishal_gold/models/market_settings.dart';
-import 'package:vishal_gold/providers/cart_provider.dart';
-import 'package:vishal_gold/providers/wishlist_provider.dart';
-import 'package:vishal_gold/screens/cart/cart_screen.dart';
-import 'package:vishal_gold/screens/product/full_screen_photo_viewer.dart';
-import 'package:vishal_gold/services/firebase_service.dart';
+import 'package:vishal_jewelers/constants/app_colors.dart';
+import 'package:vishal_jewelers/models/product.dart';
+import 'package:vishal_jewelers/models/category.dart' as app_category;
+import 'package:vishal_jewelers/models/market_settings.dart';
+import 'package:vishal_jewelers/providers/cart_provider.dart';
+import 'package:vishal_jewelers/providers/wishlist_provider.dart';
+import 'package:vishal_jewelers/screens/cart/cart_screen.dart';
+import 'package:vishal_jewelers/screens/product/full_screen_photo_viewer.dart';
+import 'package:vishal_jewelers/services/firebase_service.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
-import 'package:vishal_gold/widgets/common/shimmer_widget.dart';
+import 'package:vishal_jewelers/widgets/common/shimmer_widget.dart';
 
 class ProductDetailScreen extends StatefulWidget {
   final Product product;
@@ -229,7 +229,7 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
   Widget _buildDetailsSection() {
     return Container(
       width: double.infinity,
-      decoration: const BoxDecoration(
+      decoration: BoxDecoration(
         color: AppColors.surface,
         borderRadius: BorderRadius.only(
           topLeft: Radius.circular(28),
@@ -295,7 +295,7 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
             children: [
               _buildSpecItem('Gross Weight', '${widget.product.grossWeight}g'),
               _buildSpecItem('Net Weight', '${widget.product.netWeight}g'),
-              _buildSpecItem('Purity', '${widget.product.purity}%'),
+              _buildSpecItem('Purity', widget.product.purityDisplay),
             ],
           ),
 
@@ -460,7 +460,7 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
             children: [
               IconButton(
                 onPressed: _decrementQuantity,
-                icon: const Icon(Icons.remove, color: AppColors.gold),
+                icon: Icon(Icons.remove, color: AppColors.gold),
               ),
               Text(
                 '$_quantity',
@@ -472,7 +472,7 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
               ),
               IconButton(
                 onPressed: _incrementQuantity,
-                icon: const Icon(Icons.add, color: AppColors.gold),
+                icon: Icon(Icons.add, color: AppColors.gold),
               ),
             ],
           ),
@@ -516,8 +516,8 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
                   }
                   if (context.mounted) {
                     ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(
-                        content: Text('Added to Cart'),
+                      SnackBar(
+                        content: const Text('Added to Cart'),
                         backgroundColor: AppColors.gold,
                       ),
                     );
@@ -656,7 +656,7 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
                           fontWeight: FontWeight.w600,
                         ),
                       ),
-                      const Icon(
+                      Icon(
                         Icons.info_outline,
                         color: AppColors.gold,
                         size: 16,

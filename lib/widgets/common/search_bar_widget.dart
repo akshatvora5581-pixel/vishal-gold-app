@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:vishal_gold/constants/app_colors.dart';
+import 'package:vishal_jewelers/constants/app_colors.dart';
 
 class SearchBarWidget extends StatelessWidget {
   final Function(String)? onSearch;
@@ -21,7 +21,7 @@ class SearchBarWidget extends StatelessWidget {
         decoration: InputDecoration(
           hintText: hintText ?? 'Search products...',
           border: InputBorder.none,
-          icon: const Icon(Icons.search, color: AppColors.grey),
+          icon: Icon(Icons.search, color: AppColors.grey),
         ),
       ),
     );

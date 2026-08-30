@@ -136,7 +136,7 @@ def main():
 
     mode = "DRY RUN" if args.dry_run else "LIVE"
     print(f"\n{'='*60}")
-    print(f"  Vishal Gold — Firestore Cleanup ({mode})")
+    print(f"  Vishal Jewelers — Firestore Cleanup ({mode})")
     print(f"{'='*60}")
 
     if not args.dry_run:

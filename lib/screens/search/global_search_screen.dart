@@ -1,14 +1,14 @@
 import 'package:flutter/material.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:google_fonts/google_fonts.dart';
-import 'package:vishal_gold/constants/app_colors.dart';
-import 'package:vishal_gold/models/product.dart';
-import 'package:vishal_gold/models/category.dart';
-import 'package:vishal_gold/models/subcategory.dart';
-import 'package:vishal_gold/screens/home/all_subcategories_screen.dart';
-import 'package:vishal_gold/screens/product/product_detail_screen.dart';
-import 'package:vishal_gold/screens/product/product_listing_screen.dart';
-import 'package:vishal_gold/services/firebase_service.dart';
+import 'package:vishal_jewelers/constants/app_colors.dart';
+import 'package:vishal_jewelers/models/product.dart';
+import 'package:vishal_jewelers/models/category.dart';
+import 'package:vishal_jewelers/models/subcategory.dart';
+import 'package:vishal_jewelers/screens/home/all_subcategories_screen.dart';
+import 'package:vishal_jewelers/screens/product/product_detail_screen.dart';
+import 'package:vishal_jewelers/screens/product/product_listing_screen.dart';
+import 'package:vishal_jewelers/services/firebase_service.dart';
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Data models for the three result types
@@ -273,7 +273,7 @@ class _GlobalSearchScreenState extends State<GlobalSearchScreen> {
                         color: AppColors.surface,
                         shape: BoxShape.circle,
                       ),
-                      child: const Icon(
+                      child: Icon(
                         Icons.arrow_back_ios_new,
                         size: 18,
                         color: AppColors.white,
@@ -298,13 +298,13 @@ class _GlobalSearchScreenState extends State<GlobalSearchScreen> {
                           color: AppColors.white.withValues(alpha: 0.4),
                           fontSize: 14,
                         ),
-                        prefixIcon: const Icon(
+                        prefixIcon: Icon(
                           Icons.search_rounded,
                           color: AppColors.gold,
                         ),
                         suffixIcon: _controller.text.isNotEmpty
                             ? IconButton(
-                                icon: const Icon(
+                                icon: Icon(
                                   Icons.close,
                                   color: AppColors.textSecondary,
                                   size: 20,
@@ -334,7 +334,7 @@ class _GlobalSearchScreenState extends State<GlobalSearchScreen> {
 
             // ── Loading or results ──────────────────────────────────────────
             if (_loading)
-              const Expanded(
+              Expanded(
                 child: Center(
                   child: CircularProgressIndicator(color: AppColors.gold),
                 ),
@@ -486,7 +486,7 @@ class _ResultTile extends StatelessWidget {
               const SizedBox(width: 8),
               _buildBadge(),
               const SizedBox(width: 4),
-              const Icon(
+              Icon(
                 Icons.chevron_right_rounded,
                 color: AppColors.textSecondary,
                 size: 20,

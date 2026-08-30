@@ -2,12 +2,12 @@ import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import 'dart:io';
 import 'package:provider/provider.dart';
-import 'package:vishal_gold/providers/auth_provider.dart';
-import 'package:vishal_gold/services/firebase_service.dart';
-import 'package:vishal_gold/widgets/common/custom_app_bar.dart';
-import 'package:vishal_gold/models/sample_order.dart';
-import 'package:vishal_gold/services/local_storage_service.dart';
-import 'package:vishal_gold/services/whatsapp_service.dart';
+import 'package:vishal_jewelers/providers/auth_provider.dart';
+import 'package:vishal_jewelers/services/firebase_service.dart';
+import 'package:vishal_jewelers/widgets/common/custom_app_bar.dart';
+import 'package:vishal_jewelers/models/sample_order.dart';
+import 'package:vishal_jewelers/services/local_storage_service.dart';
+import 'package:vishal_jewelers/services/whatsapp_service.dart';
 
 class SampleOrderScreen extends StatefulWidget {
   const SampleOrderScreen({super.key});
@@ -26,19 +26,56 @@ class _SampleOrderScreenState extends State<SampleOrderScreen> {
   final _remarksController = TextEditingController();
 
   String? _selectedGroup;
+  List<String> _groups = [];
   bool _rodium = false;
   bool _huid = false;
   final List<File> _imageFiles = [];
   bool _isLoading = false;
+  bool _isLoadingCategories = true;
   final FirebaseService _firebaseService = FirebaseService();
   Map<String, String> _userDetails = {};
-
-  final List<String> _groups = ['84 MELTING', '92 MELTING', '92 MELTING CHAIN'];
 
   @override
   void initState() {
     super.initState();
     _loadUserDetails();
+    _loadCategories();
+  }
+
+  Future<void> _loadCategories() async {
+    try {
+      // Fetch active categories
+      final snapshot =
+          await _firebaseService.getCategories(onlyActive: true).first;
+
+      final categories =
+          snapshot.docs.map((doc) {
+            final data = doc.data() as Map<String, dynamic>;
+            return data['name'] as String? ?? 'Unknown';
+          }).toList();
+
+      // Ensure duplicates are removed and list is sorted
+      final uniqueCategories = categories.toSet().toList()..sort();
+
+      if (mounted) {
+        setState(() {
+          _groups = uniqueCategories;
+          _isLoadingCategories = false;
+          // Pre-select first if available
+          if (_groups.isNotEmpty) {
+            _selectedGroup = _groups.first;
+          }
+        });
+      }
+    } catch (e) {
+      debugPrint('Error loading categories: $e');
+      if (mounted) {
+        setState(() {
+          _isLoadingCategories = false;
+          // Fallback if needed, but better to show error or empty
+        });
+      }
+    }
   }
 
   Future<void> _loadUserDetails() async {
@@ -293,77 +330,100 @@ class _SampleOrderScreenState extends State<SampleOrderScreen> {
               const SizedBox(height: 24),
 
               // Group Dropdown
-              DropdownButtonFormField<String>(
-                initialValue: _selectedGroup,
-                decoration: InputDecoration(
-                  labelText: 'Select Category',
-                  labelStyle: TextStyle(
-                    color: Theme.of(context).colorScheme.primary,
-                    fontWeight: FontWeight.w600,
-                    fontSize: 12,
-                    letterSpacing: 1.0,
-                  ),
-                  hintText: 'Choose a category',
-                  hintStyle: TextStyle(
-                    color: Theme.of(
-                      context,
-                    ).colorScheme.onSurface.withValues(alpha: 0.5),
-                  ),
-                  filled: true,
-                  fillColor: Theme.of(context).colorScheme.surface,
-                  prefixIcon: Icon(
-                    Icons.category_outlined,
-                    color: Theme.of(context).colorScheme.primary,
-                  ),
-                  border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(12),
-                    borderSide: BorderSide(
-                      color: Theme.of(
-                        context,
-                      ).colorScheme.primary.withValues(alpha: 0.3),
+              _isLoadingCategories
+                  ? const Center(
+                    child: Padding(
+                      padding: EdgeInsets.all(16.0),
+                      child: CircularProgressIndicator(),
                     ),
-                  ),
-                  enabledBorder: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(12),
-                    borderSide: BorderSide(
-                      color: Theme.of(
-                        context,
-                      ).colorScheme.primary.withValues(alpha: 0.3),
+                  )
+                  : _groups.isEmpty
+                  ? Container(
+                    padding: const EdgeInsets.all(16),
+                    decoration: BoxDecoration(
+                      color: Colors.red.withValues(alpha: 0.1),
+                      borderRadius: BorderRadius.circular(12),
+                      border: Border.all(color: Colors.red.withValues(alpha: 0.3)),
                     ),
-                  ),
-                  focusedBorder: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(12),
-                    borderSide: BorderSide(
-                      color: Theme.of(context).colorScheme.primary,
-                      width: 1.5,
+                    child: const Text(
+                      'No categories found. Please try again later.',
+                      style: TextStyle(color: Colors.red),
+                      textAlign: TextAlign.center,
                     ),
-                  ),
-                ),
-                style: TextStyle(
-                  color: Theme.of(context).colorScheme.onSurface,
-                  fontSize: 16,
-                ),
-                dropdownColor: Theme.of(context).colorScheme.surface,
-                items: _groups.map((group) {
-                  return DropdownMenuItem(
-                    value: group,
-                    child: Text(
-                      group,
-                      style: TextStyle(
-                        color: Theme.of(context).colorScheme.onSurface,
-                        fontWeight: FontWeight.w500,
+                  )
+                  : DropdownButtonFormField<String>(
+                    initialValue: _selectedGroup,
+                    decoration: InputDecoration(
+                      labelText: 'Select Category',
+                      labelStyle: TextStyle(
+                        color: Theme.of(context).colorScheme.primary,
+                        fontWeight: FontWeight.w600,
+                        fontSize: 12,
+                        letterSpacing: 1.0,
+                      ),
+                      hintText: 'Choose a category',
+                      hintStyle: TextStyle(
+                        color: Theme.of(
+                          context,
+                        ).colorScheme.onSurface.withValues(alpha: 0.5),
+                      ),
+                      filled: true,
+                      fillColor: Theme.of(context).colorScheme.surface,
+                      prefixIcon: Icon(
+                        Icons.category_outlined,
+                        color: Theme.of(context).colorScheme.primary,
+                      ),
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(12),
+                        borderSide: BorderSide(
+                          color: Theme.of(
+                            context,
+                          ).colorScheme.primary.withValues(alpha: 0.3),
+                        ),
+                      ),
+                      enabledBorder: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(12),
+                        borderSide: BorderSide(
+                          color: Theme.of(
+                            context,
+                          ).colorScheme.primary.withValues(alpha: 0.3),
+                        ),
+                      ),
+                      focusedBorder: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(12),
+                        borderSide: BorderSide(
+                          color: Theme.of(context).colorScheme.primary,
+                          width: 1.5,
+                        ),
                       ),
                     ),
-                  );
-                }).toList(),
-                onChanged: (value) => setState(() => _selectedGroup = value),
-                validator: (value) {
-                  if (value == null || value.isEmpty) {
-                    return 'Please select a category';
-                  }
-                  return null;
-                },
-              ),
+                    style: TextStyle(
+                      color: Theme.of(context).colorScheme.onSurface,
+                      fontSize: 16,
+                    ),
+                    dropdownColor: Theme.of(context).colorScheme.surface,
+                    items:
+                        _groups.map((group) {
+                          return DropdownMenuItem(
+                            value: group,
+                            child: Text(
+                              group,
+                              style: TextStyle(
+                                color: Theme.of(context).colorScheme.onSurface,
+                                fontWeight: FontWeight.w500,
+                              ),
+                            ),
+                          );
+                        }).toList(),
+                    onChanged:
+                        (value) => setState(() => _selectedGroup = value),
+                    validator: (value) {
+                      if (value == null || value.isEmpty) {
+                        return 'Please select a category';
+                      }
+                      return null;
+                    },
+                  ),
               const SizedBox(height: 16),
 
               // Item Name

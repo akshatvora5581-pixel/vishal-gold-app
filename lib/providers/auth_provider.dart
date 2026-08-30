@@ -1,15 +1,15 @@
 import 'package:flutter/foundation.dart';
 import 'package:firebase_auth/firebase_auth.dart';
-import 'package:vishal_gold/services/firebase_auth_service.dart';
-import 'package:vishal_gold/services/firebase_service.dart';
-import 'package:vishal_gold/services/local_storage_service.dart';
-import 'package:vishal_gold/services/fcm_service.dart';
+import 'package:vishal_jewelers/services/firebase_auth_service.dart';
+import 'package:vishal_jewelers/services/firebase_service.dart';
+import 'package:vishal_jewelers/services/local_storage_service.dart';
+import 'package:vishal_jewelers/services/fcm_service.dart';
 import 'package:local_auth/local_auth.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'dart:convert';
 import 'package:crypto/crypto.dart';
-import 'package:vishal_gold/services/audit_service.dart';
+import 'package:vishal_jewelers/services/audit_service.dart';
 
 class AuthProvider with ChangeNotifier {
   final FirebaseAuthService _authService = FirebaseAuthService();

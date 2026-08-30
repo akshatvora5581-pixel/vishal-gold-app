@@ -1,7 +1,7 @@
 import 'package:flutter/foundation.dart';
-import 'package:vishal_gold/models/order.dart';
-import 'package:vishal_gold/models/cart_item.dart';
-import 'package:vishal_gold/services/firebase_service.dart';
+import 'package:vishal_jewelers/models/order.dart';
+import 'package:vishal_jewelers/models/cart_item.dart';
+import 'package:vishal_jewelers/services/firebase_service.dart';
 
 class OrderProvider with ChangeNotifier {
   final FirebaseService _firebaseService = FirebaseService();

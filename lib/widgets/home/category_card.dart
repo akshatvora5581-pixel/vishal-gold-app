@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:cached_network_image/cached_network_image.dart';
-import 'package:vishal_gold/constants/app_colors.dart';
-import 'package:vishal_gold/widgets/common/shimmer_widget.dart';
+import 'package:vishal_jewelers/constants/app_colors.dart';
+import 'package:vishal_jewelers/widgets/common/shimmer_widget.dart';
 
 class CategoryCard extends StatelessWidget {
   final String name;
@@ -65,7 +65,7 @@ class CategoryCard extends StatelessWidget {
     if (imagePath.isEmpty) {
       return Container(
         color: AppColors.background,
-        child: const Center(
+        child: Center(
           child: Icon(Icons.category_outlined, color: AppColors.textSecondary),
         ),
       );
@@ -98,7 +98,7 @@ class CategoryCard extends StatelessWidget {
   Widget _brokenImagePlaceholder() {
     return Container(
       color: AppColors.background,
-      child: const Center(
+      child: Center(
         child: Icon(Icons.broken_image, color: AppColors.grey),
       ),
     );

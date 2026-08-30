@@ -4,12 +4,12 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:provider/provider.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:vishal_gold/constants/app_colors.dart';
-import 'package:vishal_gold/models/product.dart';
-import 'package:vishal_gold/models/category.dart' as app_category;
-import 'package:vishal_gold/models/subcategory.dart';
-import 'package:vishal_gold/services/firebase_service.dart';
-import 'package:vishal_gold/providers/auth_provider.dart';
+import 'package:vishal_jewelers/constants/app_colors.dart';
+import 'package:vishal_jewelers/models/product.dart';
+import 'package:vishal_jewelers/models/category.dart' as app_category;
+import 'package:vishal_jewelers/models/subcategory.dart';
+import 'package:vishal_jewelers/services/firebase_service.dart';
+import 'package:vishal_jewelers/providers/auth_provider.dart';
 
 class AddEditProductSheet extends StatefulWidget {
   final Product? product;
@@ -207,7 +207,8 @@ class _AddEditProductSheetState extends State<AddEditProductSheet> {
         'is_active': true,
         'status': 'published', // Ensuring it's set to published
         'uploaded_by': performerId,
-        'version': widget.product?.version ?? 1,
+        'version': (widget.product?.version ?? 0) + 1,
+        'lastPublishedAt': FieldValue.serverTimestamp(),
         'updatedAt': FieldValue.serverTimestamp(),
       };
 
@@ -245,7 +246,7 @@ class _AddEditProductSheetState extends State<AddEditProductSheet> {
             backgroundColor: Colors.green,
           ),
         );
-        Navigator.pop(context);
+        Navigator.pop(context, true);
       }
     } catch (e) {
       if (mounted) {
@@ -287,7 +288,7 @@ class _AddEditProductSheetState extends State<AddEditProductSheet> {
                       ),
                       IconButton(
                         onPressed: () => Navigator.pop(context),
-                        icon: const Icon(
+                        icon: Icon(
                           Icons.close,
                           color: AppColors.textSecondary,
                         ),
@@ -359,14 +360,14 @@ class _AddEditProductSheetState extends State<AddEditProductSheet> {
                             ),
                           ),
                           child: isLoading
-                              ? const CircularProgressIndicator(
+                              ? CircularProgressIndicator(
                                   color: AppColors.black,
                                 )
                               : Text(
                                   widget.product == null
                                       ? 'Create Product'
                                       : 'Save Changes',
-                                  style: const TextStyle(
+                                  style: TextStyle(
                                     color: AppColors.black,
                                     fontWeight: FontWeight.bold,
                                     fontSize: 16,
@@ -397,24 +398,24 @@ class _AddEditProductSheetState extends State<AddEditProductSheet> {
       controller: controller,
       keyboardType: keyboardType,
       maxLines: maxLines,
-      style: const TextStyle(color: AppColors.textPrimary),
+      style: TextStyle(color: AppColors.textPrimary),
       decoration: InputDecoration(
         labelText: label,
-        labelStyle: const TextStyle(color: AppColors.textSecondary),
+        labelStyle: TextStyle(color: AppColors.textSecondary),
         prefixIcon: Icon(icon, color: AppColors.gold),
         filled: true,
         fillColor: AppColors.background,
         border: OutlineInputBorder(
           borderRadius: BorderRadius.circular(12),
-          borderSide: BorderSide(color: AppColors.white.withOpacity(0.1)),
+          borderSide: BorderSide(color: AppColors.white.withValues(alpha: 0.1)),
         ),
         enabledBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(12),
-          borderSide: BorderSide(color: AppColors.white.withOpacity(0.1)),
+          borderSide: BorderSide(color: AppColors.white.withValues(alpha: 0.1)),
         ),
         focusedBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(12),
-          borderSide: const BorderSide(color: AppColors.gold),
+          borderSide: BorderSide(color: AppColors.gold),
         ),
       ),
       validator: (value) {
@@ -432,7 +433,7 @@ class _AddEditProductSheetState extends State<AddEditProductSheet> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        const Text(
+        Text(
           'Product Images',
           style: TextStyle(color: AppColors.textSecondary, fontSize: 14),
         ),
@@ -456,11 +457,11 @@ class _AddEditProductSheetState extends State<AddEditProductSheet> {
                             color: AppColors.background,
                             borderRadius: BorderRadius.circular(12),
                             border: Border.all(
-                              color: AppColors.gold.withOpacity(0.3),
+                              color: AppColors.gold.withValues(alpha: 0.3),
                               style: BorderStyle.solid,
                             ),
                           ),
-                          child: const Icon(
+                          child: Icon(
                             Icons.add_photo_alternate_outlined,
                             color: AppColors.gold,
                           ),
@@ -546,7 +547,7 @@ class _AddEditProductSheetState extends State<AddEditProductSheet> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        const Text(
+        Text(
           'Inventory Status',
           style: TextStyle(color: AppColors.textSecondary, fontSize: 14),
         ),
@@ -598,7 +599,7 @@ class _AddEditProductSheetState extends State<AddEditProductSheet> {
         if (selected) _inventoryStatusNotifier.value = value;
       },
       backgroundColor: AppColors.background,
-      selectedColor: color.withOpacity(0.2),
+      selectedColor: color.withValues(alpha: 0.2),
       labelStyle: TextStyle(
         color: isSelected ? color : AppColors.textPrimary,
         fontSize: 12,
@@ -767,7 +768,7 @@ class _AddEditProductSheetState extends State<AddEditProductSheet> {
       decoration: BoxDecoration(
         color: AppColors.background,
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: AppColors.white.withOpacity(0.1)),
+        border: Border.all(color: AppColors.white.withValues(alpha: 0.1)),
       ),
       child: Row(
         children: [
@@ -775,7 +776,7 @@ class _AddEditProductSheetState extends State<AddEditProductSheet> {
           const SizedBox(width: 12),
           Text(
             message,
-            style: const TextStyle(
+            style: TextStyle(
               color: AppColors.textSecondary,
               fontSize: 14,
             ),
@@ -798,24 +799,24 @@ class _AddEditProductSheetState extends State<AddEditProductSheet> {
       decoration: BoxDecoration(
         color: AppColors.background,
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: AppColors.white.withOpacity(0.1)),
+        border: Border.all(color: AppColors.white.withValues(alpha: 0.1)),
       ),
       child: DropdownButtonFormField<T>(
         initialValue: value,
         hint: Text(
           hint,
-          style: const TextStyle(color: AppColors.textSecondary),
+          style: TextStyle(color: AppColors.textSecondary),
         ),
         items: items,
         onChanged: onChanged,
         onTap: onTap,
         dropdownColor: AppColors.surface,
-        icon: const Icon(Icons.arrow_drop_down, color: AppColors.gold),
+        icon: Icon(Icons.arrow_drop_down, color: AppColors.gold),
         decoration: InputDecoration(
           border: InputBorder.none,
           prefixIcon: Icon(icon, color: AppColors.gold),
         ),
-        style: const TextStyle(color: AppColors.textPrimary),
+        style: TextStyle(color: AppColors.textPrimary),
       ),
     );
   }
@@ -828,7 +829,7 @@ class _AddEditProductSheetState extends State<AddEditProductSheet> {
         return Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            const Text(
+            Text(
               'Purity',
               style: TextStyle(color: AppColors.textSecondary, fontSize: 14),
             ),
@@ -863,7 +864,7 @@ class _AddEditProductSheetState extends State<AddEditProductSheet> {
         if (selected) _selectedPurityNotifier.value = value;
       },
       backgroundColor: AppColors.background,
-      selectedColor: AppColors.gold.withOpacity(0.2),
+      selectedColor: AppColors.gold.withValues(alpha: 0.2),
       labelStyle: TextStyle(
         color: isSelected ? AppColors.gold : AppColors.textPrimary,
         fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,

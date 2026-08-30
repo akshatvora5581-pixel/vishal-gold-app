@@ -13,9 +13,9 @@ doc = new_document()
 
 add_cover(doc,
     title    = "User Manual",
-    subtitle = "Vishal Gold App — Retailer & Wholesaler Guide",
+    subtitle = "Vishal Jewelers App — Retailer & Wholesaler Guide",
     version  = "v1.0",
-    prepared_for = "Vishal Gold Customers",
+    prepared_for = "Vishal Jewelers Customers",
     prepared_by  = "Engineering Delivery Team"
 )
 
@@ -38,8 +38,8 @@ add_toc_placeholder(doc, [
 # ── 1. Introduction ─────────────────────────────────────────────────────────
 add_h1(doc, "1. Introduction")
 add_body(doc, (
-    "Welcome to Vishal Gold, the premier digital catalog and commerce platform designed exclusively "
-    "for the gold and fine jewelry trade. The Vishal Gold application connects jewelry wholesalers "
+    "Welcome to Vishal Jewelers, the premier digital catalog and commerce platform designed exclusively "
+    "for the gold and fine jewelry trade. The Vishal Jewelers application connects jewelry wholesalers "
     "and retailers in a seamless, secure, and efficient digital environment. Whether you are "
     "a wholesale buyer reviewing the latest inventory or a retail customer exploring curated collections, "
     "this application provides a rich, intuitive experience tailored to your role."
@@ -54,7 +54,7 @@ add_body(doc, (
 # ── 2. Download & Installation ───────────────────────────────────────────────
 add_h1(doc, "2. Getting Started — Download & Installation")
 add_body(doc, (
-    "The Vishal Gold application is available exclusively for Android devices. The following steps "
+    "The Vishal Jewelers application is available exclusively for Android devices. The following steps "
     "describe how to download and install the application for first-time use."
 ))
 add_h2(doc, "2.1 System Requirements")
@@ -68,7 +68,7 @@ add_table(doc,
     ]
 )
 add_h2(doc, "2.2 Installation Steps")
-add_numbered(doc, "Search for 'Vishal Gold' on the Google Play Store, or scan the QR code provided by your account representative.")
+add_numbered(doc, "Search for 'Vishal Jewelers' on the Google Play Store, or scan the QR code provided by your account representative.")
 add_numbered(doc, "Tap the Install button. The application will download and install automatically.")
 add_numbered(doc, "Once installed, tap Open to launch the application.")
 add_numbered(doc, "Grant the requested permissions: SMS (for OTP verification) and Notifications (for order updates).")
@@ -76,7 +76,7 @@ add_numbered(doc, "Grant the requested permissions: SMS (for OTP verification) a
 # ── 3. Understanding User Roles ──────────────────────────────────────────────
 add_h1(doc, "3. Understanding User Roles")
 add_body(doc, (
-    "Vishal Gold serves two primary user types, each with a distinct experience tailored to their "
+    "Vishal Jewelers serves two primary user types, each with a distinct experience tailored to their "
     "business needs. The application automatically adjusts the available features and pricing "
     "information based on your registered role."
 ))
@@ -102,7 +102,7 @@ add_note(doc, "Note",
 add_h1(doc, "4. Account Registration & Login")
 add_h2(doc, "4.1 First-Time Registration")
 add_body(doc, (
-    "When you open the Vishal Gold application for the first time, you will be presented with the "
+    "When you open the Vishal Jewelers application for the first time, you will be presented with the "
     "authentication screen. The application uses your mobile phone number as your unique identifier."
 ))
 add_numbered(doc, "Enter your mobile phone number in international format (e.g., +91 98765 43210).")
@@ -130,7 +130,7 @@ add_body(doc, (
 # ── 5. Browsing the Product Catalog ─────────────────────────────────────────
 add_h1(doc, "5. Browsing the Product Catalog")
 add_body(doc, (
-    "The home screen is your gateway to the entire Vishal Gold collection. Products are organized "
+    "The home screen is your gateway to the entire Vishal Jewelers collection. Products are organized "
     "into categories such as Rings, Bangles, Chains, Sets, and more. Collections can be browsed "
     "horizontally by category on the home screen, or you may navigate to a full listing view for "
     "any category."
@@ -215,12 +215,12 @@ add_body(doc, (
 add_h1(doc, "9. Placing a Sample Order")
 add_body(doc, (
     "The Sample Order feature allows you to request one or more custom or prototype jewelry pieces "
-    "from the Vishal Gold team. This is intended for custom design requests or pre-production samples."
+    "from the Vishal Jewelers team. This is intended for custom design requests or pre-production samples."
 ))
 add_numbered(doc, "Tap the 'Custom Order' button (gold circular button) on the home screen.")
 add_numbered(doc, "Fill in the required fields: Group/Category, Item Name, Quantity, Size requirements, Estimated Weight, and any Rodium or HUID treatment preferences.")
 add_numbered(doc, "Attach a reference image by tapping the image icon. You may upload a photo from your gallery.")
-add_numbered(doc, "Review your entry and tap 'Place Order'. The request will be submitted to the Vishal Gold team.")
+add_numbered(doc, "Review your entry and tap 'Place Order'. The request will be submitted to the Vishal Jewelers team.")
 add_numbered(doc, "You will receive a push notification and in-app confirmation once your sample request has been reviewed.")
 
 # ── 10. Order History ────────────────────────────────────────────────────────
@@ -244,7 +244,7 @@ add_note(doc, "Privacy", "Your personal details are stored using industry-standa
 # ── 12. Notifications ────────────────────────────────────────────────────────
 add_h1(doc, "12. Notifications")
 add_body(doc, (
-    "Vishal Gold sends push notifications to keep you informed about your orders. You will receive "
+    "Vishal Jewelers sends push notifications to keep you informed about your orders. You will receive "
     "notifications when: a new collection is added, your order status changes, a sample order "
     "request has been reviewed, or an important announcement is broadcast by the team. "
     "Notification preferences can be managed in your device's system settings under App Notifications."
@@ -266,10 +266,10 @@ faqs = [
      "close and restart the application."),
     ("I cannot see pricing information.",
      "Pricing is only visible to authenticated Wholesaler accounts. If you believe your account type "
-     "is incorrect, contact your Vishal Gold representative to update your registration."),
+     "is incorrect, contact your Vishal Jewelers representative to update your registration."),
     ("How do I contact support?",
      "Tap the Profile screen and select 'Contact Support', or reach out directly to your assigned "
-     "Vishal Gold account manager via WhatsApp or phone."),
+     "Vishal Jewelers account manager via WhatsApp or phone."),
 ]
 for q, a in faqs:
     add_h3(doc, f"Q: {q}")

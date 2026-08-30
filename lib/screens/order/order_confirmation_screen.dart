@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
-import 'package:vishal_gold/constants/app_colors.dart';
-import 'package:vishal_gold/screens/home/home_screen.dart';
-import 'package:vishal_gold/screens/order/order_detail_screen.dart';
+import 'package:vishal_jewelers/constants/app_colors.dart';
+import 'package:vishal_jewelers/screens/home/home_screen.dart';
+import 'package:vishal_jewelers/screens/order/order_detail_screen.dart';
 
 class OrderConfirmationScreen extends StatelessWidget {
   final String orderId;
@@ -28,7 +28,7 @@ class OrderConfirmationScreen extends StatelessWidget {
                     color: AppColors.successGreen,
                     shape: BoxShape.circle,
                   ),
-                  child: const Icon(
+                  child: Icon(
                     Icons.check,
                     size: 60,
                     color: AppColors.white,
@@ -106,10 +106,10 @@ class OrderConfirmationScreen extends StatelessWidget {
                     );
                   },
                   style: OutlinedButton.styleFrom(
-                    side: const BorderSide(color: AppColors.oliveGreen),
+                    side: BorderSide(color: AppColors.oliveGreen),
                     minimumSize: const Size(double.infinity, 50),
                   ),
-                  child: const Text(
+                  child: Text(
                     'Continue Shopping',
                     style: TextStyle(color: AppColors.oliveGreen),
                   ),

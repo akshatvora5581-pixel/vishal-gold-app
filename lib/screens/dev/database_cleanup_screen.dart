@@ -132,9 +132,9 @@ class _DatabaseCleanupScreenState extends State<DatabaseCleanupScreen> {
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: Colors.red.withOpacity(0.1),
+        color: Colors.red.withValues(alpha: 0.1),
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: Colors.red.withOpacity(0.3)),
+        border: Border.all(color: Colors.red.withValues(alpha: 0.3)),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -201,10 +201,10 @@ class _DatabaseCleanupScreenState extends State<DatabaseCleanupScreen> {
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
-        Text(label, style: const TextStyle(color: Colors.white60)),
+        Text(label, style: TextStyle(color: Colors.white60)),
         Text(
           value,
-          style: const TextStyle(
+          style: TextStyle(
             color: Colors.white,
             fontWeight: FontWeight.bold,
             fontSize: 18,
@@ -232,7 +232,7 @@ class _DatabaseCleanupScreenState extends State<DatabaseCleanupScreen> {
               padding: const EdgeInsets.symmetric(vertical: 2),
               child: Text(
                 _logs[index],
-                style: const TextStyle(
+                style: TextStyle(
                   color: Colors.greenAccent,
                   fontSize: 12,
                   fontFamily: 'monospace',
@@ -253,7 +253,7 @@ class _DatabaseCleanupScreenState extends State<DatabaseCleanupScreen> {
         child: ElevatedButton(
           onPressed: () => Navigator.pop(context),
           style: ElevatedButton.styleFrom(
-            backgroundColor: Colors.greenAccent.withOpacity(0.2),
+            backgroundColor: Colors.greenAccent.withValues(alpha: 0.2),
             foregroundColor: Colors.greenAccent,
             shape: RoundedRectangleBorder(
               borderRadius: BorderRadius.circular(12),

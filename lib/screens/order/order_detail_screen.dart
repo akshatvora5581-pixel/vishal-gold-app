@@ -3,9 +3,9 @@ import 'package:provider/provider.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:intl/intl.dart';
 import 'package:cached_network_image/cached_network_image.dart';
-import 'package:vishal_gold/constants/app_colors.dart';
-import 'package:vishal_gold/providers/order_provider.dart';
-import 'package:vishal_gold/models/order.dart' as app_order;
+import 'package:vishal_jewelers/constants/app_colors.dart';
+import 'package:vishal_jewelers/providers/order_provider.dart';
+import 'package:vishal_jewelers/models/order.dart' as app_order;
 
 class OrderDetailScreen extends StatelessWidget {
   final String orderId;
@@ -36,7 +36,7 @@ class OrderDetailScreen extends StatelessWidget {
         ).getOrderById(orderId),
         builder: (context, snapshot) {
           if (snapshot.connectionState == ConnectionState.waiting) {
-            return const Center(
+            return Center(
               child: CircularProgressIndicator(color: AppColors.gold),
             );
           }
@@ -349,7 +349,7 @@ class _OrderItemCard extends StatelessWidget {
                                 width: 70,
                                 height: 70,
                                 color: Colors.white10,
-                                child: const Icon(
+                                child: Icon(
                                   Icons.diamond,
                                   color: AppColors.gold,
                                 ),
@@ -364,7 +364,7 @@ class _OrderItemCard extends StatelessWidget {
                             width: 70,
                             height: 70,
                             color: Colors.white10,
-                            child: const Center(
+                            child: Center(
                               child: CircularProgressIndicator(
                                 strokeWidth: 2,
                                 color: AppColors.gold,
@@ -375,7 +375,7 @@ class _OrderItemCard extends StatelessWidget {
                             width: 70,
                             height: 70,
                             color: Colors.white10,
-                            child: const Icon(
+                            child: Icon(
                               Icons.diamond,
                               color: AppColors.gold,
                             ),
@@ -385,7 +385,7 @@ class _OrderItemCard extends StatelessWidget {
                     width: 70,
                     height: 70,
                     color: Colors.white10,
-                    child: const Icon(Icons.diamond, color: AppColors.gold),
+                    child: Icon(Icons.diamond, color: AppColors.gold),
                   ),
           ),
           const SizedBox(width: 16),

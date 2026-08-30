@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:google_fonts/google_fonts.dart';
-import 'package:vishal_gold/constants/app_colors.dart';
-import 'package:vishal_gold/utils/app_layout.dart';
-import 'package:vishal_gold/widgets/common/custom_app_bar.dart';
+import 'package:vishal_jewelers/constants/app_colors.dart';
+import 'package:vishal_jewelers/utils/app_layout.dart';
+import 'package:vishal_jewelers/widgets/common/custom_app_bar.dart';
 
 /// Displays customer-uploaded sample designs for a given [categoryName],
 /// streamed in real-time from Firestore's `sample_orders` collection.
@@ -27,7 +27,7 @@ class CategoryDesignsScreen extends StatelessWidget {
         builder: (context, snapshot) {
           // ── Loading ─────────────────────────────────────────────────────────
           if (snapshot.connectionState == ConnectionState.waiting) {
-            return const Center(
+            return Center(
               child: CircularProgressIndicator(color: AppColors.gold),
             );
           }
@@ -38,7 +38,7 @@ class CategoryDesignsScreen extends StatelessWidget {
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  const Icon(
+                  Icon(
                     Icons.error_outline_rounded,
                     color: AppColors.errorRed,
                     size: 48,
@@ -293,7 +293,7 @@ class _LoadingShimmerState extends State<_LoadingShimmer>
             children: [
               Opacity(
                 opacity: _anim.value,
-                child: const Icon(
+                child: Icon(
                   Icons.image_outlined,
                   color: AppColors.gold,
                   size: 36,
@@ -306,7 +306,7 @@ class _LoadingShimmerState extends State<_LoadingShimmer>
                   child: LinearProgressIndicator(
                     value: widget.progress,
                     backgroundColor: AppColors.cardBorder,
-                    valueColor: const AlwaysStoppedAnimation(AppColors.gold),
+                    valueColor: AlwaysStoppedAnimation(AppColors.gold),
                     minHeight: 2,
                     borderRadius: BorderRadius.circular(1),
                   ),
@@ -386,13 +386,13 @@ class _FullImageViewer extends StatelessWidget {
                       fit: BoxFit.contain,
                       loadingBuilder: (context, child, progress) {
                         if (progress == null) return child;
-                        return const Center(
+                        return Center(
                           child: CircularProgressIndicator(
                             color: AppColors.gold,
                           ),
                         );
                       },
-                      errorBuilder: (_, _, _) => const Center(
+                      errorBuilder: (_, _, _) => Center(
                         child: Icon(
                           Icons.broken_image_outlined,
                           color: AppColors.grey,
@@ -416,7 +416,7 @@ class _FullImageViewer extends StatelessWidget {
                       color: Colors.black.withValues(alpha: 0.55),
                       shape: BoxShape.circle,
                     ),
-                    child: const Icon(
+                    child: Icon(
                       Icons.close_rounded,
                       color: AppColors.white,
                       size: 22,

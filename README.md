@@ -1,4 +1,4 @@
-# 🏆 Vishal Jewellers - Jewelry Design & Ordering Platform
+# 🏆 Vishal Jewelers - Jewelry Design & Ordering Platform
 
 A premium Flutter application for jewelry wholesalers and retailers to browse, order, and upload gold jewelry designs. Built with Flutter and Supabase.
 
@@ -95,7 +95,7 @@ flutter_secure_storage: ^10.0.0
 ## 📁 Project Structure
 
 ```
-vishal_gold/
+vishal_jewelers/
 ├── 📂 lib/
 │   ├── 📂 config/
 │   │   └── app_config.dart          # ⚙️ App configuration & Supabase credentials
@@ -195,10 +195,10 @@ flutter --version
 
 ```bash
 # Clone the repository
-git clone https://github.com/akshatvora5581-pixel/vishal-gold-app.git
+git clone https://github.com/akshatvora5581-pixel/vishal-jewelers-app.git
 
 # Navigate to project directory
-cd vishal-gold-app
+cd vishal-jewelers-app
 ```
 
 ### Step 2: Install Flutter Dependencies
@@ -259,7 +259,7 @@ If you want to set up your own Supabase project, follow these steps:
 2. Click "New Project"
 3. Choose your organization
 4. Enter project details:
-   - **Name:** `vishal-gold-app`
+   - **Name:** `vishal-jewelers-app`
    - **Database Password:** (save this securely!)
    - **Region:** Choose closest to your users
 5. Click "Create new project" and wait ~2 minutes
@@ -282,7 +282,7 @@ class AppConfig {
   static const String supabaseAnonKey = 'YOUR_ANON_KEY';
 
   // App Configuration (leave as is)
-  static const String appName = 'Vishal Jewellers';
+  static const String appName = 'Vishal Jewelers';
   static const int itemsPerPage = 20;
   static const int maxRecentViews = 30;
   static const int maxUploadImages = 10;
@@ -754,7 +754,7 @@ flutter run
 
 ## 📄 License
 
-© 2026 Vishal Gold. All rights reserved.
+© 2026 Vishal Jewelers. All rights reserved.
 
 This is proprietary software. Unauthorized copying, modification, distribution, or use of this software is strictly prohibited.
 
@@ -765,7 +765,7 @@ This is proprietary software. Unauthorized copying, modification, distribution, 
 For issues, questions, or feature requests:
 
 - 📧 Email: [Contact Development Team]
-- 🐛 Issues: [GitHub Issues](https://github.com/akshatvora5581-pixel/vishal-gold-app/issues)
+- 🐛 Issues: [GitHub Issues](https://github.com/akshatvora5581-pixel/vishal-jewelers-app/issues)
 
 ---
 

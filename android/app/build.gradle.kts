@@ -17,7 +17,7 @@ if (keyPropertiesFile.exists()) {
 
 
 android {
-    namespace = "com.vishalgoldapp"
+    namespace = "com.vishaljewelersapp"
     compileSdk = flutter.compileSdkVersion
     ndkVersion = flutter.ndkVersion
 
@@ -50,7 +50,7 @@ android {
     }
 
     defaultConfig {
-        applicationId = "com.vishalgoldapp"
+        applicationId = "com.vishaljewelersapp"
         minSdk = flutter.minSdkVersion  // Firebase requires minimum SDK 21
         targetSdk = flutter.targetSdkVersion
         versionCode = flutter.versionCode
@@ -82,6 +82,8 @@ flutter {
 
 dependencies {
     coreLibraryDesugaring("com.android.tools:desugar_jdk_libs:2.1.4")
+    // Play Integrity for App Check production support
+    implementation("com.google.android.play:integrity:1.4.0")
 }
 
 // Apply Google Services plugin for Firebase

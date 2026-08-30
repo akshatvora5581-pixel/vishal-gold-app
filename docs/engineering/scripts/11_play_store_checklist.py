@@ -13,9 +13,9 @@ doc = new_document()
 
 add_cover(doc,
     title    = "Play Store Submission Checklist",
-    subtitle = "Vishal Gold App — Pre-Submission Compliance & Readiness Checklist",
+    subtitle = "Vishal Jewelers App — Pre-Submission Compliance & Readiness Checklist",
     version  = "v1.0",
-    prepared_for = "Vishal Gold Marketing & IT Team",
+    prepared_for = "Vishal Jewelers Marketing & IT Team",
     prepared_by  = "Engineering Delivery Team"
 )
 
@@ -32,8 +32,8 @@ add_toc_placeholder(doc, [
 
 add_h1(doc, "1. Overview")
 add_body(doc, (
-    "This checklist is designed to guide the Vishal Gold team through the complete process of "
-    "preparing and submitting the Vishal Gold Android application to the Google Play Store. "
+    "This checklist is designed to guide the Vishal Jewelers team through the complete process of "
+    "preparing and submitting the Vishal Jewelers Android application to the Google Play Store. "
     "Each section must be completed in full before proceeding to the final submission step. "
     "Google Play has rigorous review criteria, and an incomplete or non-compliant submission "
     "may result in rejection, delaying the application's availability to users."
@@ -147,7 +147,7 @@ add_table(doc,
         ["20","Complete content rating questionnaire in Play Console",
          "Expected: Everyone — IARC rating for a commerce/shopping app", "[ ]"],
         ["21","Confirm app does not contain adult/gambling/dangerous content",
-         "Not applicable to Vishal Gold — jewelry commerce app",        "[ ]"],
+         "Not applicable to Vishal Jewelers — jewelry commerce app",        "[ ]"],
         ["22","Confirm app requests only necessary permissions",
          "Only SMS (OTP) and POST_NOTIFICATIONS are required",          "[ ]"],
         ["23","No advertisements (AdMob or third-party) in the app",
@@ -159,7 +159,7 @@ add_h1(doc, "6. Privacy Policy Requirements")
 add_body(doc, (
     "Google Play requires all apps that collect personal data to link to a publicly accessible "
     "Privacy Policy. The Privacy Policy provided in Document #08 of this delivery package "
-    "must be published on a public web page (e.g., the Vishal Gold website or a hosted "
+    "must be published on a public web page (e.g., the Vishal Jewelers website or a hosted "
     "Google Doc) before submission."
 ))
 add_table(doc,
@@ -205,7 +205,7 @@ add_table(doc,
     rows=[
         ["30","Upload AAB to Play Console → Production → New Release", "Ensure AAB, not APK",    "[ ]"],
         ["31","Enter release name and release notes",
-         "Example: '1.0.0 — Initial Release: Vishal Gold App'",                               "[ ]"],
+         "Example: '1.0.0 — Initial Release: Vishal Jewelers App'",                               "[ ]"],
         ["32","Review pre-launch report in Play Console",
          "Google Play automatically runs basic security scans — fix any Critical warnings",   "[ ]"],
         ["33","Submit for review",

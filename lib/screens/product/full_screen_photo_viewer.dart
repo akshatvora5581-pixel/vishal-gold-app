@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:cached_network_image/cached_network_image.dart';
-import 'package:vishal_gold/constants/app_colors.dart';
+import 'package:vishal_jewelers/constants/app_colors.dart';
 
 /// Full-screen, pinch-to-zoom, swipeable photo viewer.
 /// Shown when the user taps a product image on the detail page.
@@ -95,12 +95,12 @@ class _FullScreenPhotoViewerState extends State<FullScreenPhotoViewer> {
                                 imageUrl: url,
                                 fit: BoxFit.contain,
                                 filterQuality: FilterQuality.high,
-                                placeholder: (context, url) => const Center(
+                                placeholder: (context, url) => Center(
                                   child: CircularProgressIndicator(
                                     color: AppColors.gold,
                                   ),
                                 ),
-                                errorWidget: (context, url, err) => const Icon(
+                                errorWidget: (context, url, err) => Icon(
                                   Icons.broken_image_outlined,
                                   color: AppColors.grey,
                                   size: 64,
@@ -166,7 +166,7 @@ class _FullScreenPhotoViewerState extends State<FullScreenPhotoViewer> {
                           ),
                           child: Text(
                             '${_currentIndex + 1} / ${widget.imageUrls.length}',
-                            style: const TextStyle(
+                            style: TextStyle(
                               color: Colors.white,
                               fontSize: 13,
                               fontWeight: FontWeight.w600,

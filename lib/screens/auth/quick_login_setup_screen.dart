@@ -1,10 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import 'package:vishal_gold/providers/auth_provider.dart';
-import 'package:vishal_gold/constants/app_colors.dart';
-import 'package:vishal_gold/screens/auth/setup_pin_screen.dart';
-import 'package:vishal_gold/models/admin.dart';
-import 'package:vishal_gold/screens/admin/admin_dashboard_screen.dart';
+import 'package:vishal_jewelers/providers/auth_provider.dart';
+import 'package:vishal_jewelers/constants/app_colors.dart';
+import 'package:vishal_jewelers/screens/auth/setup_pin_screen.dart';
+import 'package:vishal_jewelers/models/admin.dart';
+import 'package:vishal_jewelers/screens/admin/admin_dashboard_screen.dart';
 
 class QuickLoginSetupScreen extends StatefulWidget {
   final String password;
@@ -81,17 +81,17 @@ class _QuickLoginSetupScreenState extends State<QuickLoginSetupScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final authProvider = Provider.of<AuthProvider>(context, listen: false);
+    final authProvider = Provider.of<AuthProvider>(context);
 
     return Scaffold(
       backgroundColor: AppColors.background,
       appBar: AppBar(
-        title: const Text(
+        title: Text(
           'Quick Login Setup',
           style: TextStyle(color: AppColors.softGold),
         ),
         backgroundColor: AppColors.surface,
-        iconTheme: const IconThemeData(color: AppColors.softGold),
+        iconTheme: IconThemeData(color: AppColors.softGold),
       ),
       body: SafeArea(
         child: Center(
@@ -109,7 +109,7 @@ class _QuickLoginSetupScreenState extends State<QuickLoginSetupScreen> {
                     fit: BoxFit.contain,
                   ),
                   const SizedBox(height: 24),
-                  const Text(
+                  Text(
                     'Enable Quick Login',
                     style: TextStyle(
                       color: AppColors.textPrimary,
@@ -119,7 +119,7 @@ class _QuickLoginSetupScreenState extends State<QuickLoginSetupScreen> {
                     textAlign: TextAlign.center,
                   ),
                   const SizedBox(height: 16),
-                  const Text(
+                  Text(
                     'To make your future logins easier, you can enable Biometric (Fingerprint/FaceID) or PIN based authentication.',
                     style: TextStyle(
                       color: AppColors.textSecondary,
@@ -130,7 +130,7 @@ class _QuickLoginSetupScreenState extends State<QuickLoginSetupScreen> {
                   ),
                   const Spacer(),
                   if (_isLoading)
-                    const Center(
+                    Center(
                       child: CircularProgressIndicator(
                         color: AppColors.softGold,
                       ),
@@ -139,11 +139,11 @@ class _QuickLoginSetupScreenState extends State<QuickLoginSetupScreen> {
                     if (authProvider.canCheckBiometrics) ...[
                       ElevatedButton.icon(
                         onPressed: _setupBiometric,
-                        icon: const Icon(
+                        icon: Icon(
                           Icons.fingerprint,
                           color: AppColors.background,
                         ),
-                        label: const Text(
+                        label: Text(
                           'Setup Biometrics',
                           style: TextStyle(
                             color: AppColors.background,
@@ -163,8 +163,8 @@ class _QuickLoginSetupScreenState extends State<QuickLoginSetupScreen> {
                     ],
                     OutlinedButton.icon(
                       onPressed: _setupPin,
-                      icon: const Icon(Icons.pin, color: AppColors.softGold),
-                      label: const Text(
+                      icon: Icon(Icons.pin, color: AppColors.softGold),
+                      label: Text(
                         'Setup PIN',
                         style: TextStyle(
                           color: AppColors.softGold,
@@ -173,7 +173,7 @@ class _QuickLoginSetupScreenState extends State<QuickLoginSetupScreen> {
                         ),
                       ),
                       style: OutlinedButton.styleFrom(
-                        side: const BorderSide(color: AppColors.softGold),
+                        side: BorderSide(color: AppColors.softGold),
                         padding: const EdgeInsets.symmetric(vertical: 16),
                         shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(12),
@@ -183,7 +183,7 @@ class _QuickLoginSetupScreenState extends State<QuickLoginSetupScreen> {
                     const SizedBox(height: 16),
                     TextButton(
                       onPressed: _skip,
-                      child: const Text(
+                      child: Text(
                         'Skip for now',
                         style: TextStyle(
                           color: AppColors.textSecondary,

@@ -1,10 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:google_fonts/google_fonts.dart';
-import 'package:vishal_gold/constants/app_colors.dart';
-import 'package:vishal_gold/providers/auth_provider.dart';
-import 'package:vishal_gold/screens/auth/setup_pin_screen.dart';
-import 'package:vishal_gold/models/admin.dart';
+import 'package:vishal_jewelers/constants/app_colors.dart';
+import 'package:vishal_jewelers/providers/auth_provider.dart';
+import 'package:vishal_jewelers/screens/auth/setup_pin_screen.dart';
+import 'package:vishal_jewelers/models/admin.dart';
 
 class SecurityCenterScreen extends StatefulWidget {
   const SecurityCenterScreen({super.key});
@@ -38,16 +38,16 @@ class _SecurityCenterScreenState extends State<SecurityCenterScreen> {
             TextField(
               controller: _passwordController,
               obscureText: true,
-              style: const TextStyle(color: AppColors.textPrimary),
+              style: TextStyle(color: AppColors.textPrimary),
               decoration: InputDecoration(
                 hintText: 'Admin Password',
-                hintStyle: const TextStyle(color: AppColors.textTertiary),
+                hintStyle: TextStyle(color: AppColors.textTertiary),
                 enabledBorder: UnderlineInputBorder(
                   borderSide: BorderSide(
                     color: AppColors.gold.withValues(alpha: 0.5),
                   ),
                 ),
-                focusedBorder: const UnderlineInputBorder(
+                focusedBorder: UnderlineInputBorder(
                   borderSide: BorderSide(color: AppColors.gold),
                 ),
               ),
@@ -91,7 +91,7 @@ class _SecurityCenterScreenState extends State<SecurityCenterScreen> {
           ),
         ),
         backgroundColor: AppColors.surface,
-        iconTheme: const IconThemeData(color: AppColors.gold),
+        iconTheme: IconThemeData(color: AppColors.gold),
       ),
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(24),
@@ -150,7 +150,7 @@ class _SecurityCenterScreenState extends State<SecurityCenterScreen> {
       ),
       child: Row(
         children: [
-          const Icon(Icons.verified_user, color: AppColors.gold, size: 48),
+          Icon(Icons.verified_user, color: AppColors.gold, size: 48),
           const SizedBox(width: 20),
           Expanded(
             child: Column(
@@ -233,7 +233,7 @@ class _SecurityCenterScreenState extends State<SecurityCenterScreen> {
                 ],
               ),
             ),
-            const Icon(Icons.chevron_right, color: AppColors.textTertiary),
+            Icon(Icons.chevron_right, color: AppColors.textTertiary),
           ],
         ),
       ),

@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import 'package:vishal_gold/providers/auth_provider.dart';
-import 'package:vishal_gold/constants/app_colors.dart';
-import 'package:vishal_gold/models/admin.dart';
-import 'package:vishal_gold/screens/admin/admin_dashboard_screen.dart';
+import 'package:vishal_jewelers/providers/auth_provider.dart';
+import 'package:vishal_jewelers/constants/app_colors.dart';
+import 'package:vishal_jewelers/models/admin.dart';
+import 'package:vishal_jewelers/screens/admin/admin_dashboard_screen.dart';
 
 class SetupPinScreen extends StatefulWidget {
   final String password;
@@ -157,7 +157,7 @@ class _SetupPinScreenState extends State<SetupPinScreen> {
           ),
           child: Text(
             number,
-            style: const TextStyle(
+            style: TextStyle(
               color: AppColors.textPrimary,
               fontSize: 32,
               fontWeight: FontWeight.w300,
@@ -178,7 +178,7 @@ class _SetupPinScreenState extends State<SetupPinScreen> {
           width: 80,
           height: 80,
           alignment: Alignment.center,
-          child: const Icon(
+          child: Icon(
             Icons.backspace_outlined,
             color: AppColors.textPrimary,
             size: 32,
@@ -193,12 +193,12 @@ class _SetupPinScreenState extends State<SetupPinScreen> {
     return Scaffold(
       backgroundColor: AppColors.background,
       appBar: AppBar(
-        title: const Text(
+        title: Text(
           'Setup PIN',
           style: TextStyle(color: AppColors.softGold),
         ),
         backgroundColor: AppColors.surface,
-        iconTheme: const IconThemeData(color: AppColors.softGold),
+        iconTheme: IconThemeData(color: AppColors.softGold),
       ),
       body: SafeArea(
         child: Center(
@@ -212,7 +212,7 @@ class _SetupPinScreenState extends State<SetupPinScreen> {
                     _isConfirming
                         ? 'Confirm your 4-digit PIN'
                         : 'Enter a 4-digit PIN',
-                    style: const TextStyle(
+                    style: TextStyle(
                       color: AppColors.textPrimary,
                       fontSize: 22,
                       fontWeight: FontWeight.w500,
@@ -224,14 +224,14 @@ class _SetupPinScreenState extends State<SetupPinScreen> {
                   if (_errorMessage.isNotEmpty)
                     Text(
                       _errorMessage,
-                      style: const TextStyle(color: AppColors.errorRed),
+                      style: TextStyle(color: AppColors.errorRed),
                     )
                   else
                     const SizedBox(height: 20),
                   const SizedBox(height: 24),
                   if (_isLoading)
-                    const Padding(
-                      padding: EdgeInsets.symmetric(vertical: 40),
+                    Padding(
+                      padding: const EdgeInsets.symmetric(vertical: 40),
                       child: CircularProgressIndicator(
                         color: AppColors.softGold,
                       ),
@@ -251,7 +251,7 @@ class _SetupPinScreenState extends State<SetupPinScreen> {
                             (route) => false,
                           );
                         },
-                        child: const Text(
+                        child: Text(
                           'Skip for now',
                           style: TextStyle(
                             color: AppColors.textSecondary,

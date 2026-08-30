@@ -13,9 +13,9 @@ doc = new_document()
 
 add_cover(doc,
     title    = "Security Disclosure Document",
-    subtitle = "Vishal Gold App — Residual Risk Disclosure & Client Action Register",
+    subtitle = "Vishal Jewelers App — Residual Risk Disclosure & Client Action Register",
     version  = "v1.0",
-    prepared_for = "Vishal Gold Management / CTO",
+    prepared_for = "Vishal Jewelers Management / CTO",
     prepared_by  = "Senior Android VAPT Expert"
 )
 
@@ -31,7 +31,7 @@ add_toc_placeholder(doc, [
 add_h1(doc, "1. Purpose & Scope")
 add_body(doc, (
     "This Security Disclosure Document formally communicates the current security posture of the "
-    "Vishal Gold Android application to the client's management team. It serves two purposes: "
+    "Vishal Jewelers Android application to the client's management team. It serves two purposes: "
     "to confirm the security remediation work completed prior to delivery, and to transparently "
     "disclose any residual security risks that require the client's attention or acceptance before "
     "the application is made available to production users."
@@ -190,7 +190,7 @@ add_numbered(doc, "Integrate root detection library flutter_jailbreak_detection 
 
 add_signature_block(doc, [
     ("VAPT Lead / Security Reviewer", "Engineering Delivery Team"),
-    ("Client CTO / IT Head",          "Vishal Gold"),
+    ("Client CTO / IT Head",          "Vishal Jewelers"),
 ])
 
 save(doc, OUT)

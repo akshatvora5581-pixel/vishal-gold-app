@@ -1,21 +1,21 @@
 {
   "project_info": {
-    "project_number": "373212780191",
-    "project_id": "vishal-gold-app",
-    "storage_bucket": "vishal-gold-app.firebasestorage.app"
+    "project_number": "416576636573",
+    "project_id": "vishal-jewelers",
+    "storage_bucket": "vishal-jewelers.firebasestorage.app"
   },
   "client": [
     {
       "client_info": {
-        "mobilesdk_app_id": "1:373212780191:android:a7bdbcba05e8bc3c5874aa",
+        "mobilesdk_app_id": "1:416576636573:android:726183fc873d94e63d7674",
         "android_client_info": {
-          "package_name": "com.vishalgoldapp"
+          "package_name": "com.vishaljewelersapp"
         }
       },
       "oauth_client": [],
       "api_key": [
         {
-          "current_key": "AIzaSyDB5v9Aq7yPz6QRoLIBgPsvue5UcZgBQP0"
+          "current_key": "AIzaSyDI34SRMQ8Oa2zrqcXFQoMGwYZarYOkuNc"
         }
       ],
       "services": {

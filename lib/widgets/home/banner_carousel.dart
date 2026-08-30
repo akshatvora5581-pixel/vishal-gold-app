@@ -1,15 +1,19 @@
 import 'package:flutter/material.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:provider/provider.dart';
+import 'package:vishal_jewelers/providers/preview_provider.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:carousel_slider/carousel_slider.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:smooth_page_indicator/smooth_page_indicator.dart';
 import 'package:url_launcher/url_launcher.dart';
-import 'package:vishal_gold/constants/app_colors.dart';
-import 'package:vishal_gold/models/app_banner.dart';
-import 'package:vishal_gold/services/firebase_service.dart';
-import 'package:vishal_gold/utils/app_layout.dart';
-import 'package:vishal_gold/screens/home/all_subcategories_screen.dart';
-import 'package:vishal_gold/screens/product/product_detail_screen.dart';
+import 'package:vishal_jewelers/constants/app_colors.dart';
+import 'package:vishal_jewelers/models/app_banner.dart';
+import 'package:vishal_jewelers/services/firebase_service.dart';
+import 'package:vishal_jewelers/utils/app_layout.dart';
+import 'package:vishal_jewelers/screens/home/all_subcategories_screen.dart';
+import 'package:vishal_jewelers/screens/product/product_detail_screen.dart';
+import 'package:vishal_jewelers/widgets/common/shimmer_widget.dart';
 
 class BannerCarousel extends StatefulWidget {
   const BannerCarousel({super.key});
@@ -21,6 +25,25 @@ class BannerCarousel extends StatefulWidget {
 class _BannerCarouselState extends State<BannerCarousel> {
   int _currentIndex = 0;
   final FirebaseService _firebaseService = FirebaseService();
+  Stream<List<AppBanner>>? _bannerStream;
+  bool? _lastIsPreviewMode;
+
+  @override
+  void initState() {
+    super.initState();
+    // Initialize stream early
+    _bannerStream = _firebaseService.getActiveBanners();
+  }
+
+  void _updateStream(bool isPreview) {
+    if (_lastIsPreviewMode == isPreview) return;
+    _lastIsPreviewMode = isPreview;
+    
+    // In preview mode, we might want a different stream 
+    // or we might need to combine with staging, but the StreamBuilder 
+    // handles staging already. The core issue is the live stream.
+    _bannerStream = _firebaseService.getActiveBanners();
+  }
 
   Future<void> _onBannerTap(AppBanner banner) async {
     if (banner.actionValue == null || banner.actionValue!.isEmpty) return;
@@ -77,68 +100,142 @@ class _BannerCarouselState extends State<BannerCarousel> {
 
   @override
   Widget build(BuildContext context) {
-    return StreamBuilder<List<AppBanner>>(
-      stream: _firebaseService.getActiveBanners(),
-      builder: (context, snapshot) {
-        if (snapshot.connectionState == ConnectionState.waiting) {
-          final h = AppLayout.of(context).bannerHeight;
-          return SizedBox(
-            height: h,
-            child: const Center(
-              child: CircularProgressIndicator(color: AppColors.gold),
-            ),
+    return Consumer<PreviewProvider>(
+      builder: (context, preview, _) {
+        _updateStream(preview.isPreviewMode);
+        
+        if (preview.isPreviewMode) {
+          return StreamBuilder<QuerySnapshot>(
+            stream: _firebaseService.getStagingChanges(),
+            builder: (context, stagingSnapshot) {
+              return StreamBuilder<List<AppBanner>>(
+                stream: _bannerStream,
+                builder: (context, liveSnapshot) {
+                  if (liveSnapshot.connectionState == ConnectionState.waiting && !liveSnapshot.hasData) {
+                    return _buildLoading();
+                  }
+
+                  final liveItems = liveSnapshot.data ?? [];
+                  final stagedDocs = (stagingSnapshot.data?.docs ?? [])
+                      .where((doc) =>
+                          (doc.data() as Map<String, dynamic>)['collection_name'] ==
+                          FirebaseService.bannersCollection)
+                      .toList();
+
+                  final banners = preview.mergeWithStaging<AppBanner>(
+                    liveItems,
+                    stagedDocs,
+                    (data, id) => AppBanner.fromJson(data, id),
+                    (item) => item.id,
+                  );
+
+                  // Filter for active ones in preview too, if not already filtered
+                  final activeBanners = banners.where((b) => b.isActive).toList();
+
+                  if (activeBanners.isEmpty) return const SizedBox.shrink();
+                  return _buildCarousel(activeBanners);
+                },
+              );
+            },
           );
         }
 
-        final banners = snapshot.data ?? [];
-        if (banners.isEmpty) return const SizedBox.shrink();
+        return StreamBuilder<List<AppBanner>>(
+          stream: _bannerStream,
+          builder: (context, snapshot) {
+            if (snapshot.connectionState == ConnectionState.waiting && !snapshot.hasData) {
+              return _buildLoading();
+            }
 
-        return RepaintBoundary(
-          child: Column(
-            children: [
-              CarouselSlider(
-                options: CarouselOptions(
-                  height: AppLayout.of(context).bannerHeight,
-                  autoPlay: true,
-                  autoPlayInterval: const Duration(seconds: 4),
-                  enlargeCenterPage: false,
-                  viewportFraction: 1.0,
-                  onPageChanged: (index, reason) {
-                    setState(() {
-                      _currentIndex = index;
-                    });
-                  },
+            if (snapshot.hasError) {
+              return Container(
+                height: AppLayout.of(context).bannerHeight,
+                margin: const EdgeInsets.symmetric(horizontal: 16),
+                decoration: BoxDecoration(
+                  color: AppColors.surface,
+                  borderRadius: BorderRadius.circular(16),
                 ),
-                items: banners.map((banner) {
-                  return Builder(
-                    builder: (BuildContext context) {
-                      return GestureDetector(
-                        onTap: () => _onBannerTap(banner),
-                        child: Container(
-                          width: MediaQuery.of(context).size.width,
-                          margin: const EdgeInsets.symmetric(horizontal: 16.0),
-                          child: _buildBannerContent(banner),
-                        ),
-                      );
-                    },
-                  );
-                }).toList(),
-              ),
-              const SizedBox(height: 16),
-              AnimatedSmoothIndicator(
-                activeIndex: _currentIndex,
-                count: banners.length,
-                effect: const WormEffect(
-                  dotColor: AppColors.lightGrey,
-                  activeDotColor: AppColors.gold,
-                  dotHeight: 8,
-                  dotWidth: 8,
+                child: Center(
+                  child: Padding(
+                    padding: const EdgeInsets.all(16.0),
+                    child: Text(
+                      snapshot.error.toString(),
+                      textAlign: TextAlign.center,
+                      style: TextStyle(color: AppColors.textSecondary, fontSize: 13),
+                    ),
+                  ),
                 ),
-              ),
-            ],
-          ),
+              );
+            }
+
+            final banners = snapshot.data ?? [];
+            if (banners.isEmpty) return const SizedBox.shrink();
+
+            return _buildCarousel(banners);
+          },
         );
       },
+    );
+  }
+
+  Widget _buildLoading() {
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 16),
+      child: ShimmerWidget.rectangular(
+        height: AppLayout.of(context).bannerHeight,
+      ),
+    );
+  }
+
+  Widget _buildCarousel(List<AppBanner> banners) {
+    return RepaintBoundary(
+      child: Column(
+        children: [
+          CarouselSlider(
+            options: CarouselOptions(
+              height: AppLayout.of(context).bannerHeight,
+              autoPlay: banners.length > 1,
+              autoPlayInterval: const Duration(seconds: 5),
+              autoPlayAnimationDuration: const Duration(milliseconds: 1000),
+              autoPlayCurve: Curves.easeInOutCubic,
+              enlargeCenterPage: false,
+              viewportFraction: 1.0,
+              onPageChanged: (index, reason) {
+                setState(() {
+                  _currentIndex = index;
+                });
+              },
+            ),
+            items: banners.map((banner) {
+              return Builder(
+                builder: (BuildContext context) {
+                  return GestureDetector(
+                    onTap: () => _onBannerTap(banner),
+                    child: Container(
+                      width: MediaQuery.of(context).size.width,
+                      margin: const EdgeInsets.symmetric(horizontal: 16.0),
+                      child: _buildBannerContent(banner),
+                    ),
+                  );
+                },
+              );
+            }).toList(),
+          ),
+          if (banners.length > 1) ...[
+            const SizedBox(height: 16),
+            AnimatedSmoothIndicator(
+              activeIndex: _currentIndex,
+              count: banners.length,
+              effect: WormEffect(
+                dotColor: AppColors.lightGrey,
+                activeDotColor: AppColors.gold,
+                dotHeight: 8,
+                dotWidth: 8,
+              ),
+            ),
+          ],
+        ],
+      ),
     );
   }
 
@@ -197,7 +294,7 @@ class _BannerCarouselState extends State<BannerCarousel> {
                 if (banner.title != null)
                   Text(
                     banner.title!,
-                    style: const TextStyle(
+                    style: TextStyle(
                       fontSize: 24,
                       fontWeight: FontWeight.bold,
                       color: AppColors.white,
@@ -214,6 +311,15 @@ class _BannerCarouselState extends State<BannerCarousel> {
                     ),
                   ),
                 ],
+                const SizedBox(height: 8),
+                Text(
+                  banner.termsAndConditions,
+                  style: TextStyle(
+                    fontSize: 8,
+                    color: AppColors.white.withValues(alpha: 0.6),
+                    fontStyle: FontStyle.italic,
+                  ),
+                ),
               ],
             ),
           ),
@@ -261,7 +367,7 @@ class _BannerCarouselState extends State<BannerCarousel> {
                     const SizedBox(height: 8),
                     Text(
                       banner.subtitle!,
-                      style: const TextStyle(
+                      style: TextStyle(
                         fontSize: 13,
                         color: AppColors.textSecondary,
                       ),
@@ -269,6 +375,15 @@ class _BannerCarouselState extends State<BannerCarousel> {
                       overflow: TextOverflow.ellipsis,
                     ),
                   ],
+                  const SizedBox(height: 4),
+                  Text(
+                    banner.termsAndConditions,
+                    style: TextStyle(
+                      fontSize: 7,
+                      color: AppColors.textSecondary.withValues(alpha: 0.6),
+                      fontStyle: FontStyle.italic,
+                    ),
+                  ),
                 ],
               ),
             ),
@@ -311,6 +426,21 @@ class _BannerCarouselState extends State<BannerCarousel> {
           ),
         ],
       ),
+      child: Align(
+        alignment: Alignment.bottomRight,
+        child: Padding(
+          padding: const EdgeInsets.all(8.0),
+          child: Text(
+            banner.termsAndConditions,
+            style: TextStyle(
+              fontSize: 7,
+              color: AppColors.white.withValues(alpha: 0.6),
+              fontStyle: FontStyle.italic,
+              backgroundColor: Colors.black26,
+            ),
+          ),
+        ),
+      ),
     );
   }
 
@@ -322,6 +452,20 @@ class _BannerCarouselState extends State<BannerCarousel> {
         image: DecorationImage(
           image: CachedNetworkImageProvider(banner.imageUrl),
           fit: BoxFit.contain, // Contain rather than cover to prevent cropping
+        ),
+      ),
+      child: Align(
+        alignment: Alignment.bottomRight,
+        child: Padding(
+          padding: const EdgeInsets.all(4.0),
+          child: Text(
+            banner.termsAndConditions,
+            style: TextStyle(
+              fontSize: 6,
+              color: AppColors.textSecondary.withValues(alpha: 0.5),
+              fontStyle: FontStyle.italic,
+            ),
+          ),
         ),
       ),
     );

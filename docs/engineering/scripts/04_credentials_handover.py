@@ -13,9 +13,9 @@ doc = new_document()
 
 add_cover(doc,
     title    = "Credentials & Infrastructure Handover",
-    subtitle = "Vishal Gold App — Technical Asset Transfer Document",
+    subtitle = "Vishal Jewelers App — Technical Asset Transfer Document",
     version  = "v1.0",
-    prepared_for = "Vishal Gold IT / Management",
+    prepared_for = "Vishal Jewelers IT / Management",
     prepared_by  = "Engineering Delivery Team"
 )
 
@@ -35,8 +35,8 @@ add_h1(doc, "1. Purpose & Confidentiality")
 add_body(doc, (
     "This document serves as the formal record of all technical assets, credentials, and "
     "infrastructure configurations transferred from the Engineering Delivery Team to the client, "
-    "Vishal Gold, upon project completion. It is intended to be handled as a highly confidential "
-    "document, shared only with designated technical and management personnel at Vishal Gold."
+    "Vishal Jewelers, upon project completion. It is intended to be handled as a highly confidential "
+    "document, shared only with designated technical and management personnel at Vishal Jewelers."
 ))
 add_note(doc, "CONFIDENTIALITY WARNING",
     "This document must not be stored in public cloud drives, shared via unencrypted email, "
@@ -51,7 +51,7 @@ add_body(doc, (
 # ── 2. Firebase Project Overview ──────────────────────────────────────────────
 add_h1(doc, "2. Firebase Project Overview")
 add_body(doc, (
-    "The Vishal Gold application is built on Google Firebase, a managed backend-as-a-service "
+    "The Vishal Jewelers application is built on Google Firebase, a managed backend-as-a-service "
     "platform. The following Firebase services are active in the project and are critical to "
     "the application's operation."
 ))
@@ -114,7 +114,7 @@ add_table(doc,
 add_h1(doc, "4. Android Signing Keystore")
 add_body(doc, (
     "Every Android application must be digitally signed with a unique cryptographic keystore to "
-    "be published on the Google Play Store. The signing keystore generated for the Vishal Gold "
+    "be published on the Google Play Store. The signing keystore generated for the Vishal Jewelers "
     "application is a critical asset and must be preserved with the utmost care. Loss of this "
     "keystore means the application can never be updated on the Play Store under the same "
     "package identity."
@@ -122,7 +122,7 @@ add_body(doc, (
 add_table(doc,
     headers=["Keystore Attribute", "Value"],
     rows=[
-        ["File Name",      "vishal_gold_release.jks"],
+        ["File Name",      "vishal_jewelers_release.jks"],
         ["Key Alias",      "[TO BE PROVIDED SECURELY]"],
         ["Store Password", "[TO BE PROVIDED SECURELY]"],
         ["Key Password",   "[TO BE PROVIDED SECURELY]"],
@@ -183,7 +183,7 @@ add_numbered(doc, "Upgrade Firebase plan to Blaze before launching to production
 add_numbered(doc, "Create a Google Play Developer account and upload the provided AAB for Play Store submission.")
 
 add_signature_block(doc, [
-    ("Client IT Representative",  "Vishal Gold"),
+    ("Client IT Representative",  "Vishal Jewelers"),
     ("Delivery Engineer",         "Engineering Delivery Team"),
 ])
 

@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
-import 'package:vishal_gold/constants/app_colors.dart';
-import 'package:vishal_gold/services/firebase_service.dart';
+import 'package:vishal_jewelers/constants/app_colors.dart';
+import 'package:vishal_jewelers/services/firebase_service.dart';
 
 class ContactManagementScreen extends StatefulWidget {
   const ContactManagementScreen({super.key});
@@ -108,10 +108,10 @@ class _ContactManagementScreenState extends State<ContactManagementScreen> {
         ),
         backgroundColor: AppColors.surface,
         elevation: 0,
-        iconTheme: const IconThemeData(color: AppColors.gold),
+        iconTheme: IconThemeData(color: AppColors.gold),
       ),
       body: _isLoading
-          ? const Center(
+          ? Center(
               child: CircularProgressIndicator(color: AppColors.gold),
             )
           : SingleChildScrollView(
@@ -193,10 +193,10 @@ class _ContactManagementScreenState extends State<ContactManagementScreen> {
                     TextFormField(
                       controller: _addressController,
                       maxLines: 4,
-                      style: const TextStyle(color: AppColors.textPrimary),
+                      style: TextStyle(color: AppColors.textPrimary),
                       decoration: InputDecoration(
                         hintText: 'Enter full business address',
-                        hintStyle: const TextStyle(
+                        hintStyle: TextStyle(
                           color: AppColors.textSecondary,
                         ),
                         filled: true,
@@ -217,7 +217,7 @@ class _ContactManagementScreenState extends State<ContactManagementScreen> {
                         ),
                         focusedBorder: OutlineInputBorder(
                           borderRadius: BorderRadius.circular(12),
-                          borderSide: const BorderSide(color: AppColors.gold),
+                          borderSide: BorderSide(color: AppColors.gold),
                         ),
                       ),
                       validator: (val) => val == null || val.isEmpty
@@ -240,7 +240,7 @@ class _ContactManagementScreenState extends State<ContactManagementScreen> {
                           elevation: 0,
                         ),
                         child: _isSaving
-                            ? const SizedBox(
+                            ? SizedBox(
                                 height: 24,
                                 width: 24,
                                 child: CircularProgressIndicator(
@@ -274,10 +274,10 @@ class _ContactManagementScreenState extends State<ContactManagementScreen> {
     return TextFormField(
       controller: controller,
       keyboardType: keyboardType,
-      style: const TextStyle(color: AppColors.textPrimary),
+      style: TextStyle(color: AppColors.textPrimary),
       decoration: InputDecoration(
         labelText: label,
-        labelStyle: const TextStyle(color: AppColors.textSecondary),
+        labelStyle: TextStyle(color: AppColors.textSecondary),
         prefixIcon: Icon(icon, color: AppColors.gold),
         filled: true,
         fillColor: AppColors.surface,
@@ -293,7 +293,7 @@ class _ContactManagementScreenState extends State<ContactManagementScreen> {
         ),
         focusedBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(12),
-          borderSide: const BorderSide(color: AppColors.gold),
+          borderSide: BorderSide(color: AppColors.gold),
         ),
       ),
       validator: validator,

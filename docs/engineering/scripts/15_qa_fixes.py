@@ -13,9 +13,9 @@ doc = new_document()
 
 add_cover(doc,
     title    = "QA Fixes Log",
-    subtitle = "Remediation & Bug Resolution Registry — Vishal Gold",
+    subtitle = "Remediation & Bug Resolution Registry — Vishal Jewelers",
     version  = "v1.1",
-    prepared_for = "Vishal Gold QA & Engineering Teams",
+    prepared_for = "Vishal Jewelers QA & Engineering Teams",
     prepared_by  = "Senior Development Lead"
 )
 
@@ -29,7 +29,7 @@ add_toc_placeholder(doc, [
 add_h1(doc, "1. Fix Priority & Strategy")
 add_body(doc, (
     "This log documents the systematic remediation of security vulnerabilities (VAPT) and "
-    "functional defects (QA) identified in the Vishal Gold app. The priority for resolution "
+    "functional defects (QA) identified in the Vishal Jewelers app. The priority for resolution "
     "follows the risk hierarchy: Critical → High → Medium → Low."
 ))
 

@@ -4,12 +4,13 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:provider/provider.dart';
 import 'package:cached_network_image/cached_network_image.dart';
-import 'package:vishal_gold/constants/app_colors.dart';
-import 'package:vishal_gold/models/product.dart';
-import 'package:vishal_gold/providers/auth_provider.dart';
-import 'package:vishal_gold/services/firebase_service.dart';
-import 'package:vishal_gold/widgets/admin/add_edit_product_sheet.dart';
-import 'package:vishal_gold/utils/debouncer.dart';
+import 'package:vishal_jewelers/constants/app_colors.dart';
+import 'package:vishal_jewelers/models/product.dart';
+import 'package:vishal_jewelers/models/category.dart' as app_models;
+import 'package:vishal_jewelers/providers/auth_provider.dart';
+import 'package:vishal_jewelers/services/firebase_service.dart';
+import 'package:vishal_jewelers/widgets/admin/add_edit_product_sheet.dart';
+import 'package:vishal_jewelers/utils/debouncer.dart';
 
 class ProductManagementScreen extends StatefulWidget {
   const ProductManagementScreen({super.key});
@@ -42,12 +43,14 @@ class _ProductManagementScreenState extends State<ProductManagementScreen> {
   final int _pageSize = 20;
 
   final ScrollController _scrollController = ScrollController();
+  List<app_models.Category> _categories = [];
 
   @override
   void initState() {
     super.initState();
     _scrollController.addListener(_onScroll);
     _fetchProducts();
+    _fetchCategories();
 
     // Listen to filter changes to reset and refetch
     _searchQueryNotifier.addListener(_onFilterChanged);
@@ -78,6 +81,27 @@ class _ProductManagementScreenState extends State<ProductManagementScreen> {
       _selectedProductIds.clear();
       _isSelectionMode = false;
     });
+  }
+
+  Future<void> _fetchCategories() async {
+    try {
+      final snapshot = await _firebaseService.getCategories().first;
+      final categories =
+          snapshot.docs.map((doc) {
+            return app_models.Category.fromJson(
+              doc.data() as Map<String, dynamic>,
+              doc.id,
+            );
+          }).toList();
+
+      if (mounted) {
+        setState(() {
+          _categories = categories;
+        });
+      }
+    } catch (e) {
+      debugPrint('Error fetching categories for filters: $e');
+    }
   }
 
   Future<void> _fetchProducts() async {
@@ -143,7 +167,7 @@ class _ProductManagementScreenState extends State<ProductManagementScreen> {
         elevation: 0,
         leading: _isSelectionMode
             ? IconButton(
-                icon: const Icon(Icons.close, color: AppColors.textPrimary),
+                icon: Icon(Icons.close, color: AppColors.textPrimary),
                 onPressed: () => setState(() {
                   _isSelectionMode = false;
                   _selectedProductIds.clear();
@@ -172,7 +196,7 @@ class _ProductManagementScreenState extends State<ProductManagementScreen> {
             )
           else
             IconButton(
-              icon: const Icon(Icons.add_circle_outline, color: AppColors.gold),
+              icon: Icon(Icons.add_circle_outline, color: AppColors.gold),
               onPressed: () => _openAddEditProduct(context),
             ),
         ],
@@ -206,8 +230,8 @@ class _ProductManagementScreenState extends State<ProductManagementScreen> {
             },
             decoration: InputDecoration(
               hintText: 'Search by Tag # or Name',
-              hintStyle: const TextStyle(color: AppColors.textSecondary),
-              prefixIcon: const Icon(Icons.search, color: AppColors.gold),
+              hintStyle: TextStyle(color: AppColors.textSecondary),
+              prefixIcon: Icon(Icons.search, color: AppColors.gold),
               filled: true,
               fillColor: AppColors.background,
               border: OutlineInputBorder(
@@ -215,7 +239,7 @@ class _ProductManagementScreenState extends State<ProductManagementScreen> {
                 borderSide: BorderSide.none,
               ),
             ),
-            style: const TextStyle(color: AppColors.textPrimary),
+            style: TextStyle(color: AppColors.textPrimary),
           ),
           const SizedBox(height: 12),
           SingleChildScrollView(
@@ -253,7 +277,7 @@ class _ProductManagementScreenState extends State<ProductManagementScreen> {
                 Container(
                   height: 24,
                   width: 1,
-                  color: AppColors.white.withOpacity(0.1),
+                  color: AppColors.white.withValues(alpha: 0.1),
                 ),
                 const SizedBox(width: 12),
                 ValueListenableBuilder<String?>(
@@ -267,18 +291,14 @@ class _ProductManagementScreenState extends State<ProductManagementScreen> {
                           category,
                           (val) => _selectedCategoryNotifier.value = val,
                         ),
-                        _buildFilterChip(
-                          '84 Melting',
-                          '84_melting',
-                          category,
-                          (val) => _selectedCategoryNotifier.value = val,
-                        ),
-                        _buildFilterChip(
-                          '92 Melting',
-                          '92_melting',
-                          category,
-                          (val) => _selectedCategoryNotifier.value = val,
-                        ),
+                        ..._categories.map((cat) {
+                          return _buildFilterChip(
+                            cat.name,
+                            cat.id,
+                            category,
+                            (val) => _selectedCategoryNotifier.value = val,
+                          );
+                        }),
                       ],
                     );
                   },
@@ -319,7 +339,7 @@ class _ProductManagementScreenState extends State<ProductManagementScreen> {
             children: [
               Text(
                 '${_selectedProductIds.length} items',
-                style: const TextStyle(
+                style: TextStyle(
                   color: AppColors.black,
                   fontWeight: FontWeight.bold,
                 ),
@@ -327,24 +347,24 @@ class _ProductManagementScreenState extends State<ProductManagementScreen> {
               const Spacer(),
               TextButton.icon(
                 onPressed: () => _bulkUpdateStatus('published', performerId),
-                icon: const Icon(
+                icon: Icon(
                   Icons.publish,
                   color: AppColors.black,
                   size: 20,
                 ),
-                label: const Text(
+                label: Text(
                   'Publish',
                   style: TextStyle(color: AppColors.black),
                 ),
               ),
               TextButton.icon(
                 onPressed: () => _bulkUpdateStatus('draft', performerId),
-                icon: const Icon(
+                icon: Icon(
                   Icons.archive,
                   color: AppColors.black,
                   size: 20,
                 ),
-                label: const Text(
+                label: Text(
                   'Draft',
                   style: TextStyle(color: AppColors.black),
                 ),
@@ -390,7 +410,7 @@ class _ProductManagementScreenState extends State<ProductManagementScreen> {
       context: context,
       builder: (context) => AlertDialog(
         backgroundColor: AppColors.surface,
-        title: const Text(
+        title: Text(
           'Delete Selected',
           style: TextStyle(color: AppColors.gold),
         ),
@@ -400,7 +420,7 @@ class _ProductManagementScreenState extends State<ProductManagementScreen> {
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context, false),
-            child: const Text(
+            child: Text(
               'Cancel',
               style: TextStyle(color: AppColors.textSecondary),
             ),
@@ -449,7 +469,7 @@ class _ProductManagementScreenState extends State<ProductManagementScreen> {
         selected: isSelected,
         onSelected: (selected) => onSelected(selected ? value : null),
         backgroundColor: AppColors.background,
-        selectedColor: AppColors.gold.withOpacity(0.2),
+        selectedColor: AppColors.gold.withValues(alpha: 0.2),
         labelStyle: TextStyle(
           color: isSelected ? AppColors.gold : AppColors.textPrimary,
           fontSize: 12,
@@ -468,7 +488,7 @@ class _ProductManagementScreenState extends State<ProductManagementScreen> {
   Widget _buildProductList() {
     // 1. Initial Loading State
     if (_isLoading && _products.isEmpty) {
-      return const Center(
+      return Center(
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
@@ -493,7 +513,7 @@ class _ProductManagementScreenState extends State<ProductManagementScreen> {
               Text(
                 _errorMessage!,
                 textAlign: TextAlign.center,
-                style: const TextStyle(color: Colors.red),
+                style: TextStyle(color: Colors.red),
               ),
               const SizedBox(height: 24),
               ElevatedButton(
@@ -518,7 +538,7 @@ class _ProductManagementScreenState extends State<ProductManagementScreen> {
           physics: const AlwaysScrollableScrollPhysics(),
           children: [
             SizedBox(height: MediaQuery.of(context).size.height * 0.2),
-            const Center(
+            Center(
               child: Icon(
                 Icons.inventory_2_outlined,
                 size: 64,
@@ -547,9 +567,9 @@ class _ProductManagementScreenState extends State<ProductManagementScreen> {
         physics: const AlwaysScrollableScrollPhysics(),
         itemBuilder: (context, index) {
           if (index == _products.length) {
-            return const Center(
+            return Center(
               child: Padding(
-                padding: EdgeInsets.symmetric(vertical: 24),
+                padding: const EdgeInsets.symmetric(vertical: 24),
                 child: CircularProgressIndicator(color: AppColors.gold),
               ),
             );
@@ -565,12 +585,12 @@ class _ProductManagementScreenState extends State<ProductManagementScreen> {
     final isSelected = _selectedProductIds.contains(product.id);
 
     return Card(
-      color: isSelected ? AppColors.gold.withOpacity(0.1) : AppColors.surface,
+      color: isSelected ? AppColors.gold.withValues(alpha: 0.1) : AppColors.surface,
       margin: const EdgeInsets.only(bottom: 12),
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(12),
         side: isSelected
-            ? const BorderSide(color: AppColors.gold, width: 2)
+            ? BorderSide(color: AppColors.gold, width: 2)
             : BorderSide.none,
       ),
       child: InkWell(
@@ -638,7 +658,7 @@ class _ProductManagementScreenState extends State<ProductManagementScreen> {
                               color: AppColors.background,
                               borderRadius: BorderRadius.circular(8),
                             ),
-                            child: const Icon(
+                            child: Icon(
                               Icons.image_not_supported,
                               color: AppColors.textSecondary,
                             ),
@@ -658,18 +678,18 @@ class _ProductManagementScreenState extends State<ProductManagementScreen> {
                     if (product.name != null && product.name!.isNotEmpty)
                       Text(
                         product.name!,
-                        style: const TextStyle(color: AppColors.textPrimary),
+                        style: TextStyle(color: AppColors.textPrimary),
                       ),
                     Text(
                       '${product.categoryDisplay} > ${product.subcategory}',
-                      style: const TextStyle(
+                      style: TextStyle(
                         color: AppColors.textSecondary,
                         fontSize: 12,
                       ),
                     ),
                     Text(
-                      'GW: ${product.grossWeight}g | Purity: ${product.purity}K',
-                      style: const TextStyle(
+                      'GW: ${product.grossWeight}g | Purity: ${product.purityDisplay}',
+                      style: TextStyle(
                         color: AppColors.textSecondary,
                         fontSize: 12,
                       ),
@@ -683,8 +703,8 @@ class _ProductManagementScreenState extends State<ProductManagementScreen> {
                   ),
                   decoration: BoxDecoration(
                     color: product.status == 'published'
-                        ? Colors.green.withOpacity(0.1)
-                        : Colors.orange.withOpacity(0.1),
+                        ? Colors.green.withValues(alpha: 0.1)
+                        : Colors.orange.withValues(alpha: 0.1),
                     borderRadius: BorderRadius.circular(4),
                   ),
                   child: Text(
@@ -729,8 +749,8 @@ class _ProductManagementScreenState extends State<ProductManagementScreen> {
     );
   }
 
-  void _openAddEditProduct(BuildContext context, {Product? product}) {
-    showModalBottomSheet(
+  Future<void> _openAddEditProduct(BuildContext context, {Product? product}) async {
+    final result = await showModalBottomSheet<bool>(
       context: context,
       isScrollControlled: true,
       backgroundColor: AppColors.surface,
@@ -744,6 +764,10 @@ class _ProductManagementScreenState extends State<ProductManagementScreen> {
         child: AddEditProductSheet(product: product),
       ),
     );
+
+    if (result == true) {
+      _onFilterChanged();
+    }
   }
 
   Future<void> _deleteProduct(Product product) async {
@@ -752,7 +776,7 @@ class _ProductManagementScreenState extends State<ProductManagementScreen> {
       context: context,
       builder: (context) => AlertDialog(
         backgroundColor: AppColors.surface,
-        title: const Text(
+        title: Text(
           'Delete Product',
           style: TextStyle(color: AppColors.gold),
         ),
@@ -760,7 +784,7 @@ class _ProductManagementScreenState extends State<ProductManagementScreen> {
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context, false),
-            child: const Text(
+            child: Text(
               'Cancel',
               style: TextStyle(color: AppColors.textSecondary),
             ),

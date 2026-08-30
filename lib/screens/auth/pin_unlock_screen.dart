@@ -1,12 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import 'package:vishal_gold/providers/auth_provider.dart';
-import 'package:vishal_gold/constants/app_colors.dart';
-import 'package:vishal_gold/screens/admin/admin_dashboard_screen.dart';
-import 'package:vishal_gold/screens/auth/admin_login_screen.dart';
-import 'package:vishal_gold/services/firebase_service.dart';
-import 'package:vishal_gold/services/fcm_service.dart';
-import 'package:vishal_gold/models/admin.dart';
+import 'package:vishal_jewelers/providers/auth_provider.dart';
+import 'package:vishal_jewelers/constants/app_colors.dart';
+import 'package:vishal_jewelers/screens/admin/admin_dashboard_screen.dart';
+import 'package:vishal_jewelers/screens/auth/admin_login_screen.dart';
+import 'package:vishal_jewelers/services/firebase_service.dart';
+import 'package:vishal_jewelers/models/admin.dart';
 
 class PinUnlockScreen extends StatefulWidget {
   const PinUnlockScreen({super.key});
@@ -75,8 +74,7 @@ class _PinUnlockScreenState extends State<PinUnlockScreen> {
         final admin = Admin.fromJson(adminData, adminId);
 
         // Strict Subscription: Only for active admins after successful authentication
-        await FCMService().subscribeToTopic('admin_orders');
-        print('Current Topic Subscription: Admin_Orders');
+        debugPrint('Current Topic Subscription: Admin_Orders');
 
         Navigator.pushAndRemoveUntil(
           context,
@@ -214,7 +212,7 @@ class _PinUnlockScreenState extends State<PinUnlockScreen> {
           ),
           child: Text(
             number,
-            style: const TextStyle(
+            style: TextStyle(
               color: AppColors.textPrimary,
               fontSize: 32,
               fontWeight: FontWeight.w300,
@@ -235,7 +233,7 @@ class _PinUnlockScreenState extends State<PinUnlockScreen> {
           width: 80,
           height: 80,
           alignment: Alignment.center,
-          child: const Icon(
+          child: Icon(
             Icons.backspace_outlined,
             color: AppColors.textPrimary,
             size: 32,
@@ -260,7 +258,7 @@ class _PinUnlockScreenState extends State<PinUnlockScreen> {
               width: 80,
               height: 80,
               alignment: Alignment.center,
-              child: const Icon(
+              child: Icon(
                 Icons.fingerprint,
                 color: AppColors.softGold,
                 size: 32,
@@ -290,7 +288,7 @@ class _PinUnlockScreenState extends State<PinUnlockScreen> {
                     fit: BoxFit.contain,
                   ),
                   const SizedBox(height: 20),
-                  const Text(
+                  Text(
                     'Enter Admin PIN',
                     style: TextStyle(
                       color: AppColors.textPrimary,
@@ -304,13 +302,13 @@ class _PinUnlockScreenState extends State<PinUnlockScreen> {
                   if (_errorMessage.isNotEmpty)
                     Text(
                       _errorMessage,
-                      style: const TextStyle(color: AppColors.errorRed),
+                      style: TextStyle(color: AppColors.errorRed),
                     )
                   else
                     const SizedBox(height: 20),
                   const SizedBox(height: 30),
                   if (_isLoading)
-                    const SizedBox(
+                    SizedBox(
                       height: 400,
                       child: Center(
                         child: CircularProgressIndicator(
@@ -323,7 +321,7 @@ class _PinUnlockScreenState extends State<PinUnlockScreen> {
                   const SizedBox(height: 20),
                   TextButton(
                     onPressed: _onLoginWithPassword,
-                    child: const Text(
+                    child: Text(
                       'Login with Password Instead',
                       style: TextStyle(
                         color: AppColors.textSecondary,

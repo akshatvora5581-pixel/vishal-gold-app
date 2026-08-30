@@ -1,9 +1,9 @@
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
-import 'package:vishal_gold/models/product.dart';
-import 'package:vishal_gold/screens/product/product_detail_screen.dart';
-import 'package:vishal_gold/services/firebase_service.dart';
+import 'package:vishal_jewelers/models/product.dart';
+import 'package:vishal_jewelers/screens/product/product_detail_screen.dart';
+import 'package:vishal_jewelers/services/firebase_service.dart';
 
 // ── Background handler — must be top-level ───────────────────────────────────
 @pragma('vm:entry-point')
@@ -29,7 +29,7 @@ class FCMService {
   static const AndroidNotificationChannel _channel = AndroidNotificationChannel(
     'new_stock_channel',
     'New Stock Alerts',
-    description: 'Alerts when new jewelry stock is added',
+    description: 'Alerts when new jewellery stock is added',
     importance: Importance.max,
     playSound: true,
     enableVibration: true,

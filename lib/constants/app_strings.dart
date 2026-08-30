@@ -1,8 +1,12 @@
+import '../config/whitelabel_config.dart';
+
 class AppStrings {
+  static BaseConfig get _config => AppEnvironment.config;
+
   // App
-  static const String appName = 'Vishal Jewellers';
-  static const String appTagline = 'Dharukawala';
-  static const String logoPath = 'assets/logo.png';
+  static String get appName => _config.appName;
+  static String get appTagline => _config.appTagline;
+  static String get logoPath => _config.logoPath;
 
   // Authentication
   static const String login = 'Login';

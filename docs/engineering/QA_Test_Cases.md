@@ -1,4 +1,4 @@
-# QA Test Cases — Vishal Gold App
+# QA Test Cases — Vishal Jewelers App
 **Version:** 1.1 | **Agent:** Senior QA Engineer | **Date:** 2026-02-25 | **Iteration:** 2 (Post-Remediation Retest)
 
 ---

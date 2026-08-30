@@ -1,7 +1,7 @@
-name: vishal_gold
-description: "Vishal Jewellers - Jewelry Design & Ordering Platform"
+name: vishal_jewelers
+description: "Vishal Jewellers - Jewellery Design & Ordering Platform"
 publish_to: 'none'
-version: 1.0.0
+version: 1.0.4+6
 
 environment:
   sdk: ^3.9.2
@@ -14,7 +14,7 @@ dependencies:
   provider: ^6.1.1
   
   # Backend & Auth - Firebase
-  firebase_core: ^4.4.0
+  firebase_core: ^4.5.0
   firebase_auth: ^6.1.4
   cloud_firestore: ^6.1.1
   firebase_storage: ^13.0.6
@@ -46,7 +46,7 @@ dependencies:
   flutter_staggered_animations: ^1.1.1
   fl_chart: ^1.1.1
   firebase_app_check: ^0.4.1+5
-  font_awesome_flutter: ^10.12.0
+  font_awesome_flutter: ^11.0.0
   firebase_analytics: ^12.1.2
   local_auth: ^3.0.1
   path_provider: ^2.1.5

@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 // Sahi path: 'info' folder wala use karein
-import 'package:vishal_gold/screens/info/user_info_screen.dart'; 
+import 'package:vishal_jewelers/screens/info/user_info_screen.dart'; 
 
 class AuthScreen extends StatelessWidget {
   const AuthScreen({super.key});

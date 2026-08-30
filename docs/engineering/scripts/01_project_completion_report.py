@@ -13,9 +13,9 @@ doc = new_document()
 
 add_cover(doc,
     title    = "Project Completion Report",
-    subtitle = "Vishal Gold — B2B/B2C Jewelry Mobile Application",
+    subtitle = "Vishal Jewelers — B2B/B2C Jewelry Mobile Application",
     version  = "v1.0",
-    prepared_for = "Vishal Gold Management",
+    prepared_for = "Vishal Jewelers Management",
     prepared_by  = "Engineering Delivery Team"
 )
 
@@ -35,7 +35,7 @@ add_toc_placeholder(doc, [
 # ── 1. Executive Summary ────────────────────────────────────────────────────
 add_h1(doc, "1. Executive Summary")
 add_body(doc, (
-    "This report documents the formal completion of the Vishal Gold mobile application project, "
+    "This report documents the formal completion of the Vishal Jewelers mobile application project, "
     "a B2B and B2C jewelry commerce platform developed for wholesalers, retailers, and administrative "
     "stakeholders in the gold and fine jewelry industry. The application was conceived to digitize "
     "the traditional wholesale-retail jewelry workflow by providing an authenticated, role-based mobile "
@@ -61,7 +61,7 @@ add_h1(doc, "2. Project Scope & Objectives")
 add_h2(doc, "2.1 Agreed Objectives")
 add_body(doc, (
     "The primary objective of this engagement was to design, develop, test, and deliver a "
-    "production-ready Android mobile application for Vishal Gold that enables the following "
+    "production-ready Android mobile application for Vishal Jewelers that enables the following "
     "business capabilities."
 ))
 add_numbered(doc, "A role-based authentication system supporting Wholesalers, Retailers, and Administrators.")
@@ -249,7 +249,7 @@ add_numbered(doc, "Review the Maintenance & Support SLA with the post-delivery s
 
 # ── Sign-off ──────────────────────────────────────────────────────────────────
 add_signature_block(doc, [
-    ("Client Representative",   "Vishal Gold"),
+    ("Client Representative",   "Vishal Jewelers"),
     ("Project Manager",         "Engineering Delivery Team"),
     ("Technical Lead",          "Engineering Delivery Team"),
 ])

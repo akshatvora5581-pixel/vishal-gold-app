@@ -18,7 +18,7 @@ def create_source_zip(source_dir, output_path):
 
     # Files to explicitly exclude
     ignore_files = {
-        'vishal_gold_release.jks',
+        'vishal_jewelers_release.jks',
         'key.properties'
     }
 
@@ -53,9 +53,9 @@ def create_source_zip(source_dir, output_path):
         print(f"Done! Created {output_path} ({size_mb:.2f} MB)")
 
 if __name__ == "__main__":
-    source = r"d:\CodeTech\VishalGoldApp"
+    source = r"d:\CodeTech\VishalJewelersApp"
     # Output to the same place as the APK for convenience
-    out_zip = r"d:\CodeTech\VishalGoldApp\build\app\outputs\flutter-apk\VishalGold_SourceCode.zip"
+    out_zip = r"d:\CodeTech\VishalJewelersApp\build\app\outputs\flutter-apk\VishalJewelers_SourceCode.zip"
     
     # Ensure dir exists (it should since APK was built)
     os.makedirs(os.path.dirname(out_zip), exist_ok=True)

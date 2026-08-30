@@ -1,5 +1,5 @@
 """
-run_all.py — Master runner: generates all 11 Vishal Gold client delivery DOCX documents.
+run_all.py — Master runner: generates all 11 Vishal Jewelers client delivery DOCX documents.
 """
 import subprocess, sys, os
 
@@ -26,7 +26,7 @@ scripts = [
 ]
 
 print("=" * 60)
-print("  Vishal Gold — Client Delivery Document Generator")
+print("  Vishal Jewelers — Client Delivery Document Generator")
 print("=" * 60)
 errors = []
 for script in scripts:

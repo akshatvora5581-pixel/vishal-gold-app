@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
-import 'package:vishal_gold/constants/app_colors.dart';
+import 'package:vishal_jewelers/constants/app_colors.dart';
 
 class PrivacyPolicyScreen extends StatelessWidget {
   const PrivacyPolicyScreen({super.key});
@@ -18,7 +18,7 @@ class PrivacyPolicyScreen extends StatelessWidget {
           ),
         ),
         backgroundColor: AppColors.surface,
-        iconTheme: const IconThemeData(color: AppColors.white),
+        iconTheme: IconThemeData(color: AppColors.white),
       ),
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(20),

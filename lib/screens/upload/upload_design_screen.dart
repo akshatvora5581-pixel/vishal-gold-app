@@ -2,12 +2,12 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:provider/provider.dart';
-import 'package:vishal_gold/constants/app_colors.dart';
-import 'package:vishal_gold/providers/auth_provider.dart';
-import 'package:vishal_gold/providers/product_provider.dart';
-import 'package:vishal_gold/services/firebase_service.dart';
-import 'package:vishal_gold/services/whatsapp_service.dart';
-import 'package:vishal_gold/models/notification.dart';
+import 'package:vishal_jewelers/constants/app_colors.dart';
+import 'package:vishal_jewelers/providers/auth_provider.dart';
+import 'package:vishal_jewelers/providers/product_provider.dart';
+import 'package:vishal_jewelers/services/firebase_service.dart';
+import 'package:vishal_jewelers/services/whatsapp_service.dart';
+import 'package:vishal_jewelers/models/notification.dart';
 
 class UploadDesignScreen extends StatefulWidget {
   const UploadDesignScreen({super.key});
@@ -266,7 +266,7 @@ class _UploadDesignScreenState extends State<UploadDesignScreen> {
                                   ),
                                   borderRadius: BorderRadius.circular(8),
                                 ),
-                                child: const Icon(
+                                child: Icon(
                                   Icons.add_a_photo,
                                   color: AppColors.gold,
                                 ),

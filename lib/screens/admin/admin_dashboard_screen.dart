@@ -2,32 +2,32 @@ import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:fl_chart/fl_chart.dart';
-import 'package:vishal_gold/services/analytics_service.dart';
+import 'package:vishal_jewelers/services/analytics_service.dart';
 import 'package:provider/provider.dart';
-import 'package:vishal_gold/constants/app_colors.dart';
-import 'package:vishal_gold/models/admin.dart';
-import 'package:vishal_gold/screens/profile/quick_login_settings_screen.dart';
-import 'package:vishal_gold/providers/auth_provider.dart';
-import 'package:vishal_gold/widgets/admin/admin_dashboard_widgets.dart';
-import 'package:vishal_gold/screens/admin/category_management_screen.dart';
-import 'package:vishal_gold/screens/admin/product_management_screen.dart';
-import 'package:vishal_gold/screens/admin/sub_admin_management_screen.dart';
-import 'package:vishal_gold/screens/admin/subcategory_management_screen.dart';
-import 'package:vishal_gold/screens/admin/banner_management_screen.dart';
-import 'package:vishal_gold/screens/admin/admin_orders_screen.dart';
-import 'package:vishal_gold/screens/admin/fcm_console_screen.dart';
-import 'package:vishal_gold/providers/preview_provider.dart';
-import 'package:vishal_gold/screens/home/home_screen.dart';
-import 'package:vishal_gold/screens/admin/analytics_dashboard_screen.dart';
-import 'package:vishal_gold/screens/admin/crm_hub_screen.dart';
-import 'package:vishal_gold/screens/admin/flash_sale_creator_screen.dart';
-import 'package:vishal_gold/screens/admin/design_to_social_screen.dart';
-import 'package:vishal_gold/screens/admin/audit_trail_screen.dart';
-import 'package:vishal_gold/screens/admin/contact_management_screen.dart';
-import 'package:vishal_gold/screens/dev/database_cleanup_screen.dart';
-import 'package:vishal_gold/services/firebase_service.dart';
-import 'package:vishal_gold/services/fcm_service.dart';
-import 'package:vishal_gold/utils/app_layout.dart';
+import 'package:vishal_jewelers/constants/app_colors.dart';
+import 'package:vishal_jewelers/models/admin.dart';
+import 'package:vishal_jewelers/screens/profile/quick_login_settings_screen.dart';
+import 'package:vishal_jewelers/providers/auth_provider.dart';
+import 'package:vishal_jewelers/widgets/admin/admin_dashboard_widgets.dart';
+import 'package:vishal_jewelers/screens/admin/category_management_screen.dart';
+import 'package:vishal_jewelers/screens/admin/product_management_screen.dart';
+import 'package:vishal_jewelers/screens/admin/sub_admin_management_screen.dart';
+import 'package:vishal_jewelers/screens/admin/subcategory_management_screen.dart';
+import 'package:vishal_jewelers/screens/admin/banner_management_screen.dart';
+import 'package:vishal_jewelers/screens/admin/admin_orders_screen.dart';
+import 'package:vishal_jewelers/screens/admin/fcm_console_screen.dart';
+import 'package:vishal_jewelers/providers/preview_provider.dart';
+import 'package:vishal_jewelers/screens/home/home_screen.dart';
+import 'package:vishal_jewelers/screens/admin/analytics_dashboard_screen.dart';
+import 'package:vishal_jewelers/screens/admin/crm_hub_screen.dart';
+import 'package:vishal_jewelers/screens/admin/flash_sale_creator_screen.dart';
+import 'package:vishal_jewelers/screens/admin/design_to_social_screen.dart';
+import 'package:vishal_jewelers/screens/admin/audit_trail_screen.dart';
+import 'package:vishal_jewelers/screens/admin/contact_management_screen.dart';
+import 'package:vishal_jewelers/screens/dev/database_cleanup_screen.dart';
+import 'package:vishal_jewelers/services/firebase_service.dart';
+import 'package:vishal_jewelers/services/fcm_service.dart';
+import 'package:vishal_jewelers/utils/app_layout.dart';
 
 // ── Design tokens ──────────────────────────────────────────────────────────
 const _kBg = Color(0xFF080808);
@@ -80,7 +80,7 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
         backgroundColor: const Color(0xFF1A1A1A),
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(20),
-          side: const BorderSide(color: _kGoldBorder),
+          side: BorderSide(color: _kGoldBorder),
         ),
         title: Text(
           'Exit Admin Panel',
@@ -109,25 +109,24 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
       ),
     );
 
-    if (confirm != true || !mounted) return;
+    if (confirm != true || !context.mounted) return;
 
     // Show loading overlay while clearing admin session
     showDialog(
       context: context,
       barrierDismissible: false,
       builder: (_) =>
-          const Center(child: CircularProgressIndicator(color: AppColors.gold)),
+          Center(child: CircularProgressIndicator(color: AppColors.gold)),
     );
 
     try {
       // Safe exit: clears admin PIN/biometric storage WITHOUT signing out of Firebase.
       // The normal user's Firebase session stays intact.
-      await context.read<AuthProvider>().signOutAdminSession();
+      if (!context.mounted) return;
+      await Provider.of<AuthProvider>(context, listen: false).signOutAdminSession();
 
-      if (!mounted) return;
+      if (!context.mounted) return;
 
-      // Route back to the normal user home screen, removing the entire
-      // admin navigation stack so Back doesn't re-open the Admin Panel.
       Navigator.of(context).pushAndRemoveUntil(
         MaterialPageRoute(builder: (_) => const HomeScreen()),
         (route) => false,
@@ -516,7 +515,7 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
                       padding: const EdgeInsets.all(2.5),
                       decoration: BoxDecoration(
                         shape: BoxShape.circle,
-                        gradient: const LinearGradient(
+                        gradient: LinearGradient(
                           colors: [AppColors.gold, Color(0xFF8B6914)],
                           begin: Alignment.topLeft,
                           end: Alignment.bottomRight,
@@ -583,7 +582,7 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
                           child: Row(
                             mainAxisSize: MainAxisSize.min,
                             children: [
-                              const Icon(
+                              Icon(
                                 Icons.verified_rounded,
                                 color: AppColors.gold,
                                 size: 12,
@@ -629,8 +628,8 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
                 MaterialPageRoute(builder: (_) => const HomeScreen()),
               );
               ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(
-                  content: Text('Preview Mode Active — Browsing as End User'),
+                SnackBar(
+                  content: const Text('Preview Mode Active — Browsing as End User'),
                   backgroundColor: AppColors.gold,
                 ),
               );
@@ -640,7 +639,7 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
         ),
 
         IconButton(
-          icon: const Icon(
+          icon: Icon(
             Icons.power_settings_new_rounded,
             color: AppColors.gold,
           ),
@@ -856,7 +855,7 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
               ),
               child: Row(
                 children: [
-                  const Icon(
+                  Icon(
                     Icons.pending_actions,
                     color: AppColors.gold,
                     size: 16,
@@ -864,7 +863,7 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
                   const SizedBox(width: 6),
                   Text(
                     '${preview.pendingChangesCount} staged',
-                    style: const TextStyle(
+                    style: TextStyle(
                       color: AppColors.gold,
                       fontSize: 13,
                       fontWeight: FontWeight.w600,
@@ -877,7 +876,7 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
             OutlinedButton(
               onPressed: () => _discardChanges(context),
               style: OutlinedButton.styleFrom(
-                side: const BorderSide(color: Colors.redAccent),
+                side: BorderSide(color: Colors.redAccent),
                 foregroundColor: Colors.redAccent,
                 padding: const EdgeInsets.symmetric(horizontal: 16),
               ),
@@ -896,7 +895,7 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
                   horizontal: 20,
                   vertical: 10,
                 ),
-                textStyle: const TextStyle(fontWeight: FontWeight.bold),
+                textStyle: TextStyle(fontWeight: FontWeight.bold),
               ),
             ),
           ],
@@ -913,7 +912,7 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
         backgroundColor: const Color(0xFF1C1C1C),
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(20),
-          side: const BorderSide(color: _kGoldBorder),
+          side: BorderSide(color: _kGoldBorder),
         ),
         title: Text(
           'Publish All Changes?',
@@ -1187,7 +1186,7 @@ class _EditAdminProfileSheetState extends State<_EditAdminProfileSheet> {
                 ),
               ),
               child: _loading
-                  ? const CircularProgressIndicator(color: AppColors.black)
+                  ? CircularProgressIndicator(color: AppColors.black)
                   : const Text(
                       'Save Changes',
                       style: TextStyle(fontWeight: FontWeight.bold),
@@ -1211,21 +1210,21 @@ class _EditAdminProfileSheetState extends State<_EditAdminProfileSheet> {
     return TextFormField(
       controller: controller,
       keyboardType: keyboardType,
-      style: const TextStyle(color: Colors.white),
+      style: TextStyle(color: Colors.white),
       decoration: InputDecoration(
         labelText: label,
-        labelStyle: const TextStyle(color: Colors.white38),
+        labelStyle: TextStyle(color: Colors.white38),
         prefixIcon: Icon(icon, color: AppColors.gold),
         prefixText: prefixText,
-        prefixStyle: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
+        prefixStyle: TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
         counterText: '', // Hide default counter
         enabledBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(12),
-          borderSide: const BorderSide(color: Colors.white10),
+          borderSide: BorderSide(color: Colors.white10),
         ),
         focusedBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(12),
-          borderSide: const BorderSide(color: AppColors.gold),
+          borderSide: BorderSide(color: AppColors.gold),
         ),
         filled: true,
         fillColor: Colors.white.withValues(alpha: 0.03),
@@ -1267,7 +1266,7 @@ class _WeightAnalyticsSheet extends StatelessWidget {
                   color: AppColors.gold,
                 ),
               ),
-              const Icon(Icons.analytics_outlined, color: AppColors.gold),
+              Icon(Icons.analytics_outlined, color: AppColors.gold),
             ],
           ),
           const SizedBox(height: 24),
@@ -1276,9 +1275,9 @@ class _WeightAnalyticsSheet extends StatelessWidget {
               future: firebaseService.getWeightAnalytics(),
               builder: (context, snapshot) {
                 if (snapshot.connectionState == ConnectionState.waiting) {
-                  return const Center(
+                  return Center(
                     child: Padding(
-                      padding: EdgeInsets.all(40),
+                      padding: const EdgeInsets.all(40),
                       child: CircularProgressIndicator(color: AppColors.gold),
                     ),
                   );
@@ -1286,7 +1285,7 @@ class _WeightAnalyticsSheet extends StatelessWidget {
                 if (snapshot.hasError) {
                   return Text(
                     'Error: ${snapshot.error}',
-                    style: const TextStyle(color: Colors.red),
+                    style: TextStyle(color: Colors.red),
                   );
                 }
 
@@ -1345,7 +1344,7 @@ class _WeightAnalyticsSheet extends StatelessWidget {
                               ),
                             ],
                           ),
-                          const Icon(
+                          Icon(
                             Icons.scale_rounded,
                             color: AppColors.gold,
                             size: 32,
@@ -1483,7 +1482,7 @@ class _AnalyticsHubSheetState extends State<_AnalyticsHubSheet> {
                 ],
               ),
               IconButton(
-                icon: const Icon(Icons.refresh, color: AppColors.gold),
+                icon: Icon(Icons.refresh, color: AppColors.gold),
                 onPressed: _loadData,
               ),
             ],
@@ -1516,7 +1515,7 @@ class _AnalyticsHubSheetState extends State<_AnalyticsHubSheet> {
           const SizedBox(height: 32),
           Expanded(
             child: _isLoading
-                ? const Center(
+                ? Center(
                     child: CircularProgressIndicator(color: AppColors.gold),
                   )
                 : _selectedIndex == 0
@@ -1600,7 +1599,7 @@ class _AnalyticsHubSheetState extends State<_AnalyticsHubSheet> {
                     padding: const EdgeInsets.only(top: 8.0),
                     child: Text(
                       sortedKeys[index].split(' ')[0],
-                      style: const TextStyle(
+                      style: TextStyle(
                         color: Colors.white38,
                         fontSize: 10,
                       ),
@@ -1685,7 +1684,7 @@ class _AnalyticsHubSheetState extends State<_AnalyticsHubSheet> {
                         0,
                         keys[index].length > 4 ? 4 : keys[index].length,
                       ),
-                      style: const TextStyle(
+                      style: TextStyle(
                         color: Colors.white38,
                         fontSize: 10,
                       ),
@@ -1744,7 +1743,7 @@ class _AnalyticsHubSheetState extends State<_AnalyticsHubSheet> {
                         child: Image.network(
                           productData['image_urls'][0],
                           fit: BoxFit.cover,
-                          errorBuilder: (_, __, ___) => const Icon(
+                          errorBuilder: (context, error, stackTrace) => const Icon(
                             Icons.image_not_supported_outlined,
                             color: Colors.white24,
                             size: 20,
@@ -1792,7 +1791,7 @@ class _AnalyticsHubSheetState extends State<_AnalyticsHubSheet> {
                 ),
                 child: Row(
                   children: [
-                    const Icon(Icons.favorite, color: AppColors.gold, size: 14),
+                    Icon(Icons.favorite, color: AppColors.gold, size: 14),
                     const SizedBox(width: 6),
                     Text(
                       '$count',

@@ -7,7 +7,7 @@ import 'package:image_picker/image_picker.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:screenshot/screenshot.dart';
 import 'package:share_plus/share_plus.dart';
-import 'package:vishal_gold/constants/app_colors.dart';
+import 'package:vishal_jewelers/constants/app_colors.dart';
 
 /// A sealed-class-style wrapper so we can hold either a local File or a URL.
 class _ImageSource {
@@ -110,7 +110,7 @@ class _DesignToSocialScreenState extends State<DesignToSocialScreen>
       final Uint8List? imageBytes = await _screenshotController.capture();
       if (imageBytes == null) return;
       final dir = await getApplicationDocumentsDirectory();
-      final file = File('${dir.path}/vishal_gold_promo.png');
+      final file = File('${dir.path}/vishal_jewellers_promo.png');
       await file.writeAsBytes(imageBytes);
       await Share.shareXFiles([
         XFile(file.path),
@@ -140,7 +140,7 @@ class _DesignToSocialScreenState extends State<DesignToSocialScreen>
           TextButton.icon(
             onPressed: _isSharing ? null : _shareImage,
             icon: _isSharing
-                ? const SizedBox(
+                ? SizedBox(
                     width: 18,
                     height: 18,
                     child: CircularProgressIndicator(
@@ -148,7 +148,7 @@ class _DesignToSocialScreenState extends State<DesignToSocialScreen>
                       color: AppColors.gold,
                     ),
                   )
-                : const Icon(
+                : Icon(
                     Icons.share_rounded,
                     color: AppColors.gold,
                     size: 18,
@@ -205,7 +205,7 @@ class _DesignToSocialScreenState extends State<DesignToSocialScreen>
                         width: 300,
                         height: 300,
                         fit: BoxFit.cover,
-                        errorBuilder: (_, __, ___) => const Center(
+                        errorBuilder: (context, error, stackTrace) => const Center(
                           child: Icon(
                             Icons.broken_image_outlined,
                             color: Colors.white30,
@@ -462,7 +462,7 @@ class _DesignToSocialScreenState extends State<DesignToSocialScreen>
           .snapshots(),
       builder: (context, snapshot) {
         if (snapshot.connectionState == ConnectionState.waiting) {
-          return const Center(
+          return Center(
             child: CircularProgressIndicator(color: AppColors.gold),
           );
         }
@@ -507,7 +507,7 @@ class _DesignToSocialScreenState extends State<DesignToSocialScreen>
                         padding: const EdgeInsets.all(4),
                         child: Container(
                           padding: const EdgeInsets.all(3),
-                          decoration: const BoxDecoration(
+                          decoration: BoxDecoration(
                             color: AppColors.gold,
                             shape: BoxShape.circle,
                           ),
@@ -549,7 +549,7 @@ class _DesignToSocialScreenState extends State<DesignToSocialScreen>
                   child: Image.network(
                     url,
                     fit: BoxFit.cover,
-                    errorBuilder: (_, __, ___) =>
+                    errorBuilder: (context, error, stackTrace) =>
                         const ColoredBox(color: Color(0xFF252525)),
                   ),
                 ),
@@ -559,7 +559,7 @@ class _DesignToSocialScreenState extends State<DesignToSocialScreen>
                     child: Container(
                       color: AppColors.gold.withValues(alpha: 0.3),
                       alignment: Alignment.center,
-                      child: const Icon(
+                      child: Icon(
                         Icons.check_circle_rounded,
                         color: AppColors.gold,
                         size: 32,

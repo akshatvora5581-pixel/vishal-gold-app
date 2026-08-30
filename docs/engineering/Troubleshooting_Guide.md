@@ -1,4 +1,4 @@
-# Troubleshooting Guide — Vishal Gold (Ultra-Detailed)
+# Troubleshooting Guide — Vishal Jewelers (Ultra-Detailed)
 **Version:** 1.2 | **Last Updated:** 2026-02-25 | **Status:** Mission-Critical
 
 ---
@@ -114,6 +114,6 @@
 ## 7. Emergency Recovery Procedure
 
 If the app enters an inconsistent state (Corrupted local DB + stale Firebase persistence):
-1. **Clear Local Data**: `Settings -> Apps -> Vishal Gold -> Clear Storage`.
+1. **Clear Local Data**: `Settings -> Apps -> Vishal Jewelers -> Clear Storage`.
 2. **Restart Provider**: Perform a "Hot Restart" (Shift+R) to clear `ChangeNotifier` states.
 3. **Re-Auth**: Force sign out and re-verify via Phone OTP.

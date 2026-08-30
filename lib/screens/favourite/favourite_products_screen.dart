@@ -2,10 +2,10 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:provider/provider.dart';
 import 'package:flutter_staggered_animations/flutter_staggered_animations.dart';
-import 'package:vishal_gold/constants/app_colors.dart';
-import 'package:vishal_gold/providers/wishlist_provider.dart';
-import 'package:vishal_gold/utils/app_layout.dart';
-import 'package:vishal_gold/widgets/product/product_card.dart';
+import 'package:vishal_jewelers/constants/app_colors.dart';
+import 'package:vishal_jewelers/providers/wishlist_provider.dart';
+import 'package:vishal_jewelers/utils/app_layout.dart';
+import 'package:vishal_jewelers/widgets/product/product_card.dart';
 
 class FavouriteProductsScreen extends StatelessWidget {
   const FavouriteProductsScreen({super.key});
@@ -24,14 +24,14 @@ class FavouriteProductsScreen extends StatelessWidget {
             fontWeight: FontWeight.bold,
           ),
         ),
-        iconTheme: const IconThemeData(color: AppColors.gold),
+        iconTheme: IconThemeData(color: AppColors.gold),
       ),
       body: Consumer<WishlistProvider>(
         builder: (context, wishlistProvider, child) {
           final items = wishlistProvider.items.where((item) => item.product != null).toList();
 
           if (wishlistProvider.isLoading && items.isEmpty) {
-            return const Center(
+            return Center(
               child: CircularProgressIndicator(
                 valueColor: AlwaysStoppedAnimation<Color>(AppColors.gold),
               ),

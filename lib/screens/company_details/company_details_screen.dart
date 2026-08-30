@@ -1,10 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import 'package:vishal_gold/constants/app_colors.dart';
-import 'package:vishal_gold/constants/app_strings.dart';
-import 'package:vishal_gold/providers/auth_provider.dart';
-import 'package:vishal_gold/screens/home/home_screen.dart';
-import 'package:vishal_gold/utils/validators.dart';
+import 'package:vishal_jewelers/constants/app_colors.dart';
+import 'package:vishal_jewelers/constants/app_strings.dart';
+import 'package:vishal_jewelers/providers/auth_provider.dart';
+import 'package:vishal_jewelers/screens/home/home_screen.dart';
+import 'package:vishal_jewelers/utils/validators.dart';
 
 class CompanyDetailsScreen extends StatefulWidget {
   const CompanyDetailsScreen({super.key});
@@ -70,7 +70,7 @@ class _CompanyDetailsScreenState extends State<CompanyDetailsScreen> {
     return Scaffold(
       backgroundColor: AppColors.cream,
       appBar: AppBar(
-        title: const Text(AppStrings.companyDetails),
+        title: Text(AppStrings.companyDetails),
         automaticallyImplyLeading: false,
       ),
       body: SafeArea(
@@ -86,7 +86,7 @@ class _CompanyDetailsScreenState extends State<CompanyDetailsScreen> {
                 // Company Name Field
                 TextFormField(
                   controller: _companyNameController,
-                  decoration: const InputDecoration(
+                  decoration: InputDecoration(
                     labelText: '${AppStrings.companyName} *',
                     hintText: 'ABC Jewelers Pvt Ltd',
                     prefixIcon: Icon(Icons.business),
@@ -100,7 +100,7 @@ class _CompanyDetailsScreenState extends State<CompanyDetailsScreen> {
                 // Address Field
                 TextFormField(
                   controller: _addressController,
-                  decoration: const InputDecoration(
+                  decoration: InputDecoration(
                     labelText: '${AppStrings.address} *',
                     hintText: '123, Market Street, Zaveri Bazaar',
                     prefixIcon: Icon(Icons.location_on),
@@ -122,7 +122,7 @@ class _CompanyDetailsScreenState extends State<CompanyDetailsScreen> {
                 // City Field
                 TextFormField(
                   controller: _cityController,
-                  decoration: const InputDecoration(
+                  decoration: InputDecoration(
                     labelText: '${AppStrings.city} *',
                     hintText: 'Mumbai',
                     prefixIcon: Icon(Icons.location_city),
@@ -139,7 +139,7 @@ class _CompanyDetailsScreenState extends State<CompanyDetailsScreen> {
                     return ElevatedButton(
                       onPressed: authProvider.isLoading ? null : _saveDetails,
                       child: authProvider.isLoading
-                          ? const SizedBox(
+                          ? SizedBox(
                               height: 20,
                               width: 20,
                               child: CircularProgressIndicator(
@@ -147,7 +147,7 @@ class _CompanyDetailsScreenState extends State<CompanyDetailsScreen> {
                                 strokeWidth: 2,
                               ),
                             )
-                          : const Text(
+                          : Text(
                               '${AppStrings.save} & ${AppStrings.continueText}',
                             ),
                     );

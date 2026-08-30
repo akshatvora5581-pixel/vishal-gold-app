@@ -1,15 +1,15 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:firebase_auth/firebase_auth.dart' hide AuthProvider;
-import 'package:vishal_gold/providers/auth_provider.dart';
-import 'package:vishal_gold/screens/home/home_screen.dart';
-import 'package:vishal_gold/screens/auth/phone_auth_screen.dart';
-import 'package:vishal_gold/screens/auth/pin_unlock_screen.dart';
-import 'package:vishal_gold/screens/admin/admin_dashboard_screen.dart';
-import 'package:vishal_gold/screens/splash_screen.dart';
-import 'package:vishal_gold/screens/info/user_info_screen.dart';
-import 'package:vishal_gold/services/local_storage_service.dart';
-import 'package:vishal_gold/models/admin.dart';
+import 'package:vishal_jewelers/providers/auth_provider.dart';
+import 'package:vishal_jewelers/screens/home/home_screen.dart';
+import 'package:vishal_jewelers/screens/auth/phone_auth_screen.dart';
+import 'package:vishal_jewelers/screens/auth/pin_unlock_screen.dart';
+import 'package:vishal_jewelers/screens/admin/admin_dashboard_screen.dart';
+import 'package:vishal_jewelers/screens/splash_screen.dart';
+import 'package:vishal_jewelers/screens/info/user_info_screen.dart';
+import 'package:vishal_jewelers/services/local_storage_service.dart';
+import 'package:vishal_jewelers/models/admin.dart';
 
 class AuthWrapper extends StatelessWidget {
   const AuthWrapper({super.key});

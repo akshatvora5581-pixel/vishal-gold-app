@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:google_fonts/google_fonts.dart';
-import 'package:vishal_gold/constants/app_colors.dart';
-import 'package:vishal_gold/providers/language_provider.dart';
+import 'package:vishal_jewelers/constants/app_colors.dart';
+import 'package:vishal_jewelers/providers/language_provider.dart';
 
 class LanguageSettingsScreen extends StatelessWidget {
   const LanguageSettingsScreen({super.key});
@@ -27,7 +27,7 @@ class LanguageSettingsScreen extends StatelessWidget {
           ),
         ),
         backgroundColor: AppColors.surface,
-        iconTheme: const IconThemeData(color: AppColors.gold),
+        iconTheme: IconThemeData(color: AppColors.gold),
       ),
       body: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -104,7 +104,7 @@ class LanguageSettingsScreen extends StatelessWidget {
                           ),
                         ),
                         if (isSelected)
-                          const Icon(Icons.check_circle, color: AppColors.gold)
+                          Icon(Icons.check_circle, color: AppColors.gold)
                         else
                           Icon(
                             Icons.radio_button_off,

@@ -5,7 +5,7 @@ import 'package:intl/intl.dart';
 import '../../providers/notification_provider.dart';
 import '../../models/notification.dart';
 
-import 'package:vishal_gold/constants/app_colors.dart';
+import 'package:vishal_jewelers/constants/app_colors.dart';
 
 class NotificationsScreen extends StatelessWidget {
   const NotificationsScreen({super.key});
@@ -24,7 +24,7 @@ class NotificationsScreen extends StatelessWidget {
         ),
         centerTitle: true,
         backgroundColor: AppColors.surface,
-        iconTheme: const IconThemeData(color: AppColors.gold),
+        iconTheme: IconThemeData(color: AppColors.gold),
         actions: [
           Consumer<NotificationProvider>(
             builder: (context, notificationProvider, _) {
@@ -35,7 +35,7 @@ class NotificationsScreen extends StatelessWidget {
                     // Actually, let's just use the provider's markAllAsRead method which calculates unread local IDs
                     notificationProvider.markAllAsRead(null);
                   },
-                  child: const Text(
+                  child: Text(
                     'Mark all as read',
                     style: TextStyle(color: AppColors.gold, fontSize: 12),
                   ),
@@ -49,7 +49,7 @@ class NotificationsScreen extends StatelessWidget {
       body: Consumer<NotificationProvider>(
         builder: (context, notificationProvider, child) {
           if (notificationProvider.isLoading) {
-            return const Center(
+            return Center(
               child: CircularProgressIndicator(color: AppColors.gold),
             );
           }
@@ -59,7 +59,7 @@ class NotificationsScreen extends StatelessWidget {
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  const Icon(
+                  Icon(
                     Icons.notifications_none,
                     size: 64,
                     color: AppColors.textSecondary,
@@ -201,7 +201,7 @@ class NotificationsScreen extends StatelessWidget {
                             width: 8,
                             height: 8,
                             margin: const EdgeInsets.only(top: 4, left: 8),
-                            decoration: const BoxDecoration(
+                            decoration: BoxDecoration(
                               color: AppColors.gold,
                               shape: BoxShape.circle,
                             ),

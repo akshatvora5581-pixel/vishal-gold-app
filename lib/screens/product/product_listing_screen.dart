@@ -2,11 +2,11 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:flutter_staggered_animations/flutter_staggered_animations.dart';
 import 'package:google_fonts/google_fonts.dart';
-import 'package:vishal_gold/constants/app_colors.dart';
-import 'package:vishal_gold/providers/product_provider.dart';
-import 'package:vishal_gold/utils/app_layout.dart';
-import 'package:vishal_gold/widgets/product/product_card.dart';
-import 'package:vishal_gold/widgets/product/product_skeleton.dart';
+import 'package:vishal_jewelers/constants/app_colors.dart';
+import 'package:vishal_jewelers/providers/product_provider.dart';
+import 'package:vishal_jewelers/utils/app_layout.dart';
+import 'package:vishal_jewelers/widgets/product/product_card.dart';
+import 'package:vishal_jewelers/widgets/product/product_skeleton.dart';
 
 class ProductListingScreen extends StatefulWidget {
   final String? category;
@@ -28,9 +28,7 @@ class _ProductListingScreenState extends State<ProductListingScreen> {
   bool _isSearching = false;
   final TextEditingController _searchController = TextEditingController();
   final FocusNode _searchFocusNode = FocusNode();
-  final String _currentSort = 'Newest First';
   final ScrollController _scrollController = ScrollController();
-
   @override
   void initState() {
     super.initState();
@@ -138,7 +136,7 @@ class _ProductListingScreenState extends State<ProductListingScreen> {
                     ),
               leading: _isSearching
                   ? IconButton(
-                      icon: const Icon(
+                      icon: Icon(
                         Icons.arrow_back_ios_new,
                         color: AppColors.white,
                         size: 20,
@@ -146,7 +144,7 @@ class _ProductListingScreenState extends State<ProductListingScreen> {
                       onPressed: _stopSearch,
                     )
                   : IconButton(
-                      icon: const Icon(
+                      icon: Icon(
                         Icons.arrow_back_ios_new,
                         color: AppColors.white,
                         size: 20,
@@ -176,7 +174,7 @@ class _ProductListingScreenState extends State<ProductListingScreen> {
               actions: [
                 if (_isSearching)
                   IconButton(
-                    icon: const Icon(Icons.close, color: AppColors.white),
+                    icon: Icon(Icons.close, color: AppColors.white),
                     onPressed: _stopSearch,
                   )
                 else ...[
@@ -191,11 +189,11 @@ class _ProductListingScreenState extends State<ProductListingScreen> {
                           Container(
                             width: 36,
                             height: 36,
-                            decoration: const BoxDecoration(
+                            decoration: BoxDecoration(
                               color: AppColors.black,
                               shape: BoxShape.circle,
                             ),
-                            child: const Icon(
+                            child: Icon(
                               Icons.tune_rounded,
                               color: AppColors.gold,
                               size: 20,
@@ -226,7 +224,7 @@ class _ProductListingScreenState extends State<ProductListingScreen> {
                   ),
                   // ── Search button ──────────────────────────────────────────
                   IconButton(
-                    icon: const Icon(Icons.search, color: AppColors.white),
+                    icon: Icon(Icons.search, color: AppColors.white),
                     onPressed: _startSearch,
                   ),
                 ],
@@ -261,7 +259,7 @@ class _ProductListingScreenState extends State<ProductListingScreen> {
                           child: Column(
                             mainAxisAlignment: MainAxisAlignment.center,
                             children: [
-                              const Icon(Icons.info_outline, color: AppColors.gold, size: 48),
+                              Icon(Icons.info_outline, color: AppColors.gold, size: 48),
                               const SizedBox(height: 16),
                               Text(
                                 provider.error!,
@@ -273,7 +271,7 @@ class _ProductListingScreenState extends State<ProductListingScreen> {
                               ),
                               TextButton(
                                 onPressed: () => provider.fetchInitialProducts(),
-                                child: const Text('Try Again', style: TextStyle(color: AppColors.gold)),
+                                child: Text('Try Again', style: TextStyle(color: AppColors.gold)),
                               ),
                             ],
                           ),
@@ -347,9 +345,9 @@ class _ProductListingScreenState extends State<ProductListingScreen> {
             Consumer<ProductProvider>(
               builder: (context, provider, child) {
                 if (provider.isFetchingMore) {
-                  return const SliverToBoxAdapter(
+                  return SliverToBoxAdapter(
                     child: Padding(
-                      padding: EdgeInsets.symmetric(vertical: 24),
+                      padding: const EdgeInsets.symmetric(vertical: 24),
                       child: Center(
                         child: CircularProgressIndicator(
                           valueColor: AlwaysStoppedAnimation<Color>(
@@ -414,7 +412,7 @@ class _SortFilterBottomSheetState extends State<_SortFilterBottomSheet> {
   @override
   Widget build(BuildContext context) {
     return Container(
-      decoration: const BoxDecoration(
+      decoration: BoxDecoration(
         color: AppColors.background,
         borderRadius: BorderRadius.only(
           topLeft: Radius.circular(28),

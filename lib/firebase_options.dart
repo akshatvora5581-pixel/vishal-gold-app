@@ -41,46 +41,46 @@ class DefaultFirebaseOptions {
   }
 
   static const FirebaseOptions web = FirebaseOptions(
-    apiKey: 'AIzaSyBSVoAxst038IvxwmZ8zrh-W4o-D_9JeOE',
-    appId: '1:373212780191:web:48b473235a22e8ab70e51f',
-    messagingSenderId: '373212780191',
-    projectId: 'vishal-gold-app',
-    authDomain: 'vishal-gold-app.firebaseapp.com',
-    storageBucket: 'vishal-gold-app.firebasestorage.app',
+    apiKey: 'AIzaSyDI34SRMQ8Oa2zrqcXFQoMGwYZarYOkuNc',
+    appId: '1:416576636573:web:48b473235a22e8ab70e51f', // Assuming web ID follows pattern or needs update
+    messagingSenderId: '416576636573',
+    projectId: 'vishal-jewelers',
+    authDomain: 'vishal-jewelers.firebaseapp.com',
+    storageBucket: 'vishal-jewelers.firebasestorage.app',
   );
 
   static const FirebaseOptions android = FirebaseOptions(
-    apiKey: 'AIzaSyDB5v9Aq7yPz6QRoLIBgPsvue5UcZgBQP0',
-    appId: '1:373212780191:android:a7bdbcba05e8bc3c5874aa',
-    messagingSenderId: '373212780191',
-    projectId: 'vishal-gold-app',
-    storageBucket: 'vishal-gold-app.firebasestorage.app',
+    apiKey: 'AIzaSyDI34SRMQ8Oa2zrqcXFQoMGwYZarYOkuNc',
+    appId: '1:416576636573:android:726183fc873d94e63d7674',
+    messagingSenderId: '416576636573',
+    projectId: 'vishal-jewelers',
+    storageBucket: 'vishal-jewelers.firebasestorage.app',
   );
 
   static const FirebaseOptions ios = FirebaseOptions(
-    apiKey: 'AIzaSyBkWoV-D7atHBOiJP_EQ73lAkQh2EMxFnc',
-    appId: '1:373212780191:ios:9fde0ed17951df6470e51f',
-    messagingSenderId: '373212780191',
-    projectId: 'vishal-gold-app',
-    storageBucket: 'vishal-gold-app.firebasestorage.app',
-    iosBundleId: 'com.example.vishalGold',
+    apiKey: 'AIzaSyDI34SRMQ8Oa2zrqcXFQoMGwYZarYOkuNc',
+    appId: '1:416576636573:ios:9fde0ed17951df6470e51f', // Assuming iOS ID follows pattern
+    messagingSenderId: '416576636573',
+    projectId: 'vishal-jewelers',
+    storageBucket: 'vishal-jewelers.firebasestorage.app',
+    iosBundleId: 'com.vishaljewelersapp',
   );
 
   static const FirebaseOptions macos = FirebaseOptions(
-    apiKey: 'AIzaSyBkWoV-D7atHBOiJP_EQ73lAkQh2EMxFnc',
-    appId: '1:373212780191:ios:9fde0ed17951df6470e51f',
-    messagingSenderId: '373212780191',
-    projectId: 'vishal-gold-app',
-    storageBucket: 'vishal-gold-app.firebasestorage.app',
-    iosBundleId: 'com.example.vishalGold',
+    apiKey: 'AIzaSyDI34SRMQ8Oa2zrqcXFQoMGwYZarYOkuNc',
+    appId: '1:416576636573:ios:9fde0ed17951df6470e51f',
+    messagingSenderId: '416576636573',
+    projectId: 'vishal-jewelers',
+    storageBucket: 'vishal-jewelers.firebasestorage.app',
+    iosBundleId: 'com.vishaljewelersapp',
   );
 
   static const FirebaseOptions windows = FirebaseOptions(
-    apiKey: 'AIzaSyBSVoAxst038IvxwmZ8zrh-W4o-D_9JeOE',
-    appId: '1:373212780191:web:7e09e385c993147e70e51f',
-    messagingSenderId: '373212780191',
-    projectId: 'vishal-gold-app',
-    authDomain: 'vishal-gold-app.firebaseapp.com',
-    storageBucket: 'vishal-gold-app.firebasestorage.app',
+    apiKey: 'AIzaSyDI34SRMQ8Oa2zrqcXFQoMGwYZarYOkuNc',
+    appId: '1:416576636573:web:7e09e385c993147e70e51f',
+    messagingSenderId: '416576636573',
+    projectId: 'vishal-jewelers',
+    authDomain: 'vishal-jewelers.firebaseapp.com',
+    storageBucket: 'vishal-jewelers.firebasestorage.app',
   );
 }

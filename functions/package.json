@@ -1,6 +1,6 @@
 {
-    "name": "vishal-gold-functions",
-    "description": "Firebase Cloud Functions for Vishal Jewellers App push notifications",
+    "name": "vishal-jewelers-functions",
+    "description": "Firebase Cloud Functions for Vishal Jewelers App push notifications",
     "scripts": {
         "lint": "eslint .",
         "serve": "firebase emulators:start --only functions",

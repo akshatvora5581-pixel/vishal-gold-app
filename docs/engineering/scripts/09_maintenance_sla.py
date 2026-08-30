@@ -13,9 +13,9 @@ doc = new_document()
 
 add_cover(doc,
     title    = "Maintenance & Support SLA",
-    subtitle = "Vishal Gold App — Service Level Agreement for Post-Delivery Support",
+    subtitle = "Vishal Jewelers App — Service Level Agreement for Post-Delivery Support",
     version  = "v1.0",
-    prepared_for = "Vishal Gold Management",
+    prepared_for = "Vishal Jewelers Management",
     prepared_by  = "Engineering Delivery Team"
 )
 
@@ -35,8 +35,8 @@ add_h1(doc, "1. Agreement Overview")
 add_body(doc, (
     "This Service Level Agreement (SLA) defines the terms and conditions of post-delivery "
     "maintenance and technical support provided by the Engineering Delivery Team (hereinafter "
-    "referred to as 'the Support Provider') to Vishal Gold (hereinafter referred to as 'the Client') "
-    "following the formal handover of the Vishal Gold mobile application."
+    "referred to as 'the Support Provider') to Vishal Jewelers (hereinafter referred to as 'the Client') "
+    "following the formal handover of the Vishal Jewelers mobile application."
 ))
 add_body(doc, (
     "This agreement becomes effective from the date of both parties' signatures on the Project "
@@ -162,7 +162,7 @@ add_body(doc, (
 ))
 
 add_signature_block(doc, [
-    ("Client Representative", "Vishal Gold"),
+    ("Client Representative", "Vishal Jewelers"),
     ("Support Provider Lead",  "Engineering Delivery Team"),
 ])
 

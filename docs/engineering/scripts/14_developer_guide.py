@@ -13,9 +13,9 @@ doc = new_document()
 
 add_cover(doc,
     title    = "Developer Guide",
-    subtitle = "Technical Engineering & Extension Manual — Vishal Gold",
+    subtitle = "Technical Engineering & Extension Manual — Vishal Jewelers",
     version  = "v1.1",
-    prepared_for = "Vishal Gold Engineering Team",
+    prepared_for = "Vishal Jewelers Engineering Team",
     prepared_by  = "Senior Backend & Mobile Architects"
 )
 
@@ -33,7 +33,7 @@ add_toc_placeholder(doc, [
 # ── 1. Architecture & Philosophy ──────────────────────────────────────────
 add_h1(doc, "1. Architecture & Philosophy")
 add_body(doc, (
-    "The Vishal Gold application is built on a high-availability, security-first foundation. "
+    "The Vishal Jewelers application is built on a high-availability, security-first foundation. "
     "The system follows a reactive architecture where the UI is a function of the state, "
     "and the state is strictly managed through localized providers."
 ))

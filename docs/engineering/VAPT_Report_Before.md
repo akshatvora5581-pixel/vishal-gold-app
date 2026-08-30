@@ -1,4 +1,4 @@
-# VAPT Report — Vishal Gold Android App (BEFORE Fixes)
+# VAPT Report — Vishal Jewelers Android App (BEFORE Fixes)
 **Version:** 1.0 | **Agent:** Senior Android VAPT Expert | **Date:** 2026-02-25 | **Iteration:** 1
 
 ---

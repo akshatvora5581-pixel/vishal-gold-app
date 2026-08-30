@@ -1,5 +1,5 @@
 """
-doc_utils.py  — Shared formatting utilities for Vishal Gold client document generation.
+doc_utils.py  — Shared formatting utilities for Vishal Jewelers client document generation.
 Aptos font, 12pt body, justified paragraphs, professional hierarchy.
 """
 
@@ -65,7 +65,7 @@ def set_run_font(run, name=FONT_BODY, size=SIZE_BODY, bold=False, italic=False, 
 
 
 def add_cover(doc: Document, title: str, subtitle: str, version: str = "v1.0",
-              date: str = None, prepared_for: str = "Vishal Gold",
+              date: str = None, prepared_for: str = "Vishal Jewelers",
               prepared_by: str = "Engineering Team"):
     """Insert a professional cover page."""
     if date is None:
@@ -103,7 +103,7 @@ def add_cover(doc: Document, title: str, subtitle: str, version: str = "v1.0",
     table.alignment = WD_TABLE_ALIGNMENT.CENTER
     table.style = "Table Grid"
     meta = [
-        ("Project",      "Vishal Gold — B2B/B2C Jewelry App"),
+        ("Project",      "Vishal Jewelers — B2B/B2C Jewelry App"),
         ("Prepared For", prepared_for),
         ("Prepared By",  prepared_by),
         ("Version",      version),
@@ -253,7 +253,7 @@ def add_table(doc: Document, headers: list, rows: list):
 
 
 def add_signature_block(doc: Document, parties: list):
-    """parties = [('Client Representative', 'Vishal Gold'), ('Project Manager', 'Our Firm')]"""
+    """parties = [('Client Representative', 'Vishal Jewelers'), ('Project Manager', 'Our Firm')]"""
     doc.add_paragraph()
     add_h2(doc, "Authorization & Sign-Off")
     add_body(doc, "The undersigned parties confirm that they have reviewed the contents of this document and agree to its terms and findings.")

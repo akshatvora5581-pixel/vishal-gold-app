@@ -2,10 +2,10 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:provider/provider.dart';
-import 'package:vishal_gold/services/analytics_service.dart';
-import 'package:vishal_gold/services/firebase_service.dart';
-import 'package:vishal_gold/constants/app_colors.dart';
-import 'package:vishal_gold/providers/auth_provider.dart';
+import 'package:vishal_jewelers/services/analytics_service.dart';
+import 'package:vishal_jewelers/services/firebase_service.dart';
+import 'package:vishal_jewelers/constants/app_colors.dart';
+import 'package:vishal_jewelers/providers/auth_provider.dart';
 
 class CRMHubScreen extends StatefulWidget {
   const CRMHubScreen({super.key});
@@ -57,7 +57,7 @@ class _CRMHubScreenState extends State<CRMHubScreen> {
 
   void _sendWhatsApp(String phone, String name) async {
     final message =
-        'Hello $name, we missed you at Vishal Jewellers! Check out our latest designs.';
+        'Hello $name, we missed you at Vishal Jewelers! Check out our latest designs.';
     final url = 'https://wa.me/$phone?text=${Uri.encodeComponent(message)}';
     if (await canLaunchUrl(Uri.parse(url))) {
       await launchUrl(Uri.parse(url), mode: LaunchMode.externalApplication);
@@ -95,7 +95,7 @@ class _CRMHubScreenState extends State<CRMHubScreen> {
               padding: const EdgeInsets.only(right: 8),
               child: TextButton.icon(
                 onPressed: () => _openBroadcastModal(),
-                icon: const Icon(
+                icon: Icon(
                   Icons.campaign_rounded,
                   color: AppColors.gold,
                   size: 18,
@@ -117,7 +117,7 @@ class _CRMHubScreenState extends State<CRMHubScreen> {
           _buildSegmentSelector(),
           Expanded(
             child: _isLoading
-                ? const Center(
+                ? Center(
                     child: CircularProgressIndicator(color: AppColors.gold),
                   )
                 : _buildUserList(),
@@ -200,7 +200,7 @@ class _CRMHubScreenState extends State<CRMHubScreen> {
                 backgroundColor: AppColors.gold.withValues(alpha: 0.1),
                 child: Text(
                   name.isNotEmpty ? name[0].toUpperCase() : '?',
-                  style: const TextStyle(
+                  style: TextStyle(
                     color: AppColors.gold,
                     fontWeight: FontWeight.bold,
                   ),
@@ -236,7 +236,7 @@ class _CRMHubScreenState extends State<CRMHubScreen> {
                   iconSize: 22,
                 ),
               IconButton(
-                icon: const Icon(
+                icon: Icon(
                   Icons.notifications_active_rounded,
                   color: AppColors.gold,
                 ),
@@ -369,7 +369,7 @@ class _PushNotificationSheetState extends State<_PushNotificationSheet> {
                   color: AppColors.gold.withValues(alpha: 0.1),
                   borderRadius: BorderRadius.circular(12),
                 ),
-                child: const Icon(
+                child: Icon(
                   Icons.notifications_active_rounded,
                   color: AppColors.gold,
                   size: 24,
@@ -487,11 +487,11 @@ class _PushNotificationSheetState extends State<_PushNotificationSheet> {
             ),
             enabledBorder: OutlineInputBorder(
               borderRadius: BorderRadius.circular(12),
-              borderSide: const BorderSide(color: Colors.white12),
+              borderSide: BorderSide(color: Colors.white12),
             ),
             focusedBorder: OutlineInputBorder(
               borderRadius: BorderRadius.circular(12),
-              borderSide: const BorderSide(color: AppColors.gold, width: 1.5),
+              borderSide: BorderSide(color: AppColors.gold, width: 1.5),
             ),
             contentPadding: const EdgeInsets.symmetric(
               horizontal: 16,

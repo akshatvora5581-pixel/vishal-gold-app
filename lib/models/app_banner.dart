@@ -8,6 +8,7 @@ class AppBanner {
   final String actionType; // 'category', 'subcategory', 'product', 'external'
   final String? actionValue; // ID or URL
   final String templateType; // 'theme1', 'theme2', 'full_image', 'blank'
+  final String termsAndConditions;
   final bool isActive;
   final int order;
   final DateTime createdAt;
@@ -20,6 +21,7 @@ class AppBanner {
     required this.actionType,
     this.actionValue,
     this.templateType = 'theme1',
+    this.termsAndConditions = '*T&C Applied',
     this.isActive = true,
     this.order = 0,
     required this.createdAt,
@@ -35,29 +37,31 @@ class AppBanner {
 
     return AppBanner(
       id: id,
-      imageUrl: (json['imageUrl'] ?? json['image_url']) as String? ?? '',
+      imageUrl: (json['image_url'] ?? json['imageUrl']) as String? ?? '',
       title: json['title'] as String?,
       subtitle: json['subtitle'] as String?,
-      actionType: (json['actionType'] ?? json['action_type']) as String? ?? 'category',
-      actionValue: (json['actionValue'] ?? json['action_value']) as String?,
-      templateType: (json['templateType'] ?? json['template_type']) as String? ?? 'theme1',
-      isActive: (json['isActive'] ?? json['is_active']) as bool? ?? true,
+      actionType: (json['action_type'] ?? json['actionType']) as String? ?? 'category',
+      actionValue: (json['action_value'] ?? json['actionValue']) as String?,
+      templateType: (json['template_type'] ?? json['templateType']) as String? ?? 'theme1',
+      termsAndConditions: (json['terms_and_conditions'] ?? json['termsAndConditions'] ?? '*T&C Applied') as String,
+      isActive: (json['is_active'] ?? json['isActive'] ?? true) as bool,
       order: (json['order'] ?? 0) as int,
-      createdAt: parseDate(json['createdAt'] ?? json['created_at']),
+      createdAt: parseDate(json['created_at'] ?? json['createdAt']),
     );
   }
 
   Map<String, dynamic> toJson() {
     return {
-      'imageUrl': imageUrl,
+      'image_url': imageUrl,
       'title': title,
       'subtitle': subtitle,
-      'actionType': actionType,
-      'actionValue': actionValue,
-      'templateType': templateType,
-      'isActive': isActive,
+      'action_type': actionType,
+      'action_value': actionValue,
+      'template_type': templateType,
+      'terms_and_conditions': termsAndConditions,
+      'is_active': isActive,
       'order': order,
-      'createdAt': Timestamp.fromDate(createdAt),
+      'created_at': Timestamp.fromDate(createdAt),
     };
   }
 
@@ -68,6 +72,7 @@ class AppBanner {
     String? actionType,
     String? actionValue,
     String? templateType,
+    String? termsAndConditions,
     bool? isActive,
     int? order,
   }) {
@@ -79,6 +84,7 @@ class AppBanner {
       actionType: actionType ?? this.actionType,
       actionValue: actionValue ?? this.actionValue,
       templateType: templateType ?? this.templateType,
+      termsAndConditions: termsAndConditions ?? this.termsAndConditions,
       isActive: isActive ?? this.isActive,
       order: order ?? this.order,
       createdAt: createdAt,

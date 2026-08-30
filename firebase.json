@@ -3,20 +3,20 @@
     "platforms": {
       "android": {
         "default": {
-          "projectId": "vishal-gold-app",
-          "appId": "1:373212780191:android:a7bdbcba05e8bc3c5874aa",
+          "projectId": "vishal-jewelers",
+          "appId": "1:416576636573:android:726183fc873d94e63d7674",
           "fileOutput": "android/app/google-services.json"
         }
       },
       "dart": {
         "lib/firebase_options.dart": {
-          "projectId": "vishal-gold-app",
+          "projectId": "vishal-jewelers",
           "configurations": {
-            "android": "1:373212780191:android:a7bdbcba05e8bc3c5874aa",
-            "ios": "1:373212780191:ios:9fde0ed17951df6470e51f",
-            "macos": "1:373212780191:ios:9fde0ed17951df6470e51f",
-            "web": "1:373212780191:web:48b473235a22e8ab70e51f",
-            "windows": "1:373212780191:web:7e09e385c993147e70e51f"
+            "android": "1:416576636573:android:726183fc873d94e63d7674",
+            "ios": "1:416576636573:ios:9fde0ed17951df6470e51f",
+            "macos": "1:416576636573:ios:9fde0ed17951df6470e51f",
+            "web": "1:416576636573:web:48b473235a22e8ab70e51f",
+            "windows": "1:416576636573:web:7e09e385c993147e70e51f"
           }
         }
       }

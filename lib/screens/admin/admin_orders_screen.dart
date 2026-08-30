@@ -3,10 +3,10 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:intl/intl.dart';
 import 'package:url_launcher/url_launcher.dart';
-import 'package:vishal_gold/constants/app_colors.dart';
-import 'package:vishal_gold/models/notification.dart';
-import 'package:vishal_gold/services/firebase_service.dart';
-import 'package:vishal_gold/models/order.dart' as app_order;
+import 'package:vishal_jewelers/constants/app_colors.dart';
+import 'package:vishal_jewelers/models/notification.dart';
+import 'package:vishal_jewelers/services/firebase_service.dart';
+import 'package:vishal_jewelers/models/order.dart' as app_order;
 
 class AdminOrdersScreen extends StatefulWidget {
   const AdminOrdersScreen({super.key});
@@ -328,7 +328,7 @@ class _AdminOrdersScreenState extends State<AdminOrdersScreen> {
           ),
         ),
         backgroundColor: AppColors.surface,
-        iconTheme: const IconThemeData(color: AppColors.white),
+        iconTheme: IconThemeData(color: AppColors.white),
         bottom: PreferredSize(
           preferredSize: const Size.fromHeight(48),
           child: SizedBox(
@@ -382,7 +382,7 @@ class _AdminOrdersScreenState extends State<AdminOrdersScreen> {
 
   Widget _buildBody() {
     if (_isLoading && _orders.isEmpty) {
-      return const Center(
+      return Center(
         child: CircularProgressIndicator(color: AppColors.gold),
       );
     }
@@ -418,9 +418,9 @@ class _AdminOrdersScreenState extends State<AdminOrdersScreen> {
         itemCount: _orders.length + (_hasMore ? 1 : 0),
         itemBuilder: (context, index) {
           if (index == _orders.length) {
-            return const Center(
+            return Center(
               child: Padding(
-                padding: EdgeInsets.all(8.0),
+                padding: const EdgeInsets.all(8.0),
                 child: CircularProgressIndicator(color: AppColors.gold),
               ),
             );
@@ -532,7 +532,7 @@ class _AdminOrdersScreenState extends State<AdminOrdersScreen> {
             const SizedBox(width: 8),
             IconButton(
               onPressed: () => _deleteOrder(context, orderId),
-              icon: const Icon(
+              icon: Icon(
                 Icons.delete_outline,
                 color: AppColors.errorRed,
                 size: 22,
@@ -550,7 +550,7 @@ class _AdminOrdersScreenState extends State<AdminOrdersScreen> {
             children: [
               Row(
                 children: [
-                  const Icon(
+                  Icon(
                     Icons.person_outline,
                     size: 14,
                     color: AppColors.gold,
@@ -674,7 +674,7 @@ class _AdminOrdersScreenState extends State<AdminOrdersScreen> {
                                   color: AppColors.gold.withValues(alpha: 0.15),
                                   borderRadius: BorderRadius.circular(8),
                                 ),
-                                child: const Center(
+                                child: Center(
                                   child: Icon(
                                     Icons.diamond_outlined,
                                     color: AppColors.gold,

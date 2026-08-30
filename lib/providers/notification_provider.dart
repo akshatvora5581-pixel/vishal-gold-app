@@ -1,6 +1,6 @@
 import 'package:flutter/foundation.dart';
-import 'package:vishal_gold/models/notification.dart';
-import 'package:vishal_gold/services/firebase_service.dart';
+import 'package:vishal_jewelers/models/notification.dart';
+import 'package:vishal_jewelers/services/firebase_service.dart';
 import 'dart:async';
 
 class NotificationProvider with ChangeNotifier {

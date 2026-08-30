@@ -13,9 +13,9 @@ doc = new_document()
 
 add_cover(doc,
     title    = "Known Issues & Limitations Log",
-    subtitle = "Vishal Gold App — Defect Register at Time of Delivery",
+    subtitle = "Vishal Jewelers App — Defect Register at Time of Delivery",
     version  = "v1.0",
-    prepared_for = "Vishal Gold Technical Team",
+    prepared_for = "Vishal Jewelers Technical Team",
     prepared_by  = "Engineering Delivery Team"
 )
 
@@ -31,7 +31,7 @@ add_toc_placeholder(doc, [
 add_h1(doc, "1. Purpose")
 add_body(doc, (
     "This Known Issues and Limitations Log provides a complete, transparent register of all "
-    "known defects, limitations, and deferred items at the time of the Vishal Gold application's "
+    "known defects, limitations, and deferred items at the time of the Vishal Jewelers application's "
     "formal delivery. It is intended to ensure that the client and all stakeholders have a "
     "clear understanding of the application's current state, enabling informed decisions "
     "regarding go-live readiness, risk acceptance, and future development priorities."

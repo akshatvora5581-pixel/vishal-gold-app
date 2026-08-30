@@ -1,4 +1,4 @@
-# QA Fixes Log — Vishal Gold App
+# QA Fixes Log — Vishal Jewelers App
 **Version:** 1.0 | **Agent:** Senior Developer | **Date:** 2026-02-25 | **Iteration:** 1
 
 ---

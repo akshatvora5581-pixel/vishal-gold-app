@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import 'package:vishal_gold/constants/app_colors.dart';
-import 'package:vishal_gold/providers/cart_provider.dart';
-import 'package:vishal_gold/screens/cart/cart_screen.dart';
+import 'package:vishal_jewelers/constants/app_colors.dart';
+import 'package:vishal_jewelers/providers/cart_provider.dart';
+import 'package:vishal_jewelers/screens/cart/cart_screen.dart';
 import 'package:google_fonts/google_fonts.dart';
 
 class GlobalCartIcon extends StatelessWidget {
@@ -16,7 +16,7 @@ class GlobalCartIcon extends StatelessWidget {
           alignment: Alignment.center,
           children: [
             IconButton(
-              icon: const Icon(
+              icon: Icon(
                 Icons.shopping_cart_outlined,
                 color: AppColors.gold,
                 size: 26,
@@ -34,7 +34,7 @@ class GlobalCartIcon extends StatelessWidget {
                 top: 6,
                 child: Container(
                   padding: const EdgeInsets.all(4),
-                  decoration: const BoxDecoration(
+                  decoration: BoxDecoration(
                     color: AppColors.errorRed,
                     shape: BoxShape.circle,
                   ),

@@ -28,6 +28,7 @@ class FirebaseAuthService {
 
         // Called when SMS is auto-verified (Android only)
         verificationCompleted: (PhoneAuthCredential credential) async {
+          debugPrint('FirebaseAuth: Auto-verification completed.');
           try {
             UserCredential userCredential = await _auth.signInWithCredential(
               credential,
@@ -36,12 +37,14 @@ class FirebaseAuthService {
               onAutoVerified(userCredential.user!);
             }
           } catch (e) {
+            debugPrint('FirebaseAuth: Auto-verification sign-in failed: $e');
             onError('The app was unable to automatically verify your code. Please enter it manually below.');
           }
         },
 
         // Called when verification fails
         verificationFailed: (FirebaseAuthException e) {
+          debugPrint('FirebaseAuth: Verification failed. Code: ${e.code}, Message: ${e.message}');
           String errorMessage;
           switch (e.code) {
             case 'invalid-phone-number':
@@ -67,6 +70,7 @@ class FirebaseAuthService {
 
         // Called when OTP is sent successfully
         codeSent: (String verificationId, int? resendToken) {
+          debugPrint('FirebaseAuth: Code sent. VerificationId: $verificationId');
           onCodeSent(verificationId);
         },
 

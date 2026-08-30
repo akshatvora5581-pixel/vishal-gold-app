@@ -3,13 +3,13 @@ import 'package:provider/provider.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:url_launcher/url_launcher.dart';
-import 'package:vishal_gold/constants/app_colors.dart';
-import 'package:vishal_gold/providers/auth_provider.dart';
-import 'package:vishal_gold/providers/cart_provider.dart';
-import 'package:vishal_gold/providers/order_provider.dart';
-import 'package:vishal_gold/services/firebase_service.dart';
-import 'package:vishal_gold/screens/order/order_confirmation_screen.dart';
-import 'package:vishal_gold/models/notification.dart';
+import 'package:vishal_jewelers/constants/app_colors.dart';
+import 'package:vishal_jewelers/providers/auth_provider.dart';
+import 'package:vishal_jewelers/providers/cart_provider.dart';
+import 'package:vishal_jewelers/providers/order_provider.dart';
+import 'package:vishal_jewelers/services/firebase_service.dart';
+import 'package:vishal_jewelers/screens/order/order_confirmation_screen.dart';
+import 'package:vishal_jewelers/models/notification.dart';
 
 class CartScreen extends StatelessWidget {
   const CartScreen({super.key});
@@ -222,12 +222,12 @@ class CartScreen extends StatelessWidget {
             fontWeight: FontWeight.bold,
           ),
         ),
-        iconTheme: const IconThemeData(color: AppColors.white),
+        iconTheme: IconThemeData(color: AppColors.white),
       ),
       body: Consumer<CartProvider>(
         builder: (context, cartProvider, child) {
           if (cartProvider.isLoading) {
-            return const Center(
+            return Center(
               child: CircularProgressIndicator(color: AppColors.gold),
             );
           }
@@ -263,7 +263,7 @@ class CartScreen extends StatelessWidget {
                   OutlinedButton(
                     onPressed: () => Navigator.pop(context),
                     style: OutlinedButton.styleFrom(
-                      side: const BorderSide(color: AppColors.gold),
+                      side: BorderSide(color: AppColors.gold),
                       foregroundColor: AppColors.gold,
                       padding: const EdgeInsets.symmetric(
                         horizontal: 30,
@@ -365,7 +365,7 @@ class CartScreen extends StatelessWidget {
                                                   cartItem.productId,
                                                   cartItem.quantity - 1,
                                                 ),
-                                            icon: const Icon(
+                                            icon: Icon(
                                               Icons.remove,
                                               color: AppColors.gold,
                                               size: 16,
@@ -386,7 +386,7 @@ class CartScreen extends StatelessWidget {
                                                   cartItem.productId,
                                                   cartItem.quantity + 1,
                                                 ),
-                                            icon: const Icon(
+                                            icon: Icon(
                                               Icons.add,
                                               color: AppColors.gold,
                                               size: 16,
@@ -401,7 +401,7 @@ class CartScreen extends StatelessWidget {
                                     IconButton(
                                       onPressed: () => cartProvider
                                           .removeFromCart(cartItem.productId),
-                                      icon: const Icon(
+                                      icon: Icon(
                                         Icons.delete_outline,
                                         color: AppColors.errorRed,
                                       ),

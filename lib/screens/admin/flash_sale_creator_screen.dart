@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart'; // Added
 import 'package:google_fonts/google_fonts.dart';
-import 'package:vishal_gold/constants/app_colors.dart';
+import 'package:vishal_jewelers/constants/app_colors.dart';
 
 class FlashSaleCreatorScreen extends StatefulWidget {
   const FlashSaleCreatorScreen({super.key});
@@ -161,10 +161,10 @@ class _FlashSaleCreatorScreenState extends State<FlashSaleCreatorScreen> {
         const SizedBox(height: 8),
         TextFormField(
           maxLines: maxLines,
-          style: const TextStyle(color: Colors.white),
+          style: TextStyle(color: Colors.white),
           decoration: InputDecoration(
             hintText: hint,
-            hintStyle: const TextStyle(color: Colors.white24),
+            hintStyle: TextStyle(color: Colors.white24),
             filled: true,
             fillColor: Colors.white.withValues(alpha: 0.05),
             border: OutlineInputBorder(
@@ -251,7 +251,7 @@ class _FlashSaleCreatorScreenState extends State<FlashSaleCreatorScreen> {
                 ),
               ],
             ),
-            const Icon(Icons.calendar_today_rounded, color: AppColors.gold),
+            Icon(Icons.calendar_today_rounded, color: AppColors.gold),
           ],
         ),
       ),

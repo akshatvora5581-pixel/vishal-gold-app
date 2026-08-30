@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:vishal_gold/services/firebase_service.dart';
+import 'package:vishal_jewelers/services/firebase_service.dart';
 
 class PreviewProvider with ChangeNotifier {
   final FirebaseService _firebaseService = FirebaseService();
@@ -37,9 +37,10 @@ class PreviewProvider with ChangeNotifier {
     List<T> liveItems,
     List<QueryDocumentSnapshot> stagedDocs,
     T Function(Map<String, dynamic> data, String id) fromJson,
-    String Function(T item) getId,
-  ) {
-    if (!_isPreviewMode) return liveItems;
+    String Function(T item) getId, {
+    bool force = false,
+  }) {
+    if (!_isPreviewMode && !force) return liveItems;
 
     final Map<String, T> mergedMap = {
       for (var item in liveItems) getId(item): item,

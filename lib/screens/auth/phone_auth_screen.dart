@@ -1,14 +1,14 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart' hide AuthProvider;
 import 'package:google_fonts/google_fonts.dart';
-import 'package:vishal_gold/services/firebase_auth_service.dart';
-import 'package:vishal_gold/services/firebase_service.dart';
-import 'package:vishal_gold/constants/app_colors.dart';
-import 'package:vishal_gold/screens/home/home_screen.dart';
-import 'package:vishal_gold/screens/auth/admin_login_screen.dart';
-import 'package:vishal_gold/screens/auth/pin_unlock_screen.dart';
+import 'package:vishal_jewelers/services/firebase_auth_service.dart';
+import 'package:vishal_jewelers/services/firebase_service.dart';
+import 'package:vishal_jewelers/constants/app_colors.dart';
+import 'package:vishal_jewelers/screens/home/home_screen.dart';
+import 'package:vishal_jewelers/screens/auth/admin_login_screen.dart';
+import 'package:vishal_jewelers/screens/auth/pin_unlock_screen.dart';
 import 'package:provider/provider.dart';
-import 'package:vishal_gold/providers/auth_provider.dart';
+import 'package:vishal_jewelers/providers/auth_provider.dart';
 import 'dart:async';
 
 class PhoneAuthScreen extends StatefulWidget {
@@ -35,7 +35,7 @@ class _PhoneAuthScreenState extends State<PhoneAuthScreen> {
   bool _otpSent = false;
   bool _loading = false;
   String? _errorMessage;
-  final bool _showNameField = false;
+  bool _showNameField = false;
   // OTP rate limiting (VAPT-004): 60s cooldown after each OTP request
   int _otpCooldownSecondsRemaining = 0;
   Timer? _adminTriggerTimer;
@@ -188,8 +188,15 @@ class _PhoneAuthScreenState extends State<PhoneAuthScreen> {
         user.uid,
       );
 
-      _navigateToHome();
-        } catch (e) {
+      if (userData == null) {
+        setState(() {
+          _showNameField = true;
+          _loading = false;
+        });
+      } else {
+        _navigateToHome();
+      }
+    } catch (e) {
       if (mounted) {
         setState(() {
           _errorMessage = 'Failed to load user data';
@@ -281,22 +288,22 @@ class _PhoneAuthScreenState extends State<PhoneAuthScreen> {
                     _isAdminTriggerActive = false;
                     _adminTriggerTimer?.cancel();
                   },
-                  child: Container(
-                    width: 140,
-                    height: 140,
+                    child: Container(
+                    width: 220,
+                    height: 220,
                     decoration: BoxDecoration(
-                      shape: BoxShape.circle,
+                      borderRadius: BorderRadius.circular(24),
                       border: Border.all(color: AppColors.gold, width: 2),
                       boxShadow: [
                         BoxShadow(
                           // ignore: deprecated_member_use
                           color: AppColors.gold.withValues(alpha: 0.2),
-                          blurRadius: 20,
-                          spreadRadius: 5,
+                          blurRadius: 30,
+                          spreadRadius: 10,
                         ),
                       ],
                     ),
-                    padding: const EdgeInsets.all(25),
+                    padding: const EdgeInsets.all(20),
                     child: Image.asset(
                       'assets/logo.png',
                       fit: BoxFit.contain,
@@ -308,7 +315,7 @@ class _PhoneAuthScreenState extends State<PhoneAuthScreen> {
                 const SizedBox(height: 40),
 
                 Text(
-                  'VISHAL GOLD',
+                  'VISHAL JEWELLERS',
                   style: GoogleFonts.playfairDisplay(
                     fontSize: 32,
                     fontWeight: FontWeight.bold,
@@ -321,7 +328,7 @@ class _PhoneAuthScreenState extends State<PhoneAuthScreen> {
                 const SizedBox(height: 10),
 
                 Text(
-                  'Exclusive Jewelry Collection',
+                  'Exclusive Jewellery Collection',
                   style: GoogleFonts.outfit(
                     fontSize: 14,
                     color: AppColors.textSecondary,
@@ -348,7 +355,7 @@ class _PhoneAuthScreenState extends State<PhoneAuthScreen> {
                     ),
                     child: Row(
                       children: [
-                        const Icon(
+                        Icon(
                           Icons.error_outline,
                           color: AppColors.errorRed,
                           size: 20,
@@ -357,7 +364,7 @@ class _PhoneAuthScreenState extends State<PhoneAuthScreen> {
                         Expanded(
                           child: Text(
                             _errorMessage!,
-                            style: const TextStyle(color: AppColors.errorRed),
+                            style: TextStyle(color: AppColors.errorRed),
                           ),
                         ),
                       ],
@@ -520,16 +527,16 @@ class _PhoneAuthScreenState extends State<PhoneAuthScreen> {
           keyboardType: keyboardType,
           maxLength: maxLength,
           textCapitalization: textCapitalization,
-          style: const TextStyle(color: AppColors.white, fontSize: 16),
+          style: TextStyle(color: AppColors.white, fontSize: 16),
           cursorColor: AppColors.gold,
           decoration: InputDecoration(
             hintText: hint,
-            hintStyle: const TextStyle(color: Colors.white30),
+            hintStyle: TextStyle(color: Colors.white30),
             filled: true,
             fillColor: AppColors.surface,
             prefixIcon: Icon(icon, color: AppColors.gold),
             prefixText: prefixText,
-            prefixStyle: const TextStyle(
+            prefixStyle: TextStyle(
               color: AppColors.gold,
               fontWeight: FontWeight.bold,
               fontSize: 16,
@@ -545,7 +552,7 @@ class _PhoneAuthScreenState extends State<PhoneAuthScreen> {
             ),
             focusedBorder: OutlineInputBorder(
               borderRadius: BorderRadius.circular(16),
-              borderSide: const BorderSide(color: AppColors.gold, width: 1),
+              borderSide: BorderSide(color: AppColors.gold, width: 1),
             ),
           ),
         ),
@@ -573,7 +580,7 @@ class _PhoneAuthScreenState extends State<PhoneAuthScreen> {
           ),
         ),
         child: isLoading
-            ? const SizedBox(
+            ? SizedBox(
                 height: 24,
                 width: 24,
                 child: CircularProgressIndicator(

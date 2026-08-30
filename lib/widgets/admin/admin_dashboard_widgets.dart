@@ -25,10 +25,10 @@ class StatTile extends StatelessWidget {
       decoration: BoxDecoration(
         color: kCard,
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: accent.withOpacity(0.2)),
+        border: Border.all(color: accent.withValues(alpha: 0.2)),
         boxShadow: [
           BoxShadow(
-            color: accent.withOpacity(0.06),
+            color: accent.withValues(alpha: 0.06),
             blurRadius: 12,
             offset: const Offset(0, 4),
           ),
@@ -101,20 +101,20 @@ class DashboardMenuAction extends StatelessWidget {
     return InkWell(
       onTap: onTap,
       borderRadius: BorderRadius.circular(18),
-      splashColor: color.withOpacity(0.1),
-      highlightColor: color.withOpacity(0.05),
+      splashColor: color.withValues(alpha: 0.1),
+      highlightColor: color.withValues(alpha: 0.05),
       child: ClipRRect(
         borderRadius: BorderRadius.circular(18),
         child: BackdropFilter(
           filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
           child: Container(
             decoration: BoxDecoration(
-              color: kCard.withOpacity(0.9),
+              color: kCard.withValues(alpha: 0.9),
               borderRadius: BorderRadius.circular(18),
-              border: Border.all(color: color.withOpacity(0.18)),
+              border: Border.all(color: color.withValues(alpha: 0.18)),
               boxShadow: [
                 BoxShadow(
-                  color: color.withOpacity(0.06),
+                  color: color.withValues(alpha: 0.06),
                   blurRadius: 16,
                   offset: const Offset(0, 6),
                 ),
@@ -131,15 +131,15 @@ class DashboardMenuAction extends StatelessWidget {
                     decoration: BoxDecoration(
                       gradient: LinearGradient(
                         colors: [
-                          color.withOpacity(0.25),
-                          color.withOpacity(0.08),
+                          color.withValues(alpha: 0.25),
+                          color.withValues(alpha: 0.08),
                         ],
                         begin: Alignment.topLeft,
                         end: Alignment.bottomRight,
                       ),
                       borderRadius: BorderRadius.circular(12),
                       border: Border.all(
-                        color: color.withOpacity(0.2),
+                        color: color.withValues(alpha: 0.2),
                       ),
                     ),
                     child: Icon(icon, color: color, size: 22),
@@ -149,7 +149,7 @@ class DashboardMenuAction extends StatelessWidget {
                     child: Text(
                       title,
                       style: GoogleFonts.outfit(
-                        color: Colors.white.withOpacity(0.85),
+                        color: Colors.white.withValues(alpha: 0.85),
                         fontSize: 14,
                         fontWeight: FontWeight.w600,
                       ),
@@ -157,7 +157,7 @@ class DashboardMenuAction extends StatelessWidget {
                   ),
                   Icon(
                     Icons.chevron_right_rounded,
-                    color: color.withOpacity(0.4),
+                    color: color.withValues(alpha: 0.4),
                     size: 20,
                   ),
                 ],

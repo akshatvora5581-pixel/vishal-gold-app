@@ -2,10 +2,10 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:provider/provider.dart';
-import 'package:vishal_gold/constants/app_colors.dart';
-import 'package:vishal_gold/models/admin.dart';
-import 'package:vishal_gold/providers/auth_provider.dart';
-import 'package:vishal_gold/services/firebase_service.dart';
+import 'package:vishal_jewelers/constants/app_colors.dart';
+import 'package:vishal_jewelers/models/admin.dart';
+import 'package:vishal_jewelers/providers/auth_provider.dart';
+import 'package:vishal_jewelers/services/firebase_service.dart';
 
 class SubAdminManagementScreen extends StatefulWidget {
   const SubAdminManagementScreen({super.key});
@@ -34,7 +34,7 @@ class _SubAdminManagementScreenState extends State<SubAdminManagementScreen> {
         ),
         actions: [
           IconButton(
-            icon: const Icon(Icons.add, color: AppColors.gold),
+            icon: Icon(Icons.add, color: AppColors.gold),
             onPressed: () => _showAddAdminSheet(context),
           ),
         ],
@@ -46,12 +46,12 @@ class _SubAdminManagementScreenState extends State<SubAdminManagementScreen> {
             return Center(
               child: Text(
                 'Error: ${snapshot.error}',
-                style: const TextStyle(color: Colors.red),
+                style: TextStyle(color: Colors.red),
               ),
             );
           }
           if (snapshot.connectionState == ConnectionState.waiting) {
-            return const Center(
+            return Center(
               child: CircularProgressIndicator(color: AppColors.gold),
             );
           }
@@ -68,7 +68,7 @@ class _SubAdminManagementScreenState extends State<SubAdminManagementScreen> {
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  const Icon(
+                  Icon(
                     Icons.admin_panel_settings_outlined,
                     size: 64,
                     color: AppColors.textSecondary,
@@ -151,7 +151,7 @@ class _SubAdminManagementScreenState extends State<SubAdminManagementScreen> {
           ],
         ),
         trailing: PopupMenuButton<String>(
-          icon: const Icon(Icons.more_vert, color: AppColors.textSecondary),
+          icon: Icon(Icons.more_vert, color: AppColors.textSecondary),
           color: AppColors.surface,
           onSelected: (value) {
             if (value == 'edit') {
@@ -161,7 +161,7 @@ class _SubAdminManagementScreenState extends State<SubAdminManagementScreen> {
             }
           },
           itemBuilder: (context) => [
-            const PopupMenuItem(
+            PopupMenuItem(
               value: 'edit',
               child: Text(
                 'Change Role & Permissions',
@@ -207,7 +207,7 @@ class _SubAdminManagementScreenState extends State<SubAdminManagementScreen> {
       backgroundColor: Colors.transparent,
       builder: (context) => StatefulBuilder(
         builder: (context, setSheetState) => Container(
-          decoration: const BoxDecoration(
+          decoration: BoxDecoration(
             color: AppColors.surface,
             borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
           ),
@@ -233,17 +233,17 @@ class _SubAdminManagementScreenState extends State<SubAdminManagementScreen> {
                 const SizedBox(height: 20),
                 TextField(
                   controller: nameController,
-                  style: const TextStyle(color: AppColors.textPrimary),
+                  style: TextStyle(color: AppColors.textPrimary),
                   decoration: _inputDecoration('Full Name', Icons.person),
                 ),
                 const SizedBox(height: 16),
                 TextField(
                   controller: emailController,
-                  style: const TextStyle(color: AppColors.textPrimary),
+                  style: TextStyle(color: AppColors.textPrimary),
                   decoration: _inputDecoration('Email Address', Icons.email),
                 ),
                 const SizedBox(height: 16),
-                const Text(
+                Text(
                   'Role',
                   style: TextStyle(
                     color: AppColors.textSecondary,
@@ -277,7 +277,7 @@ class _SubAdminManagementScreenState extends State<SubAdminManagementScreen> {
                 ),
                 if (selectedRole == 'admin') ...[
                   const SizedBox(height: 20),
-                  const Text(
+                  Text(
                     'Permissions',
                     style: TextStyle(
                       color: AppColors.textSecondary,
@@ -292,7 +292,7 @@ class _SubAdminManagementScreenState extends State<SubAdminManagementScreen> {
                             .split('_')
                             .map((e) => e[0].toUpperCase() + e.substring(1))
                             .join(' '),
-                        style: const TextStyle(color: AppColors.textPrimary),
+                        style: TextStyle(color: AppColors.textPrimary),
                       ),
                       value: permissions[perm],
                       onChanged: (val) {
@@ -370,7 +370,7 @@ class _SubAdminManagementScreenState extends State<SubAdminManagementScreen> {
       backgroundColor: Colors.transparent,
       builder: (context) => StatefulBuilder(
         builder: (context, setSheetState) => Container(
-          decoration: const BoxDecoration(
+          decoration: BoxDecoration(
             color: AppColors.surface,
             borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
           ),
@@ -420,7 +420,7 @@ class _SubAdminManagementScreenState extends State<SubAdminManagementScreen> {
                 ),
                 if (selectedRole == 'admin') ...[
                   const SizedBox(height: 20),
-                  const Text(
+                  Text(
                     'Permissions',
                     style: TextStyle(
                       color: AppColors.textSecondary,
@@ -435,7 +435,7 @@ class _SubAdminManagementScreenState extends State<SubAdminManagementScreen> {
                             .split('_')
                             .map((e) => e[0].toUpperCase() + e.substring(1))
                             .join(' '),
-                        style: const TextStyle(color: AppColors.textPrimary),
+                        style: TextStyle(color: AppColors.textPrimary),
                       ),
                       value: permissions[perm],
                       onChanged: (val) {
@@ -495,18 +495,18 @@ class _SubAdminManagementScreenState extends State<SubAdminManagementScreen> {
       context: context,
       builder: (context) => AlertDialog(
         backgroundColor: AppColors.surface,
-        title: const Text(
+        title: Text(
           'Remove Admin',
           style: TextStyle(color: AppColors.textPrimary),
         ),
         content: Text(
           'Are you sure you want to remove ${admin.fullName} from administrators?',
-          style: const TextStyle(color: AppColors.textSecondary),
+          style: TextStyle(color: AppColors.textSecondary),
         ),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context),
-            child: const Text(
+            child: Text(
               'Cancel',
               style: TextStyle(color: AppColors.textSecondary),
             ),
@@ -528,7 +528,7 @@ class _SubAdminManagementScreenState extends State<SubAdminManagementScreen> {
   InputDecoration _inputDecoration(String label, IconData icon) {
     return InputDecoration(
       labelText: label,
-      labelStyle: const TextStyle(color: AppColors.textSecondary),
+      labelStyle: TextStyle(color: AppColors.textSecondary),
       prefixIcon: Icon(icon, color: AppColors.gold),
       enabledBorder: OutlineInputBorder(
         borderRadius: BorderRadius.circular(12),
@@ -536,7 +536,7 @@ class _SubAdminManagementScreenState extends State<SubAdminManagementScreen> {
       ),
       focusedBorder: OutlineInputBorder(
         borderRadius: BorderRadius.circular(12),
-        borderSide: const BorderSide(color: AppColors.gold),
+        borderSide: BorderSide(color: AppColors.gold),
       ),
       filled: true,
       fillColor: AppColors.background,

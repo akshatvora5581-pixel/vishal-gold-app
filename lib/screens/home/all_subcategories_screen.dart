@@ -1,12 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:cached_network_image/cached_network_image.dart';
-import 'package:vishal_gold/constants/app_colors.dart';
-import 'package:vishal_gold/models/category.dart' as app_models;
-import 'package:vishal_gold/models/subcategory.dart';
-import 'package:vishal_gold/utils/app_layout.dart';
-import 'package:vishal_gold/widgets/common/custom_app_bar.dart';
-import 'package:vishal_gold/widgets/common/shimmer_widget.dart';
-import 'package:vishal_gold/screens/product/product_listing_screen.dart';
+import 'package:vishal_jewelers/constants/app_colors.dart';
+import 'package:vishal_jewelers/models/category.dart' as app_models;
+import 'package:vishal_jewelers/models/subcategory.dart';
+import 'package:vishal_jewelers/utils/app_layout.dart';
+import 'package:vishal_jewelers/widgets/common/custom_app_bar.dart';
+import 'package:vishal_jewelers/widgets/common/shimmer_widget.dart';
+import 'package:vishal_jewelers/screens/product/product_listing_screen.dart';
 
 class AllSubcategoriesScreen extends StatelessWidget {
   final app_models.Category category;
@@ -120,7 +120,7 @@ class _SubcategoryCard extends StatelessWidget {
     if (imageUrl.isEmpty) {
       return Container(
         color: AppColors.background,
-        child: const Center(
+        child: Center(
           child: Icon(Icons.category_outlined, color: AppColors.textTertiary),
         ),
       );
@@ -134,7 +134,7 @@ class _SubcategoryCard extends StatelessWidget {
         cacheWidth: 300,
         errorBuilder: (_, _, _) => Container(
           color: AppColors.background,
-          child: const Center(
+          child: Center(
             child: Icon(Icons.broken_image, color: AppColors.grey),
           ),
         ),
@@ -151,7 +151,7 @@ class _SubcategoryCard extends StatelessWidget {
           ShimmerWidget.rectangular(height: double.infinity),
       errorWidget: (_, _, _) => Container(
         color: AppColors.background,
-        child: const Center(
+        child: Center(
           child: Icon(Icons.broken_image, color: AppColors.grey),
         ),
       ),

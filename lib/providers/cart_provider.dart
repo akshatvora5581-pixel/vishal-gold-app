@@ -1,10 +1,10 @@
 import 'dart:convert';
 import 'package:flutter/foundation.dart';
 import 'package:uuid/uuid.dart';
-import 'package:vishal_gold/models/product.dart';
-import 'package:vishal_gold/models/cart_item.dart';
-import 'package:vishal_gold/services/firebase_service.dart';
-import 'package:vishal_gold/services/local_storage_service.dart';
+import 'package:vishal_jewelers/models/product.dart';
+import 'package:vishal_jewelers/models/cart_item.dart';
+import 'package:vishal_jewelers/services/firebase_service.dart';
+import 'package:vishal_jewelers/services/local_storage_service.dart';
 
 class CartProvider with ChangeNotifier {
   final FirebaseService _firebaseService = FirebaseService();

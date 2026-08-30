@@ -1,5 +1,5 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:vishal_gold/models/product.dart';
+import 'package:vishal_jewelers/models/product.dart';
 
 class WishlistItem {
   final String id;

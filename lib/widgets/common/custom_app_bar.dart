@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:vishal_gold/constants/app_colors.dart';
+import 'package:vishal_jewelers/constants/app_colors.dart';
 
 class CustomAppBar extends StatelessWidget implements PreferredSizeWidget {
   final String title;
@@ -12,7 +12,7 @@ class CustomAppBar extends StatelessWidget implements PreferredSizeWidget {
     return AppBar(
       title: Text(
         title,
-        style: const TextStyle(
+        style: TextStyle(
           color: AppColors.white,
           fontWeight: FontWeight.bold,
           letterSpacing: 1.2,

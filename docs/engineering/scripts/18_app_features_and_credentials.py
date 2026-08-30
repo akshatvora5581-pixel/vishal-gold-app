@@ -1,6 +1,6 @@
 """
 18_app_features_and_credentials.py
-Full Application Feature Reference & Credentials Guide — Vishal Gold App
+Full Application Feature Reference & Credentials Guide — Vishal Jewelers App
 """
 import sys, os
 sys.path.insert(0, os.path.dirname(__file__))
@@ -13,9 +13,9 @@ doc = new_document()
 
 add_cover(doc,
     title    = "App Features & Credentials Reference",
-    subtitle = "Vishal Gold App — Complete Feature Inventory & Access Guide",
+    subtitle = "Vishal Jewelers App — Complete Feature Inventory & Access Guide",
     version  = "v1.0",
-    prepared_for = "Vishal Gold Management & IT Team",
+    prepared_for = "Vishal Jewelers Management & IT Team",
     prepared_by  = "Engineering Delivery Team"
 )
 
@@ -38,7 +38,7 @@ add_toc_placeholder(doc, [
 add_h1(doc, "1. Document Purpose")
 add_body(doc, (
     "This document is the single authoritative reference for every feature implemented in the "
-    "Vishal Gold application, covering both the Customer-facing app and the Administrator Panel. "
+    "Vishal Jewelers application, covering both the Customer-facing app and the Administrator Panel. "
     "It records all system credentials, default login values, user roles, access levels, "
     "every screen and its capabilities, all backend services, and infrastructure details."
 ))
@@ -65,7 +65,7 @@ add_note(doc, "CRITICAL", "Do not lose these credentials. They provide root acce
 add_table(doc,
     headers=["Account Type", "ID / Email", "Password / Key"],
     rows=[
-        ["Gmail & Firebase Console", "vishalgoldapp@gmail.com", "VishalGold123$%^"],
+        ["Gmail & Firebase Console", "vishalgoldapp@gmail.com", "VishalJewelers123$%^"],
     ]
 )
 
@@ -166,7 +166,7 @@ add_table(doc,
 add_h1(doc, "4. Splash Screen & App Entry (splash_screen.dart)")
 add_body(doc, (
     "The splash screen is the very first screen shown when the app launches. It displays "
-    "the Vishal Gold brand logo with a fade-in animation, checks the current Firebase Auth "
+    "the Vishal Jewelers brand logo with a fade-in animation, checks the current Firebase Auth "
     "session, and automatically routes the user to the correct screen."
 ))
 add_table(doc,
@@ -387,7 +387,7 @@ add_body(doc, (
 
 add_h2(doc, "5.16 Contact Us Screen (contact_us_screen.dart)")
 add_body(doc, (
-    "Provides customers with the Vishal Gold business contact details including "
+    "Provides customers with the Vishal Jewelers business contact details including "
     "phone number, WhatsApp link, email, and business address. Includes a 'Send WhatsApp' "
     "button that pre-fills a message and launches the WhatsApp app."
 ))
@@ -572,12 +572,12 @@ add_h2(doc, "6.12 Design-to-Social Exporter (design_to_social_screen.dart)")
 add_table(doc,
     headers=["Feature", "Description"],
     rows=[
-        ["Template selection",    "Branded Vishal Gold jewelry promotion templates"],
+        ["Template selection",    "Branded Vishal Jewelers jewelry promotion templates"],
         ["Product image embed",   "Select from Firestore product catalog OR upload from device gallery"],
         ["Custom text overlay",   "Add product name, price, or promotional message with styled typography"],
         ["Export to gallery",     "Save the finished promotional image to device photo gallery"],
         ["Share to social media", "Native Android share sheet — WhatsApp, Instagram, Facebook, etc."],
-        ["Brand consistency",     "All templates use Vishal Gold brand colours and typography"],
+        ["Brand consistency",     "All templates use Vishal Jewelers brand colours and typography"],
     ]
 )
 
@@ -653,7 +653,7 @@ add_table(doc,
         ["App Language (language_settings_screen.dart)",
          "Switch app display language. Currently supports English. Framework ready for additional locales."],
         ["Support Hub (support_hub_screen.dart)",
-         "Contact Vishal Gold support via WhatsApp, email, or in-app link. Shows business hours."],
+         "Contact Vishal Jewelers support via WhatsApp, email, or in-app link. Shows business hours."],
         ["Privacy Policy (privacy_policy_screen.dart)",
          "In-app scrollable Privacy Policy document."],
         ["Contact Us (contact_us_screen.dart)",
@@ -821,7 +821,7 @@ add_table(doc,
 
 # ── SIGN-OFF ──────────────────────────────────────────────────────────────────
 add_signature_block(doc, [
-    ("Client Representative",  "Vishal Gold"),
+    ("Client Representative",  "Vishal Jewelers"),
     ("Delivery Engineer",      "Engineering Delivery Team"),
 ])
 

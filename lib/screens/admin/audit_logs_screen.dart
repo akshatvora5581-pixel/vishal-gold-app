@@ -2,8 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:intl/intl.dart';
-import 'package:vishal_gold/constants/app_colors.dart';
-import 'package:vishal_gold/services/firebase_service.dart';
+import 'package:vishal_jewelers/constants/app_colors.dart';
+import 'package:vishal_jewelers/services/firebase_service.dart';
 
 class AuditLogsScreen extends StatefulWidget {
   const AuditLogsScreen({super.key});
@@ -101,7 +101,7 @@ class _AuditLogsScreenState extends State<AuditLogsScreen> {
                   _selectedAction = null;
                   _selectedTargetType = null;
                 }),
-                child: const Text(
+                child: Text(
                   'Clear Filters',
                   style: TextStyle(color: AppColors.gold),
                 ),
@@ -130,7 +130,7 @@ class _AuditLogsScreenState extends State<AuditLogsScreen> {
           value: value,
           hint: Text(
             hint,
-            style: const TextStyle(
+            style: TextStyle(
               color: AppColors.textSecondary,
               fontSize: 14,
             ),
@@ -139,14 +139,14 @@ class _AuditLogsScreenState extends State<AuditLogsScreen> {
               .map(
                 (e) => DropdownMenuItem(
                   value: e,
-                  child: Text(e, style: const TextStyle(fontSize: 12)),
+                  child: Text(e, style: TextStyle(fontSize: 12)),
                 ),
               )
               .toList(),
           onChanged: onChanged,
           dropdownColor: AppColors.surface,
-          icon: const Icon(Icons.arrow_drop_down, color: AppColors.gold),
-          style: const TextStyle(color: AppColors.textPrimary),
+          icon: Icon(Icons.arrow_drop_down, color: AppColors.gold),
+          style: TextStyle(color: AppColors.textPrimary),
           isExpanded: true,
         ),
       ),
@@ -164,12 +164,12 @@ class _AuditLogsScreenState extends State<AuditLogsScreen> {
           return Center(
             child: Text(
               'Error: ${snapshot.error}',
-              style: const TextStyle(color: Colors.red),
+              style: TextStyle(color: Colors.red),
             ),
           );
         }
         if (snapshot.connectionState == ConnectionState.waiting) {
-          return const Center(
+          return Center(
             child: CircularProgressIndicator(color: AppColors.gold),
           );
         }
@@ -254,7 +254,7 @@ class _AuditLogsScreenState extends State<AuditLogsScreen> {
                 ),
                 Text(
                   dateStr,
-                  style: const TextStyle(
+                  style: TextStyle(
                     color: AppColors.textSecondary,
                     fontSize: 12,
                   ),
@@ -264,7 +264,7 @@ class _AuditLogsScreenState extends State<AuditLogsScreen> {
             const SizedBox(height: 12),
             Text(
               details,
-              style: const TextStyle(
+              style: TextStyle(
                 color: AppColors.textPrimary,
                 fontSize: 14,
               ),
@@ -272,7 +272,7 @@ class _AuditLogsScreenState extends State<AuditLogsScreen> {
             const SizedBox(height: 8),
             Row(
               children: [
-                const Icon(
+                Icon(
                   Icons.person_outline,
                   size: 14,
                   color: AppColors.textSecondary,
@@ -280,7 +280,7 @@ class _AuditLogsScreenState extends State<AuditLogsScreen> {
                 const SizedBox(width: 4),
                 Text(
                   'Admin: $adminId',
-                  style: const TextStyle(
+                  style: TextStyle(
                     color: AppColors.textSecondary,
                     fontSize: 12,
                   ),
@@ -291,7 +291,7 @@ class _AuditLogsScreenState extends State<AuditLogsScreen> {
               const SizedBox(height: 4),
               Row(
                 children: [
-                  const Icon(
+                  Icon(
                     Icons.info_outline,
                     size: 14,
                     color: AppColors.textSecondary,
@@ -299,7 +299,7 @@ class _AuditLogsScreenState extends State<AuditLogsScreen> {
                   const SizedBox(width: 4),
                   Text(
                     'Target: ${log['target_type']} (${log['target_id']})',
-                    style: const TextStyle(
+                    style: TextStyle(
                       color: AppColors.textSecondary,
                       fontSize: 12,
                     ),

@@ -2,23 +2,25 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:provider/provider.dart';
-import 'package:vishal_gold/constants/app_colors.dart';
-import 'package:vishal_gold/providers/auth_provider.dart';
-import 'package:vishal_gold/providers/cart_provider.dart';
-import 'package:vishal_gold/screens/notifications/notifications_screen.dart';
-import 'package:vishal_gold/screens/profile/profile_screen.dart';
-import 'package:vishal_gold/screens/recent/recent_designs_screen.dart';
-import 'package:vishal_gold/widgets/common/custom_bottom_nav.dart';
-import 'package:vishal_gold/widgets/common/custom_order_fab.dart';
-import 'package:vishal_gold/widgets/common/global_cart_icon.dart';
-import 'package:vishal_gold/widgets/home/banner_carousel.dart';
-import 'package:vishal_gold/widgets/home/category_section.dart';
-import 'package:vishal_gold/models/category.dart' as app_models;
-import 'package:vishal_gold/services/firebase_service.dart';
-import 'package:vishal_gold/providers/wishlist_provider.dart';
-import 'package:vishal_gold/providers/preview_provider.dart';
-import 'package:vishal_gold/screens/search/global_search_screen.dart';
-import 'package:vishal_gold/utils/app_layout.dart';
+import 'package:vishal_jewelers/constants/app_colors.dart';
+import 'package:vishal_jewelers/providers/auth_provider.dart';
+import 'package:vishal_jewelers/providers/cart_provider.dart';
+import 'package:vishal_jewelers/screens/notifications/notifications_screen.dart';
+import 'package:vishal_jewelers/screens/profile/profile_screen.dart';
+import 'package:vishal_jewelers/screens/recent/recent_designs_screen.dart';
+import 'package:vishal_jewelers/widgets/common/custom_bottom_nav.dart';
+import 'package:vishal_jewelers/widgets/common/custom_order_fab.dart';
+import 'package:vishal_jewelers/widgets/common/global_cart_icon.dart';
+import 'package:vishal_jewelers/widgets/home/banner_carousel.dart';
+import 'package:vishal_jewelers/widgets/home/category_section.dart';
+import 'package:vishal_jewelers/models/category.dart' as app_models;
+import 'package:vishal_jewelers/services/firebase_service.dart';
+import 'package:vishal_jewelers/providers/wishlist_provider.dart';
+import 'package:vishal_jewelers/providers/preview_provider.dart';
+import 'package:vishal_jewelers/screens/search/global_search_screen.dart';
+import 'package:vishal_jewelers/utils/app_layout.dart';
+import 'package:vishal_jewelers/widgets/common/shimmer_widget.dart';
+
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -206,6 +208,10 @@ class _HomeTabState extends State<HomeTab> {
                 _buildSliverSearchHeader(layout),
 
                 // Main Content
+                SliverToBoxAdapter(
+  
+                ),
+
                 SliverPadding(
                   padding: const EdgeInsets.symmetric(vertical: 8),
                   sliver: SliverToBoxAdapter(
@@ -218,24 +224,52 @@ class _HomeTabState extends State<HomeTab> {
                   stream: _categoryStream,
                   builder: (context, snapshot) {
                     if (snapshot.connectionState == ConnectionState.waiting) {
-                      return const SliverToBoxAdapter(
-                        child: Center(
-                          child: Padding(
-                            padding: EdgeInsets.symmetric(vertical: 40),
-                            child: CircularProgressIndicator(
-                              color: AppColors.gold,
+                      return SliverList(
+                        delegate: SliverChildBuilderDelegate((context, index) {
+                          return Padding(
+                            padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 24),
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                const ShimmerWidget.rectangular(height: 24, width: 150),
+                                const SizedBox(height: 16),
+                                SizedBox(
+                                  height: layout.categoryListHeight,
+                                  child: ListView.builder(
+                                    scrollDirection: Axis.horizontal,
+                                    itemCount: 5,
+                                    itemBuilder: (context, index) => const ProductCardSkeleton(),
+                                  ),
+                                ),
+                              ],
                             ),
-                          ),
-                        ),
+                          );
+                        }, childCount: 3),
                       );
                     }
 
                     if (snapshot.hasError) {
                       return SliverToBoxAdapter(
                         child: Center(
-                          child: Text(
-                            'Could not load categories.',
-                            style: TextStyle(color: AppColors.textSecondary),
+                          child: Padding(
+                            padding: const EdgeInsets.symmetric(vertical: 40, horizontal: 20),
+                            child: Column(
+                              children: [
+                                Icon(Icons.info_outline, color: AppColors.textSecondary, size: 40),
+                                const SizedBox(height: 12),
+                                Text(
+                                  snapshot.error.toString(),
+                                  textAlign: TextAlign.center,
+                                  style: TextStyle(color: AppColors.textSecondary),
+                                ),
+                                const SizedBox(height: 16),
+                                TextButton(
+                                  onPressed: () => setState(() {}),
+                                  style: TextButton.styleFrom(foregroundColor: AppColors.gold),
+                                  child: const Text('Tap to retry'),
+                                ),
+                              ],
+                            ),
                           ),
                         ),
                       );
@@ -323,8 +357,8 @@ class _SearchHeaderDelegate extends SliverPersistentHeaderDelegate {
                 child: TextField(
                   readOnly: true,
                   decoration: InputDecoration(
-                    hintText: 'Search for jewelry...',
-                    prefixIcon: const Icon(
+                    hintText: 'Search for jewellery...',
+                    prefixIcon: Icon(
                       Icons.search,
                       color: AppColors.textSecondary,
                     ),
@@ -369,7 +403,7 @@ class _SearchHeaderDelegate extends SliverPersistentHeaderDelegate {
                   ),
                 ],
               ),
-              child: const Icon(Icons.person, color: AppColors.black, size: 24),
+              child: Icon(Icons.person, color: AppColors.black, size: 24),
             ),
           ),
         ],

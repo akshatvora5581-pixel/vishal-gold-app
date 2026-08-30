@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:fl_chart/fl_chart.dart';
 import 'package:google_fonts/google_fonts.dart';
-import 'package:vishal_gold/services/analytics_service.dart';
+import 'package:vishal_jewelers/services/analytics_service.dart';
 
 class AnalyticsDashboardScreen extends StatefulWidget {
   const AnalyticsDashboardScreen({super.key});
@@ -217,7 +217,7 @@ class _AnalyticsDashboardScreenState extends State<AnalyticsDashboardScreen> {
                   backgroundColor: const Color(0xFFFFD700),
                   child: Text(
                     customer['name'][0],
-                    style: const TextStyle(color: Colors.black),
+                    style: TextStyle(color: Colors.black),
                   ),
                 ),
                 const SizedBox(width: 16),
@@ -274,11 +274,11 @@ class _AnalyticsDashboardScreenState extends State<AnalyticsDashboardScreen> {
                 (pred) => ListTile(
                   title: Text(
                     pred['category'],
-                    style: const TextStyle(color: Colors.white),
+                    style: TextStyle(color: Colors.white),
                   ),
                   subtitle: Text(
                     'Daily Avg: ${pred['dailyAvg'].toStringAsFixed(2)}g',
-                    style: const TextStyle(color: Colors.grey),
+                    style: TextStyle(color: Colors.grey),
                   ),
                   trailing: Column(
                     mainAxisAlignment: MainAxisAlignment.center,
@@ -286,7 +286,7 @@ class _AnalyticsDashboardScreenState extends State<AnalyticsDashboardScreen> {
                     children: [
                       Text(
                         'Stock: ${pred['suggestedStock'].toStringAsFixed(0)}g',
-                        style: const TextStyle(
+                        style: TextStyle(
                           color: Color(0xFFFFD700),
                           fontWeight: FontWeight.bold,
                         ),

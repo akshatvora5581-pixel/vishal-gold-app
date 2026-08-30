@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:vishal_gold/constants/app_colors.dart';
+import 'package:vishal_jewelers/constants/app_colors.dart';
 
 class CustomBottomNavBar extends StatelessWidget {
   final int currentIndex;
@@ -60,7 +60,7 @@ class CustomBottomNavBar extends StatelessWidget {
                 margin: const EdgeInsets.only(top: 4),
                 width: 4,
                 height: 4,
-                decoration: const BoxDecoration(
+                decoration: BoxDecoration(
                   color: AppColors.gold,
                   shape: BoxShape.circle,
                 ),

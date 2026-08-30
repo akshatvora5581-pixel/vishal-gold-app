@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:vishal_gold/models/product.dart';
-import 'package:vishal_gold/services/firebase_service.dart';
+import 'package:vishal_jewelers/models/product.dart';
+import 'package:vishal_jewelers/services/firebase_service.dart';
 
 /// Sort options exposed to the UI.
 enum ProductSortOrder { newestFirst, tagAsc, tagDesc, weightAsc, weightDesc }

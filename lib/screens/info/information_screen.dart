@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
-import 'package:vishal_gold/constants/app_colors.dart';
-import 'package:vishal_gold/screens/auth/phone_auth_screen.dart';
-import 'package:vishal_gold/services/local_storage_service.dart';
+import 'package:vishal_jewelers/constants/app_colors.dart';
+import 'package:vishal_jewelers/screens/auth/phone_auth_screen.dart';
+import 'package:vishal_jewelers/services/local_storage_service.dart';
 
 class InformationScreen extends StatefulWidget {
   const InformationScreen({super.key});

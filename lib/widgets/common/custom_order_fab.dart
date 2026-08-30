@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:vishal_gold/constants/app_colors.dart';
-import 'package:vishal_gold/screens/order/sample_order_screen.dart';
+import 'package:vishal_jewelers/constants/app_colors.dart';
+import 'package:vishal_jewelers/screens/order/sample_order_screen.dart';
 
 class CustomOrderFAB extends StatelessWidget {
   const CustomOrderFAB({super.key});
@@ -17,10 +17,10 @@ class CustomOrderFAB extends StatelessWidget {
       backgroundColor: AppColors.black,
       foregroundColor: AppColors.gold,
       tooltip: 'Place Sample Order',
-      shape: const CircleBorder(
+      shape: CircleBorder(
         side: BorderSide(color: AppColors.gold, width: 1.5),
       ),
-      child: const Icon(Icons.add_shopping_cart, color: AppColors.gold),
+      child: Icon(Icons.add_shopping_cart, color: AppColors.gold),
     );
   }
 }

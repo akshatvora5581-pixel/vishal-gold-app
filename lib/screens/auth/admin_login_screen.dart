@@ -1,15 +1,15 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:firebase_auth/firebase_auth.dart' as firebase_auth;
-import 'package:vishal_gold/constants/app_colors.dart';
-import 'package:vishal_gold/services/firebase_service.dart';
-import 'package:vishal_gold/models/admin.dart';
-import 'package:vishal_gold/screens/admin/admin_dashboard_screen.dart';
+import 'package:vishal_jewelers/constants/app_colors.dart';
+import 'package:vishal_jewelers/services/firebase_service.dart';
+import 'package:vishal_jewelers/models/admin.dart';
+import 'package:vishal_jewelers/screens/admin/admin_dashboard_screen.dart';
 import 'package:provider/provider.dart';
-import 'package:vishal_gold/providers/auth_provider.dart';
-import 'package:vishal_gold/screens/auth/quick_login_setup_screen.dart';
-import 'package:vishal_gold/screens/auth/pin_unlock_screen.dart';
-import 'package:vishal_gold/services/fcm_service.dart';
+import 'package:vishal_jewelers/providers/auth_provider.dart';
+import 'package:vishal_jewelers/screens/auth/quick_login_setup_screen.dart';
+import 'package:vishal_jewelers/screens/auth/pin_unlock_screen.dart';
+import 'package:vishal_jewelers/services/fcm_service.dart';
 
 class AdminLoginScreen extends StatefulWidget {
   final bool returnFromQuickLogin;
@@ -64,8 +64,8 @@ class _AdminLoginScreenState extends State<AdminLoginScreen> {
 
   Future<void> _login() async {
     String inputEmail = _emailController.text.trim();
-    if (inputEmail == 'VishalGoldAdmin') {
-      inputEmail = 'admin@vishalgold.com';
+    if (inputEmail == 'VishalJewelersAdmin') {
+      inputEmail = 'admin@vishaljewelers.com';
     }
 
     if (inputEmail.isEmpty || _passwordController.text.isEmpty) {
@@ -178,7 +178,7 @@ class _AdminLoginScreenState extends State<AdminLoginScreen> {
         backgroundColor: Colors.transparent,
         elevation: 0,
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back_ios_new, color: AppColors.gold),
+          icon: Icon(Icons.arrow_back_ios_new, color: AppColors.gold),
           onPressed: () => Navigator.pop(context),
         ),
         title: Text(
@@ -221,7 +221,7 @@ class _AdminLoginScreenState extends State<AdminLoginScreen> {
                       ),
                       child: Text(
                         _errorMessage!,
-                        style: const TextStyle(color: AppColors.errorRed),
+                        style: TextStyle(color: AppColors.errorRed),
                         textAlign: TextAlign.center,
                       ),
                     ),
@@ -229,7 +229,7 @@ class _AdminLoginScreenState extends State<AdminLoginScreen> {
                   _buildTextField(
                     controller: _emailController,
                     label: 'ADMIN ID / EMAIL',
-                    hint: 'VishalGoldAdmin',
+                    hint: 'VishalJewelersAdmin',
                     icon: Icons.person_outline,
                   ),
                   const SizedBox(height: 20),
@@ -275,11 +275,11 @@ class _AdminLoginScreenState extends State<AdminLoginScreen> {
         TextField(
           controller: controller,
           obscureText: isPassword,
-          style: const TextStyle(color: AppColors.white),
+          style: TextStyle(color: AppColors.white),
           cursorColor: AppColors.gold,
           decoration: InputDecoration(
             hintText: hint,
-            hintStyle: const TextStyle(color: Colors.white30),
+            hintStyle: TextStyle(color: Colors.white30),
             filled: true,
             fillColor: AppColors.surface,
             prefixIcon: Icon(icon, color: AppColors.gold),
@@ -289,7 +289,7 @@ class _AdminLoginScreenState extends State<AdminLoginScreen> {
             ),
             focusedBorder: OutlineInputBorder(
               borderRadius: BorderRadius.circular(16),
-              borderSide: const BorderSide(color: AppColors.gold, width: 1),
+              borderSide: BorderSide(color: AppColors.gold, width: 1),
             ),
           ),
         ),
@@ -310,7 +310,7 @@ class _AdminLoginScreenState extends State<AdminLoginScreen> {
           ),
         ),
         child: _loading
-            ? const CircularProgressIndicator(color: AppColors.black)
+            ? CircularProgressIndicator(color: AppColors.black)
             : Text(
                 'SYSTEM LOGIN',
                 style: GoogleFonts.outfit(

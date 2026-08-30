@@ -2,13 +2,13 @@ import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:provider/provider.dart';
 import 'package:google_fonts/google_fonts.dart';
-import 'package:vishal_gold/constants/app_colors.dart';
-import 'package:vishal_gold/models/product.dart';
-import 'package:vishal_gold/providers/preview_provider.dart';
-import 'package:vishal_gold/services/firebase_service.dart';
-import 'package:vishal_gold/utils/app_layout.dart';
-import 'package:vishal_gold/widgets/common/custom_app_bar.dart';
-import 'package:vishal_gold/widgets/product/product_card.dart';
+import 'package:vishal_jewelers/constants/app_colors.dart';
+import 'package:vishal_jewelers/models/product.dart';
+import 'package:vishal_jewelers/providers/preview_provider.dart';
+import 'package:vishal_jewelers/services/firebase_service.dart';
+import 'package:vishal_jewelers/utils/app_layout.dart';
+import 'package:vishal_jewelers/widgets/common/custom_app_bar.dart';
+import 'package:vishal_jewelers/widgets/product/product_card.dart';
 
 class RecentDesignsScreen extends StatefulWidget {
   const RecentDesignsScreen({super.key});
@@ -40,7 +40,7 @@ class _RecentDesignsScreenState extends State<RecentDesignsScreen> {
             ),
             builder: (context, snapshot) {
               if (snapshot.connectionState == ConnectionState.waiting) {
-                return const Center(
+                return Center(
                   child: CircularProgressIndicator(color: AppColors.gold),
                 );
               }
@@ -49,7 +49,7 @@ class _RecentDesignsScreenState extends State<RecentDesignsScreen> {
                 return Center(
                   child: Text(
                     'Error: ${snapshot.error}',
-                    style: const TextStyle(color: Colors.red),
+                    style: TextStyle(color: Colors.red),
                   ),
                 );
               }
@@ -96,9 +96,9 @@ class _RecentDesignsScreenState extends State<RecentDesignsScreen> {
             decoration: BoxDecoration(
               color: AppColors.surface,
               shape: BoxShape.circle,
-              border: Border.all(color: AppColors.gold.withOpacity(0.1)),
+              border: Border.all(color: AppColors.gold.withValues(alpha: 0.1)),
             ),
-            child: const Icon(
+            child: Icon(
               Icons.auto_awesome_rounded,
               color: AppColors.gold,
               size: 48,

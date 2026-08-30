@@ -1,6 +1,6 @@
 """
 13_qa_report.py — Enterprise-Grade QA Test Report
-Vishal Gold Android Application
+Vishal Jewelers Android Application
 """
 import sys, os
 sys.path.insert(0, os.path.dirname(__file__))
@@ -15,9 +15,9 @@ doc = new_document()
 # ── COVER PAGE ────────────────────────────────────────────────────────────────
 add_cover(doc,
     title       = "Quality Assurance Test Report",
-    subtitle    = "Vishal Gold — Android Mobile Application",
+    subtitle    = "Vishal Jewelers — Android Mobile Application",
     version     = "v1.2 — Final Release",
-    prepared_for= "Vishal Gold Management & Technical Stakeholders",
+    prepared_for= "Vishal Jewelers Management & Technical Stakeholders",
     prepared_by = "QA Engineering Team"
 )
 
@@ -27,7 +27,7 @@ add_table(doc,
     headers=["Attribute", "Detail"],
     rows=[
         ["Document Title",      "Quality Assurance Test Report — Final Release"],
-        ["Application Name",    "Vishal Gold — B2B/B2C Jewelry Mobile Application"],
+        ["Application Name",    "Vishal Jewelers — B2B/B2C Jewelry Mobile Application"],
         ["Platform",            "Android (API 21+)"],
         ["Document Version",    "v1.2 — Final"],
         ["Classification",      "CONFIDENTIAL — Client Delivery"],
@@ -36,7 +36,7 @@ add_table(doc,
         ["Report Date",         "February 25, 2026"],
         ["Prepared By",         "QA Engineering Team"],
         ["Reviewed By",         "Engineering Team Lead"],
-        ["Distribution",        "Vishal Gold CTO, Project Manager, Development Lead"],
+        ["Distribution",        "Vishal Jewelers CTO, Project Manager, Development Lead"],
     ]
 )
 add_h2(doc, "Revision History")
@@ -72,7 +72,7 @@ add_toc_placeholder(doc, [
 # ── 1. EXECUTIVE SUMMARY ──────────────────────────────────────────────────────
 add_h1(doc, "1. Executive Summary")
 add_body(doc, (
-    "This report presents the comprehensive Quality Assurance findings for the Vishal Gold "
+    "This report presents the comprehensive Quality Assurance findings for the Vishal Jewelers "
     "Android mobile application, a B2B and B2C commerce platform designed to serve Gold "
     "jewellery wholesalers, retailers, and administrators. QA testing was conducted across "
     "two formal test cycles. Cycle 1 constituted the primary functional, regression, and "
@@ -174,7 +174,7 @@ add_h2(doc, "3.1 Application Under Test")
 add_table(doc,
     headers=["Parameter", "Value"],
     rows=[
-        ["Application",       "Vishal Gold"],
+        ["Application",       "Vishal Jewelers"],
         ["Target Platform",   "Android (minSdkVersion 21 — Android 5.0+)"],
         ["Framework",         "Flutter 3.32 / Dart 3.9"],
         ["Backend",           "Google Firebase (Auth, Firestore, Storage, FCM)"],
@@ -750,7 +750,7 @@ add_h1(doc, "12. Final Quality Status and Sign-Off")
 add_body(doc, (
     "Based on the results of Cycle 1 testing, the subsequent developer remediation "
     "programme, and the Cycle 2 regression and retest pass, the QA Engineering Team "
-    "hereby issues a formal quality assessment for the Vishal Gold Android application."
+    "hereby issues a formal quality assessment for the Vishal Jewelers Android application."
 ))
 add_table(doc,
     headers=["Acceptance Criterion", "Target", "Actual", "Status"],
@@ -768,7 +768,7 @@ add_table(doc,
 )
 add_h2(doc, "Overall Quality Verdict")
 add_note(doc, "QUALITY VERDICT",
-    "PASS with Conditions. The Vishal Gold Android application has satisfied all "
+    "PASS with Conditions. The Vishal Jewelers Android application has satisfied all "
     "mandatory acceptance criteria. Zero Critical and High defects are open. Three "
     "Low-severity items are accepted as documented Known Limitations. The application "
     "is approved for production deployment, conditional on the deployment of Firestore "
@@ -778,7 +778,7 @@ add_signature_block(doc, [
     ("QA Lead", "Engineering QA Team"),
     ("Engineering Lead", "Development Team"),
     ("Project Manager", "Delivery Team"),
-    ("Client Acceptance", "Vishal Gold"),
+    ("Client Acceptance", "Vishal Jewelers"),
 ])
 
 # ── APPENDIX A ────────────────────────────────────────────────────────────────

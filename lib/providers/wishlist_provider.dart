@@ -1,9 +1,10 @@
 import 'dart:convert';
-import 'package:flutter/foundation.dart';
-import 'package:vishal_gold/models/product.dart';
-import 'package:vishal_gold/models/wishlist_item.dart';
-import 'package:vishal_gold/services/firebase_service.dart';
-import 'package:vishal_gold/services/local_storage_service.dart';
+import 'package:flutter/widgets.dart';
+import 'package:flutter/scheduler.dart';
+import 'package:vishal_jewelers/models/product.dart';
+import 'package:vishal_jewelers/models/wishlist_item.dart';
+import 'package:vishal_jewelers/services/firebase_service.dart';
+import 'package:vishal_jewelers/services/local_storage_service.dart';
 
 class WishlistProvider with ChangeNotifier {
   final FirebaseService _firebaseService = FirebaseService();
@@ -26,10 +27,18 @@ class WishlistProvider with ChangeNotifier {
     await loadWishlist();
   }
 
+  Future<void> _notifyAsync() async {
+    if (WidgetsBinding.instance.schedulerPhase == SchedulerPhase.persistentCallbacks) {
+      WidgetsBinding.instance.addPostFrameCallback((_) => notifyListeners());
+    } else {
+      notifyListeners();
+    }
+  }
+
   /// Load wishlist from appropriate storage
   Future<void> loadWishlist() async {
     _isLoading = true;
-    notifyListeners();
+    _notifyAsync();
 
     try {
       if (_isWholesaler && _userId != null) {
@@ -43,7 +52,7 @@ class WishlistProvider with ChangeNotifier {
       debugPrint('Failed to load wishlist: $e');
     } finally {
       _isLoading = false;
-      notifyListeners();
+      _notifyAsync();
     }
   }
 

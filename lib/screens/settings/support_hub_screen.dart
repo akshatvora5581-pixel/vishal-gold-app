@@ -1,7 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:url_launcher/url_launcher.dart';
-import 'package:vishal_gold/constants/app_colors.dart';
+import 'package:vishal_jewelers/constants/app_colors.dart';
+import 'faq_screen.dart';
 
 class SupportHubScreen extends StatelessWidget {
   const SupportHubScreen({super.key});
@@ -35,7 +36,7 @@ class SupportHubScreen extends StatelessWidget {
           ),
         ),
         backgroundColor: AppColors.surface,
-        iconTheme: const IconThemeData(color: AppColors.gold),
+        iconTheme: IconThemeData(color: AppColors.gold),
       ),
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(24),
@@ -80,7 +81,10 @@ class SupportHubScreen extends StatelessWidget {
               title: 'Frequently Asked Questions',
               subtitle: 'Find answers to common questions',
               onTap: () {
-                // TODO: Navigate to FAQ screen
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (context) => const FAQScreen()),
+                );
               },
               color: AppColors.gold,
             ),
@@ -163,7 +167,7 @@ class SupportHubScreen extends StatelessWidget {
                 ],
               ),
             ),
-            const Icon(
+            Icon(
               Icons.arrow_forward_ios,
               color: AppColors.textTertiary,
               size: 16,

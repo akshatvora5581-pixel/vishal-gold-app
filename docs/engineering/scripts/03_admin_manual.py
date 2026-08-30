@@ -13,9 +13,9 @@ doc = new_document()
 
 add_cover(doc,
     title    = "Administrator Manual",
-    subtitle = "Vishal Gold App — Administrator Operations Guide",
+    subtitle = "Vishal Jewelers App — Administrator Operations Guide",
     version  = "v1.0",
-    prepared_for = "Vishal Gold Administration Team",
+    prepared_for = "Vishal Jewelers Administration Team",
     prepared_by  = "Engineering Delivery Team"
 )
 
@@ -37,7 +37,7 @@ add_toc_placeholder(doc, [
 add_h1(doc, "1. Introduction & Admin Access")
 add_body(doc, (
     "This manual provides authoritative guidance for administrators responsible for managing the "
-    "Vishal Gold application's content, catalog, operations, and user base. Unlike regular customer "
+    "Vishal Jewelers application's content, catalog, operations, and user base. Unlike regular customer "
     "users, administrators have elevated access to backend management tools through the dedicated "
     "Admin Dashboard. This dashboard is accessible only after authentication with an authorized "
     "administrator credential."
@@ -89,7 +89,7 @@ add_table(doc,
 add_h1(doc, "4. Product Management")
 add_h2(doc, "4.1 Adding a New Product")
 add_body(doc, (
-    "To add a new product to the Vishal Gold catalog, navigate to the Product Management section "
+    "To add a new product to the Vishal Jewelers catalog, navigate to the Product Management section "
     "from the Admin Dashboard. The product creation form requires the following fields."
 ))
 add_table(doc,
@@ -238,7 +238,7 @@ add_h1(doc, "10. User Management (via Firebase Console)")
 add_body(doc, (
     "End-user account management — such as deactivating an account, resetting a user's role, or "
     "viewing sign-in history — is performed directly through the Firebase Authentication console "
-    "at console.firebase.google.com. The Vishal Gold application does not expose a built-in user "
+    "at console.firebase.google.com. The Vishal Jewelers application does not expose a built-in user "
     "management interface to protect against unintended bulk operations."
 ))
 add_table(doc,

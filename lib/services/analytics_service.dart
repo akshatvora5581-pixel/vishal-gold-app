@@ -1,6 +1,6 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/foundation.dart';
-import 'package:vishal_gold/services/firebase_service.dart';
+import 'package:vishal_jewelers/services/firebase_service.dart';
 
 class AnalyticsService {
   final FirebaseService _firebaseService = FirebaseService();

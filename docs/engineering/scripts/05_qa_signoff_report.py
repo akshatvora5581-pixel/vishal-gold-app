@@ -13,9 +13,9 @@ doc = new_document()
 
 add_cover(doc,
     title    = "Quality Assurance Sign-Off Report",
-    subtitle = "Vishal Gold App — Final QA Summary & Acceptance",
+    subtitle = "Vishal Jewelers App — Final QA Summary & Acceptance",
     version  = "v1.0",
-    prepared_for = "Vishal Gold Management",
+    prepared_for = "Vishal Jewelers Management",
     prepared_by  = "Senior QA Engineer"
 )
 
@@ -31,7 +31,7 @@ add_toc_placeholder(doc, [
 add_h1(doc, "1. Executive Summary")
 add_body(doc, (
     "This Quality Assurance Sign-Off Report documents the results of the formal QA testing phase "
-    "conducted for the Vishal Gold mobile application prior to client delivery. The QA process "
+    "conducted for the Vishal Jewelers mobile application prior to client delivery. The QA process "
     "was carried out by a dedicated Senior QA Engineer and covered all functional modules of the "
     "application across a total of forty-three test cases."
 ))
@@ -45,7 +45,7 @@ add_body(doc, (
 add_h1(doc, "2. QA Scope & Methodology")
 add_h2(doc, "2.1 Scope")
 add_body(doc, (
-    "Testing was conducted on the Android version of the Vishal Gold application, the sole "
+    "Testing was conducted on the Android version of the Vishal Jewelers application, the sole "
     "platform in scope for the current project engagement. The following functional modules "
     "were included in the QA scope."
 ))
@@ -126,7 +126,7 @@ add_table(doc,
 add_h1(doc, "6. QA Sign-Off Declaration")
 add_body(doc, (
     "Based on the test execution results documented in this report, the QA team confirms that "
-    "the Vishal Gold application meets all defined acceptance criteria and is ready for client "
+    "the Vishal Jewelers application meets all defined acceptance criteria and is ready for client "
     "delivery and production deployment. All identified defects have been resolved and verified. "
     "No open critical or high defects remain."
 ))
@@ -138,7 +138,7 @@ add_body(doc, (
 
 add_signature_block(doc, [
     ("QA Lead",              "Engineering Delivery Team"),
-    ("Client Representative","Vishal Gold"),
+    ("Client Representative","Vishal Jewelers"),
 ])
 
 save(doc, OUT)

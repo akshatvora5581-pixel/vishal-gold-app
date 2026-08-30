@@ -1,25 +1,26 @@
 import 'package:flutter/material.dart';
+import '../config/whitelabel_config.dart';
 
 class AppColors {
-  // Premium Dark Theme Palette
-  static const Color background = Color(0xFF121212); // Deep rich dark grey
-  static const Color surface = Color(0xFF1E1E1E); // Slightly lighter for cards
-  static const Color gold = Color(0xFFD4AF37); // Metallic Classic Gold
-  static const Color softGold = Color(
-    0xFFFFD700,
-  ); // Lighter gold for highlights
+  static BaseConfig get _config => AppEnvironment.config;
+
+  // Premium Dark Theme Palette (Dynamic)
+  static Color get background => _config.backgroundColor;
+  static Color get surface => _config.surfaceColor;
+  static Color get gold => _config.primaryColor;
+  static Color get softGold => _config.accentColor;
   static const Color white = Color(0xFFFFFFFF);
   static const Color black = Color(0xFF000000);
 
   // Text Colors
-  static const Color textPrimary = white;
-  static const Color textSecondary = Color(0xFFB0B0B0); // Silver/Grey
+  static Color get textPrimary => _config.textPrimary;
+  static Color get textSecondary => _config.textSecondary;
   static const Color textTertiary = Color(0xFF757575);
 
   // Status Colors
-  static const Color errorRed = Color(0xFFCF6679); // Muted red for dark mode
-  static const Color successGreen = Color(0xFF81C784); // Muted green
-  static const Color warningYellow = Color(0xFFFFB74D); // Muted orange
+  static const Color errorRed = Color(0xFFCF6679);
+  static const Color successGreen = Color(0xFF81C784);
+  static const Color warningYellow = Color(0xFFFFB74D);
 
   // UI Accents
   static const Color cardBorder = Color(0xFF2C2C2C);
@@ -27,12 +28,12 @@ class AppColors {
   static const Color overlay = Color(0xAA000000);
 
   // Legacy/Compatibility
-  static const Color oliveGreen = surface; // Map old olive to surface
-  static const Color primaryGold = gold;
-  static const Color lightGrey = textSecondary;
+  static Color get oliveGreen => surface;
+  static Color get primaryGold => gold;
+  static Color get lightGrey => textSecondary;
   static const Color grey = textTertiary;
-  static const Color cream = Color(0xFFFFFDD0); // Restored for compatibility
+  static const Color cream = Color(0xFFFFFDD0);
 
   // Interactions
-  static const Color ripple = Color(0x1AD4AF37); // Gold ripple
+  static Color get ripple => _config.primaryColor.withValues(alpha: 0.1);
 }

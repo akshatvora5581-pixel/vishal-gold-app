@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
-import 'package:vishal_gold/services/firebase_service.dart';
+import 'package:vishal_jewelers/services/firebase_service.dart';
 
 /// A service to handle image picking and uploading
 class ImagePickerService {

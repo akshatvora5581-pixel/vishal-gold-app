@@ -108,7 +108,9 @@ class Product {
   }
 
   String get purityDisplay {
-    return '$purity (${purity == 84 ? '20K' : '22K'})';
+    if (purity == 84) return '20K';
+    if (purity == 92 || purity == 91) return '22K'; // Supporting both 91.6 (int 91) and 92
+    return '${purity}K';
   }
 
   String get inventoryStatusDisplay {

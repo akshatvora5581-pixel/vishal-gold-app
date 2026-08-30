@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:url_launcher/url_launcher.dart';
-import 'package:vishal_gold/constants/app_colors.dart';
+import 'package:vishal_jewelers/constants/app_colors.dart';
 
 class WhatsAppFAB extends StatelessWidget {
   const WhatsAppFAB({super.key});
@@ -19,7 +19,7 @@ class WhatsAppFAB extends StatelessWidget {
     return FloatingActionButton(
       onPressed: _launchWhatsApp,
       backgroundColor: const Color(0xFF25D366), // WhatsApp green
-      child: const Icon(Icons.chat, color: AppColors.white),
+      child: Icon(Icons.chat, color: AppColors.white),
     );
   }
 }

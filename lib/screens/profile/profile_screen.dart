@@ -4,20 +4,20 @@ import 'package:firebase_auth/firebase_auth.dart' hide AuthProvider;
 import 'package:provider/provider.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:cached_network_image/cached_network_image.dart';
-import 'package:vishal_gold/constants/app_colors.dart';
-import 'package:vishal_gold/providers/auth_provider.dart';
-import 'package:vishal_gold/screens/auth/phone_auth_screen.dart';
-import 'package:vishal_gold/screens/order/order_history_screen.dart';
-import 'package:vishal_gold/screens/favourite/favourite_products_screen.dart';
-import 'package:vishal_gold/screens/info/privacy_policy_screen.dart';
-import 'package:vishal_gold/screens/profile/edit_profile_screen.dart';
-import 'package:vishal_gold/screens/profile/quick_login_settings_screen.dart';
+import 'package:vishal_jewelers/constants/app_colors.dart';
+import 'package:vishal_jewelers/providers/auth_provider.dart';
+import 'package:vishal_jewelers/screens/auth/phone_auth_screen.dart';
+import 'package:vishal_jewelers/screens/order/order_history_screen.dart';
+import 'package:vishal_jewelers/screens/favourite/favourite_products_screen.dart';
+import 'package:vishal_jewelers/screens/info/privacy_policy_screen.dart';
+import 'package:vishal_jewelers/screens/profile/edit_profile_screen.dart';
+import 'package:vishal_jewelers/screens/profile/quick_login_settings_screen.dart';
 
-import 'package:vishal_gold/screens/settings/notification_settings_screen.dart';
-import 'package:vishal_gold/screens/settings/security_center_screen.dart';
-import 'package:vishal_gold/screens/settings/storage_settings_screen.dart';
+import 'package:vishal_jewelers/screens/settings/notification_settings_screen.dart';
+import 'package:vishal_jewelers/screens/settings/security_center_screen.dart';
+import 'package:vishal_jewelers/screens/settings/storage_settings_screen.dart';
 
-import 'package:vishal_gold/screens/dev/database_cleanup_screen.dart';
+import 'package:vishal_jewelers/screens/dev/database_cleanup_screen.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 class ProfileScreen extends StatefulWidget {
@@ -103,14 +103,26 @@ class _ProfileScreenState extends State<ProfileScreen> {
               ),
               const SizedBox(height: 24),
               _buildSupportTile(
-                icon: Icons.chat_outlined,
-                title: 'Chat on WhatsApp',
-                subtitle: '+91 9909280997',
+                icon: Icons.location_on_outlined,
+                title: 'Visit Us',
+                subtitle: 'Opposite to mahalaxmi temple, Mehta complex, Vora bazar, Bhavnagar',
                 onTap: () {
                   Navigator.pop(context);
                   _launchURL(
-                    'whatsapp://send?phone=+919909280997',
-                    fallbackUrl: 'https://wa.me/919909280997',
+                    'https://www.google.com/maps/search/?api=1&query=Mehta+complex,+Vora+bazar,+Bhavnagar'
+                  );
+                },
+              ),
+              const SizedBox(height: 12),
+              _buildSupportTile(
+                icon: Icons.chat_outlined,
+                title: 'Chat on WhatsApp',
+                subtitle: '+91 9879888819',
+                onTap: () {
+                  Navigator.pop(context);
+                  _launchURL(
+                    'whatsapp://send?phone=+919879888819',
+                    fallbackUrl: 'https://wa.me/919879888819',
                   );
                 },
               ),
@@ -118,10 +130,10 @@ class _ProfileScreenState extends State<ProfileScreen> {
               _buildSupportTile(
                 icon: Icons.phone_outlined,
                 title: 'Call Us',
-                subtitle: '+91 9909280997',
+                subtitle: '+91 9879888819',
                 onTap: () {
                   Navigator.pop(context);
-                  _launchURL('tel:+919909280997');
+                  _launchURL('tel:+919879888819');
                 },
               ),
               const SizedBox(height: 12),
@@ -191,7 +203,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 ],
               ),
             ),
-            const Icon(Icons.arrow_forward_ios, color: AppColors.grey, size: 16),
+            Icon(Icons.arrow_forward_ios, color: AppColors.grey, size: 16),
           ],
         ),
       ),
@@ -278,7 +290,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
       body: Builder(
         builder: (context) {
           if (authProvider.isLoading && authProvider.userProfile == null) {
-            return const Center(
+            return Center(
               child: CircularProgressIndicator(color: AppColors.gold),
             );
           }
@@ -402,7 +414,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                                 color: AppColors.gold.withValues(alpha: 0.1),
                                 shape: BoxShape.circle,
                               ),
-                              child: const Icon(
+                              child: Icon(
                                 Icons.edit,
                                 color: AppColors.gold,
                                 size: 18,
@@ -571,7 +583,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                         child: OutlinedButton.icon(
                           onPressed: () => _logout(context),
                           icon:
-                              const Icon(Icons.logout, color: AppColors.errorRed),
+                              Icon(Icons.logout, color: AppColors.errorRed),
                           label: Text(
                             'LOGOUT',
                             style: GoogleFonts.outfit(
@@ -581,7 +593,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                           ),
                           style: OutlinedButton.styleFrom(
                             padding: const EdgeInsets.symmetric(vertical: 16),
-                            side: const BorderSide(color: AppColors.errorRed),
+                            side: BorderSide(color: AppColors.errorRed),
                             shape: RoundedRectangleBorder(
                               borderRadius: BorderRadius.circular(12),
                             ),
@@ -607,7 +619,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            const Icon(Icons.error_outline, color: AppColors.errorRed, size: 64),
+            Icon(Icons.error_outline, color: AppColors.errorRed, size: 64),
             const SizedBox(height: 16),
             Text(
               title,
@@ -652,7 +664,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 shape: BoxShape.circle,
                 border: Border.all(color: AppColors.gold, width: 2),
               ),
-              child: const Icon(Icons.person_outline,
+              child: Icon(Icons.person_outline,
                   color: AppColors.gold, size: 64),
             ),
             const SizedBox(height: 24),
@@ -821,7 +833,7 @@ class _MenuRow extends StatelessWidget {
         title,
         style: GoogleFonts.outfit(color: AppColors.white, fontSize: 16),
       ),
-      trailing: const Icon(
+      trailing: Icon(
         Icons.arrow_forward_ios,
         color: AppColors.grey,
         size: 16,

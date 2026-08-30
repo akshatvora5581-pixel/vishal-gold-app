@@ -4,6 +4,8 @@
 *.pyc
 *.swp
 .DS_Store
+**/node_modules/
+node_modules/
 .atom/
 .build/
 .buildlog/
@@ -50,3 +52,32 @@ app.*.map.json
 .env
 .env.*
 *.env
+
+# Keystores & credentials
+*.jks
+*.keystore
+*service-account*.json
+*-adminsdk-*.json
+key.properties
+keystore_credentials.txt
+android/key.properties
+android/app/key.properties
+android/*keystore*.txt
+android/*signing*.txt
+android/*sha*.txt
+android/*log*.txt
+android/*error*.txt
+android/*version*.txt
+
+# Build binaries & packages
+*.apk
+*.aab
+Client_handovers/*.apk
+client_release/*.apk
+client_release/*.aab
+release_binaries/
+
+# Temporary diagnostic & dump files
+*.txt
+!requirements.txt
+

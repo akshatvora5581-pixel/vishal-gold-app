@@ -2,7 +2,7 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:path_provider/path_provider.dart';
-import 'package:vishal_gold/constants/app_colors.dart';
+import 'package:vishal_jewelers/constants/app_colors.dart';
 
 class StorageSettingsScreen extends StatefulWidget {
   const StorageSettingsScreen({super.key});
@@ -55,8 +55,8 @@ class _StorageSettingsScreenState extends State<StorageSettingsScreen> {
       await _calculateCacheSize();
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Cache cleared successfully!'),
+          SnackBar(
+            content: const Text('Cache cleared successfully!'),
             backgroundColor: AppColors.gold,
           ),
         );
@@ -88,7 +88,7 @@ class _StorageSettingsScreenState extends State<StorageSettingsScreen> {
           ),
         ),
         backgroundColor: AppColors.surface,
-        iconTheme: const IconThemeData(color: AppColors.gold),
+        iconTheme: IconThemeData(color: AppColors.gold),
       ),
       body: Padding(
         padding: const EdgeInsets.all(24),
@@ -106,7 +106,7 @@ class _StorageSettingsScreenState extends State<StorageSettingsScreen> {
               ),
               child: Column(
                 children: [
-                  const Icon(
+                  Icon(
                     Icons.storage_outlined,
                     color: AppColors.gold,
                     size: 48,
@@ -144,7 +144,7 @@ class _StorageSettingsScreenState extends State<StorageSettingsScreen> {
                     child: ElevatedButton.icon(
                       onPressed: _isCleaning ? null : _clearCache,
                       icon: _isCleaning
-                          ? const SizedBox(
+                          ? SizedBox(
                               width: 20,
                               height: 20,
                               child: CircularProgressIndicator(
